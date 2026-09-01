@@ -29,8 +29,8 @@ public abstract class PostgresIntegrationTest {
     public static final String POSTGRES_IMAGE = "postgis/postgis:17-3.5";
 
     @ServiceConnection
-    protected static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
-        DockerImageName.parse(POSTGRES_IMAGE).asCompatibleSubstituteFor("postgres"));
+    protected static final PostgreSQLContainer POSTGRES =
+            new PostgreSQLContainer(DockerImageName.parse(POSTGRES_IMAGE).asCompatibleSubstituteFor("postgres"));
 
     static {
         POSTGRES.start();
