@@ -4,6 +4,16 @@ build/
 out/
 .gradle/
 
+# JavaScript and frontend build output
+node_modules/
+dist/
+.next/
+.nuxt/
+.svelte-kit/
+.vite/
+.parcel-cache/
+*.tsbuildinfo
+
 # IDE files
 .idea/
 .vscode/
@@ -41,4 +51,5 @@ Desktop.ini
 .testcontainers.properties
 coverage/
 reports/
+.eslintcache
 
