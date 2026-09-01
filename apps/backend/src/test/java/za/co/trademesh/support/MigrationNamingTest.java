@@ -25,7 +25,7 @@ class MigrationNamingTest {
     private static final Path MIGRATIONS = Path.of("src", "main", "resources", "db", "migration");
 
     private static final Pattern VALID =
-        Pattern.compile("^V[0-9]{14}__[a-z0-9]+(_[a-z0-9]+)*[.]sql$");
+        Pattern.compile("^V[0-9]{14}__[a-z0-9]+(_[a-z0-9]+)+[.]sql$");
 
     @Test
     void everyMigrationFollowsTheAgreedNamingConvention() throws IOException {

@@ -1,5 +1,6 @@
-# Local development database. PostGIS is enabled by a Flyway migration,
-# not by hand — see apps/backend/src/main/resources/db/migration.
+# Local development database. The postgis/postgis image installs the PostGIS
+# extension at initdb; a Flyway migration REQUIRES it and fails if absent.
+# Non-local environments get it from provisioning — see docs/adr/0002.
 services:
   postgres:
     image: postgis/postgis:17-3.5
@@ -9,7 +10,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-trademesh}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trademesh}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      # Loopback-only. The default credentials below are conveniences, not
+      # secrets; publishing on 0.0.0.0 would put a trademesh/trademesh database
+      # on every network the developer machine is attached to.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trademesh} -d ${POSTGRES_DB:-trademesh}"]
       interval: 5s
