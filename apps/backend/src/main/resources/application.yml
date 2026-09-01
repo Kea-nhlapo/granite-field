@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: trademesh-backend
+  profiles:
+    default: ${SPRING_PROFILES_DEFAULT:local}
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: ${MANAGEMENT_HEALTH_SHOW_DETAILS:never}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+
+trademesh:
+  runtime:
+    environment: ${TRADEMESH_RUNTIME_ENVIRONMENT:local}
