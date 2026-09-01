@@ -1,0 +1,44 @@
+# Java build output
+target/
+build/
+out/
+.gradle/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml
+application-local.properties
+*.jks
+*.p12
+*.pem
+*.key
+
+# Logs and runtime files
+*.log
+logs/
+tmp/
+*.pid
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Test and tooling output
+.testcontainers.properties
+coverage/
+reports/
+
