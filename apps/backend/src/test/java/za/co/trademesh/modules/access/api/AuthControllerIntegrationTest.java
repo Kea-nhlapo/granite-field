@@ -26,6 +26,8 @@ class AuthControllerIntegrationTest extends PostgresIntegrationTest {
     void cleanAccessTables() {
         jdbcTemplate.update("DELETE FROM access_refresh_session");
         jdbcTemplate.update("DELETE FROM access_business_membership");
+        jdbcTemplate.update("DELETE FROM business_registered_onboarding");
+        jdbcTemplate.update("DELETE FROM business_profile");
         jdbcTemplate.update("DELETE FROM access_user_role");
         jdbcTemplate.update("DELETE FROM access_user_account");
     }

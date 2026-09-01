@@ -19,7 +19,7 @@ class JdbcTenantMembershipLookup implements TenantMembershipLookup {
             SELECT EXISTS (
                 SELECT 1
                 FROM access_business_membership
-                WHERE user_id = ? AND business_id = ?
+                WHERE user_id = ? AND business_id = ? AND membership_status = 'ACTIVE'
             )
             """, Boolean.class, userId, businessId);
         return Boolean.TRUE.equals(found);

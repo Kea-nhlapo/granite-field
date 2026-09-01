@@ -33,6 +33,8 @@ class AuthServiceIntegrationTest extends PostgresIntegrationTest {
     void cleanAccessTables() {
         jdbcTemplate.update("DELETE FROM access_refresh_session");
         jdbcTemplate.update("DELETE FROM access_business_membership");
+        jdbcTemplate.update("DELETE FROM business_registered_onboarding");
+        jdbcTemplate.update("DELETE FROM business_profile");
         jdbcTemplate.update("DELETE FROM access_user_role");
         jdbcTemplate.update("DELETE FROM access_user_account");
     }
@@ -85,6 +87,8 @@ class AuthServiceIntegrationTest extends PostgresIntegrationTest {
                 authService.register("owner@example.com", "correct-horse-battery", RegistrationType.BUSINESS_OWNER);
         UUID ownBusinessId = UUID.randomUUID();
         UUID otherBusinessId = UUID.randomUUID();
+        insertBusiness(ownBusinessId, owner.userId(), "2024/000001/07");
+        insertBusiness(otherBusinessId, owner.userId(), "2024/000002/07");
         jdbcTemplate.update("""
             INSERT INTO access_business_membership (
                 business_id, user_id, membership_role, created_at
@@ -98,5 +102,15 @@ class AuthServiceIntegrationTest extends PostgresIntegrationTest {
                 .doesNotThrowAnyException();
         assertThatThrownBy(() -> authorizationService.requireBusinessAccess(authentication, otherBusinessId))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    private void insertBusiness(UUID businessId, UUID ownerId, String registrationNumber) {
+        jdbcTemplate.update("""
+            INSERT INTO business_profile (
+                id, registration_number, legal_name, registered_address,
+                verification_status, lifecycle_status, confirmed_by_user_id, created_at
+            ) VALUES (?, ?, 'Test Business', 'Test Address',
+                      'REGISTRY_VERIFIED', 'ACTIVE', ?, CURRENT_TIMESTAMP)
+            """, businessId, registrationNumber, ownerId);
     }
 }
