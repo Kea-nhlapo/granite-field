@@ -7,18 +7,22 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 import za.co.trademesh.modules.probe.config.ModuleProbeProperties;
 import za.co.trademesh.shared.config.RuntimeProperties;
+import za.co.trademesh.support.PostgresIntegrationTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = {
+// classes is restated because a @SpringBootTest here overrides the one on
+// PostgresIntegrationTest, and the base class names the configuration
+// explicitly so tests outside this package can find it.
+@SpringBootTest(classes = TradeMeshApplication.class, properties = {
     "trademesh.runtime.environment=local",
     "trademesh.probe.name=module-scan-verified"
 })
 @AutoConfigureMockMvc
-class TradeMeshApplicationTests {
+class TradeMeshApplicationTests extends PostgresIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

@@ -3,6 +3,17 @@ spring:
     name: trademesh-backend
   profiles:
     default: ${SPRING_PROFILES_DEFAULT:local}
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  flyway:
+    # Flyway SKIPS a misnamed migration with only an INFO log and starts
+    # normally, so a typo ships as a silently unapplied schema change.
+    # MigrationNamingTest guards the source tree; this guards the artifact.
+    validate-migration-naming: true
+    enabled: true
+    locations: classpath:db/migration
 
 server:
   port: ${SERVER_PORT:8080}
@@ -26,3 +37,16 @@ logging:
 trademesh:
   runtime:
     environment: ${TRADEMESH_RUNTIME_ENVIRONMENT:local}
+
+# Local-only convenience defaults. Every other profile must supply these
+# explicitly, so a shipped default password can never reach a real database.
+# Enforced by DatasourceCredentialDefaultsTest, not by this comment.
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/trademesh}
+    username: ${DATABASE_USERNAME:trademesh}
+    password: ${DATABASE_PASSWORD:trademesh}
