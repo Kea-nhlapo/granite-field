@@ -1,13 +1,13 @@
 package za.co.trademesh.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import za.co.trademesh.support.PostgresIntegrationTest;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class DatabaseIntegrationTest extends PostgresIntegrationTest {
 
@@ -38,12 +38,13 @@ class DatabaseIntegrationTest extends PostgresIntegrationTest {
     @Test
     void flywayRunsOnStartupAndRecordsTheRequirePostgisMigration() {
         Integer applied = jdbcTemplate.queryForObject(
-            "SELECT count(*) FROM flyway_schema_history WHERE version = ? AND success = true",
-            Integer.class, POSTGIS_MIGRATION_VERSION);
+                "SELECT count(*) FROM flyway_schema_history WHERE version = ? AND success = true",
+                Integer.class,
+                POSTGIS_MIGRATION_VERSION);
 
         assertThat(applied)
-            .as("the require-postgis migration is recorded as applied")
-            .isEqualTo(1);
+                .as("the require-postgis migration is recorded as applied")
+                .isEqualTo(1);
     }
 
     /**
@@ -62,16 +63,14 @@ class DatabaseIntegrationTest extends PostgresIntegrationTest {
 
     @Test
     void spatialColumnsAndDistanceQueriesWork() {
-        jdbcTemplate.execute(
-            "CREATE TABLE " + PROBE_SCHEMA + ".location (position geography(Point, 4326))");
-        jdbcTemplate.execute(
-            "INSERT INTO " + PROBE_SCHEMA + ".location (position) "
+        jdbcTemplate.execute("CREATE TABLE " + PROBE_SCHEMA + ".location (position geography(Point, 4326))");
+        jdbcTemplate.execute("INSERT INTO " + PROBE_SCHEMA + ".location (position) "
                 + "VALUES (ST_GeogFromText('SRID=4326;POINT(28.05 -26.20)'))");
 
         Double metresToPretoria = jdbcTemplate.queryForObject(
-            "SELECT ST_Distance(position, ST_GeogFromText('SRID=4326;POINT(28.19 -25.75)')) "
-                + "FROM " + PROBE_SCHEMA + ".location",
-            Double.class);
+                "SELECT ST_Distance(position, ST_GeogFromText('SRID=4326;POINT(28.19 -25.75)')) " + "FROM "
+                        + PROBE_SCHEMA + ".location",
+                Double.class);
 
         assertThat(metresToPretoria).isNotNull().isBetween(45_000.0, 60_000.0);
     }
