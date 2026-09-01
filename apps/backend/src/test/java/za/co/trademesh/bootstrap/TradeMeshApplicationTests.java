@@ -2,8 +2,10 @@ package za.co.trademesh.bootstrap;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import za.co.trademesh.modules.probe.config.ModuleProbeProperties;
 import za.co.trademesh.shared.config.RuntimeProperties;
 import za.co.trademesh.support.PostgresIntegrationTest;
 
@@ -12,6 +14,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+// classes is restated because a @SpringBootTest here overrides the one on
+// PostgresIntegrationTest, and the base class names the configuration
+// explicitly so tests outside this package can find it.
+@SpringBootTest(classes = TradeMeshApplication.class, properties = {
+    "trademesh.runtime.environment=local",
+    "trademesh.probe.name=module-scan-verified"
+})
 @AutoConfigureMockMvc
 class TradeMeshApplicationTests extends PostgresIntegrationTest {
 
@@ -21,9 +30,17 @@ class TradeMeshApplicationTests extends PostgresIntegrationTest {
     @Autowired
     private RuntimeProperties runtimeProperties;
 
+    @Autowired
+    private ModuleProbeProperties moduleProbeProperties;
+
     @Test
     void startsWithSafeLocalDefaults() {
         assertThat(runtimeProperties.environment()).isEqualTo("local");
+    }
+
+    @Test
+    void discoversConfigurationPropertiesOwnedByFeatureModules() {
+        assertThat(moduleProbeProperties.name()).isEqualTo("module-scan-verified");
     }
 
     @Test
