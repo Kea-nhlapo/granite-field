@@ -1,15 +1,13 @@
 package za.co.trademesh.shared.events.outbox;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.support.TransactionTemplate;
-
 import za.co.trademesh.shared.events.CorrelationContext;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 class OutboxSubmitterTest extends OutboxTestSupport {
 
@@ -23,8 +21,10 @@ class OutboxSubmitterTest extends OutboxTestSupport {
     void enqueuesAMessageWithItsPayloadAndEnvelope() {
         UUID correlationId = UUID.randomUUID();
 
-        CorrelationContext.runWithin(correlationId, "user-7", () ->
-            submitter.submit("notification.send", "invite-1", Map.of("to", "a@b.test"), 1));
+        CorrelationContext.runWithin(
+                correlationId,
+                "user-7",
+                () -> submitter.submit("notification.send", "invite-1", Map.of("to", "a@b.test"), 1));
 
         Map<String, Object> row = jdbcTemplate.queryForMap("SELECT * FROM outbox_message");
 
@@ -46,16 +46,17 @@ class OutboxSubmitterTest extends OutboxTestSupport {
         // Reaching into the payload with -> only works if the column really is
         // jsonb. Without the ?::jsonb cast in the insert this fails at runtime,
         // and it would fail on the first real message rather than at build time.
-        String recipient = jdbcTemplate.queryForObject(
-            "SELECT payload ->> 'to' FROM outbox_message", String.class);
+        String recipient = jdbcTemplate.queryForObject("SELECT payload ->> 'to' FROM outbox_message", String.class);
 
         assertThat(recipient).isEqualTo("a@b.test");
     }
 
     @Test
     void treatsASecondEnqueueOfTheSameKeyAsANoOp() {
-        assertThat(submitter.submit("notification.send", "invite-1", Map.of("n", 1), 1)).isTrue();
-        assertThat(submitter.submit("notification.send", "invite-1", Map.of("n", 2), 1)).isFalse();
+        assertThat(submitter.submit("notification.send", "invite-1", Map.of("n", 1), 1))
+                .isTrue();
+        assertThat(submitter.submit("notification.send", "invite-1", Map.of("n", 2), 1))
+                .isFalse();
 
         assertThat(rowCount()).isEqualTo(1);
     }
@@ -64,8 +65,10 @@ class OutboxSubmitterTest extends OutboxTestSupport {
     void scopesIdempotencyToTheTypeSoUnrelatedHandlersDoNotCollide() {
         String sharedBusinessKey = "shipment-42";
 
-        assertThat(submitter.submit("notification.send", sharedBusinessKey, Map.of(), 1)).isTrue();
-        assertThat(submitter.submit("evidence.record", sharedBusinessKey, Map.of(), 1)).isTrue();
+        assertThat(submitter.submit("notification.send", sharedBusinessKey, Map.of(), 1))
+                .isTrue();
+        assertThat(submitter.submit("evidence.record", sharedBusinessKey, Map.of(), 1))
+                .isTrue();
 
         assertThat(rowCount()).isEqualTo(2);
     }

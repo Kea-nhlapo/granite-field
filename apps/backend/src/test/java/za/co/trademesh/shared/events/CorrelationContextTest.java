@@ -1,12 +1,11 @@
 package za.co.trademesh.shared.events;
 
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Test;
 
 class CorrelationContextTest {
 
@@ -27,11 +26,10 @@ class CorrelationContextTest {
      */
     @Test
     void clearsTheScopeEvenWhenTheWorkThrows() {
-        assertThatThrownBy(() -> CorrelationContext.runWithin(
-            UUID.randomUUID(), "user-7", () -> {
-                throw new IllegalStateException("handler blew up");
-            }))
-            .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> CorrelationContext.runWithin(UUID.randomUUID(), "user-7", () -> {
+                    throw new IllegalStateException("handler blew up");
+                }))
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(CorrelationContext.actor()).isEmpty();
     }
@@ -42,8 +40,8 @@ class CorrelationContextTest {
         UUID inner = UUID.randomUUID();
 
         CorrelationContext.runWithin(outer, "outer-user", () -> {
-            CorrelationContext.runWithin(inner, "inner-user", () ->
-                assertThat(CorrelationContext.correlationId()).isEqualTo(inner));
+            CorrelationContext.runWithin(inner, "inner-user", () -> assertThat(CorrelationContext.correlationId())
+                    .isEqualTo(inner));
 
             assertThat(CorrelationContext.correlationId()).isEqualTo(outer);
             assertThat(CorrelationContext.actor()).contains("outer-user");
@@ -67,8 +65,8 @@ class CorrelationContextTest {
         AtomicReference<String> seenInChild = new AtomicReference<>("unset");
 
         CorrelationContext.runWithin(UUID.randomUUID(), "user-7", () -> {
-            Thread child = new Thread(() ->
-                seenInChild.set(CorrelationContext.actor().orElse("none")));
+            Thread child =
+                    new Thread(() -> seenInChild.set(CorrelationContext.actor().orElse("none")));
             child.start();
             try {
                 child.join();

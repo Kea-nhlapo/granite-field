@@ -1,12 +1,11 @@
 package za.co.trademesh.shared.events.outbox;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
-
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Backoff is arithmetic, so it is tested as arithmetic — no container, no
@@ -18,11 +17,11 @@ class OutboxBackoffTest {
     private static final Duration CAP = Duration.ofMinutes(10);
 
     private final OutboxWorker worker = new OutboxWorker(
-        null,
-        List.of(),
-        new OutboxProperties(50, 8, BASE, CAP, Duration.ofMinutes(5), true),
-        Clock.systemUTC(),
-        null);
+            null,
+            List.of(),
+            new OutboxProperties(50, 8, BASE, CAP, Duration.ofMinutes(5), true),
+            Clock.systemUTC(),
+            null);
 
     @Test
     void growsWithEachAttempt() {
@@ -48,9 +47,9 @@ class OutboxBackoffTest {
     @Test
     void doesNotReturnTheSameDelayEveryTime() {
         List<Duration> delays = java.util.stream.IntStream.range(0, 100)
-            .mapToObj(i -> worker.backoffFor(6))
-            .distinct()
-            .toList();
+                .mapToObj(i -> worker.backoffFor(6))
+                .distinct()
+                .toList();
 
         assertThat(delays).hasSizeGreaterThan(1);
     }
@@ -58,9 +57,7 @@ class OutboxBackoffTest {
     @Test
     void neverExceedsTheConfiguredCap() {
         for (int attempts : new int[] {1, 10, 40, 1000, Integer.MAX_VALUE}) {
-            assertThat(worker.backoffFor(attempts))
-                .as("attempt %s", attempts)
-                .isLessThanOrEqualTo(CAP);
+            assertThat(worker.backoffFor(attempts)).as("attempt %s", attempts).isLessThanOrEqualTo(CAP);
         }
     }
 

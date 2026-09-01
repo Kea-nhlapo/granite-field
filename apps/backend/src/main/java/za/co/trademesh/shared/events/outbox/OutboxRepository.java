@@ -8,11 +8,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
-
 import za.co.trademesh.shared.events.EventEnvelope;
 
 /**
@@ -65,12 +63,7 @@ public class OutboxRepository {
      * @return true if a row was written, false if it was already queued
      */
     public boolean enqueue(
-        UUID id,
-        String type,
-        String payload,
-        String idempotencyKey,
-        EventEnvelope envelope,
-        Instant availableAt) {
+            UUID id, String type, String payload, String idempotencyKey, EventEnvelope envelope, Instant availableAt) {
 
         int written = jdbc().sql("""
                 INSERT INTO outbox_message (
@@ -79,16 +72,16 @@ public class OutboxRepository {
                 VALUES (?, ?, ?::jsonb, ?, 'PENDING', 0, ?, ?, ?, ?, ?)
                 ON CONFLICT (type, idempotency_key) DO NOTHING
                 """)
-            .param(id)
-            .param(type)
-            .param(payload)
-            .param(idempotencyKey)
-            .param(Timestamp.from(availableAt))
-            .param(envelope.correlationId())
-            .param(envelope.actor().orElse(null))
-            .param(envelope.source())
-            .param(envelope.schemaVersion())
-            .update();
+                .param(id)
+                .param(type)
+                .param(payload)
+                .param(idempotencyKey)
+                .param(Timestamp.from(availableAt))
+                .param(envelope.correlationId())
+                .param(envelope.actor().orElse(null))
+                .param(envelope.source())
+                .param(envelope.schemaVersion())
+                .update();
 
         return written == 1;
     }
@@ -105,10 +98,12 @@ public class OutboxRepository {
      * <p>Run this in its own short transaction.
      */
     public List<OutboxMessage> claimBatch(int batchSize, Instant now) {
+        UUID claimToken = UUID.randomUUID();
         return jdbc().sql("""
                 UPDATE outbox_message
                    SET status = 'CLAIMED',
                        claimed_at = ?,
+                       claim_token = ?,
                        attempts = attempts + 1,
                        updated_at = ?
                  WHERE id IN (
@@ -120,14 +115,15 @@ public class OutboxRepository {
                         LIMIT ?
                           FOR UPDATE SKIP LOCKED)
              RETURNING id, type, payload, idempotency_key, attempts, available_at,
-                       created_at, correlation_id, actor, source, schema_version
+                       created_at, correlation_id, actor, source, schema_version, claim_token
                 """)
-            .param(Timestamp.from(now))
-            .param(Timestamp.from(now))
-            .param(Timestamp.from(now))
-            .param(batchSize)
-            .query(OutboxRepository::toMessage)
-            .list();
+                .param(Timestamp.from(now))
+                .param(claimToken)
+                .param(Timestamp.from(now))
+                .param(Timestamp.from(now))
+                .param(batchSize)
+                .query(OutboxRepository::toMessage)
+                .list();
     }
 
     /**
@@ -136,40 +132,39 @@ public class OutboxRepository {
      * <p>Guarded on status = 'CLAIMED' so a worker whose claim the reaper has
      * already revoked cannot mark DONE a message another worker now owns.
      */
-    public boolean markDone(UUID id) {
+    public boolean markDone(UUID id, UUID claimToken) {
         return jdbc().sql("""
                 UPDATE outbox_message
-                   SET status = 'DONE', claimed_at = NULL, last_error = NULL, updated_at = now()
-                 WHERE id = ? AND status = 'CLAIMED'
-                """)
-            .param(id)
-            .update() == 1;
+                   SET status = 'DONE', claimed_at = NULL, claim_token = NULL,
+                       last_error = NULL, updated_at = now()
+                 WHERE id = ? AND status = 'CLAIMED' AND claim_token = ?
+                """).param(id).param(claimToken).update() == 1;
     }
 
     /** Returns a failed message to PENDING with a later availability. */
-    public boolean markForRetry(UUID id, Instant availableAt, String error) {
+    public boolean markForRetry(UUID id, UUID claimToken, Instant availableAt, String error) {
         return jdbc().sql("""
                 UPDATE outbox_message
-                   SET status = 'PENDING', claimed_at = NULL, available_at = ?,
+                   SET status = 'PENDING', claimed_at = NULL, claim_token = NULL, available_at = ?,
                        last_error = ?, updated_at = now()
-                 WHERE id = ? AND status = 'CLAIMED'
+                 WHERE id = ? AND status = 'CLAIMED' AND claim_token = ?
                 """)
-            .param(Timestamp.from(availableAt))
-            .param(error)
-            .param(id)
-            .update() == 1;
+                        .param(Timestamp.from(availableAt))
+                        .param(error)
+                        .param(id)
+                        .param(claimToken)
+                        .update()
+                == 1;
     }
 
     /** Retires a message that has exhausted its attempts. The row is kept. */
-    public boolean markDead(UUID id, String error) {
+    public boolean markDead(UUID id, UUID claimToken, String error) {
         return jdbc().sql("""
                 UPDATE outbox_message
-                   SET status = 'DEAD', claimed_at = NULL, last_error = ?, updated_at = now()
-                 WHERE id = ? AND status = 'CLAIMED'
-                """)
-            .param(error)
-            .param(id)
-            .update() == 1;
+                   SET status = 'DEAD', claimed_at = NULL, claim_token = NULL,
+                       last_error = ?, updated_at = now()
+                 WHERE id = ? AND status = 'CLAIMED' AND claim_token = ?
+                """).param(error).param(id).param(claimToken).update() == 1;
     }
 
     /**
@@ -184,14 +179,14 @@ public class OutboxRepository {
     public int reapExpiredClaims(Instant now, Duration visibilityTimeout) {
         return jdbc().sql("""
                 UPDATE outbox_message
-                   SET status = 'PENDING', claimed_at = NULL,
+                   SET status = 'PENDING', claimed_at = NULL, claim_token = NULL,
                        last_error = 'claim expired; worker presumed dead',
                        updated_at = ?
                  WHERE status = 'CLAIMED' AND claimed_at < ?
                 """)
-            .param(Timestamp.from(now))
-            .param(Timestamp.from(now.minus(visibilityTimeout)))
-            .update();
+                .param(Timestamp.from(now))
+                .param(Timestamp.from(now.minus(visibilityTimeout)))
+                .update();
     }
 
     public Optional<OutboxRow> findById(UUID id) {
@@ -199,16 +194,16 @@ public class OutboxRepository {
                 SELECT id, type, status, attempts, available_at, claimed_at, last_error
                   FROM outbox_message WHERE id = ?
                 """)
-            .param(id)
-            .query((rs, rowNum) -> new OutboxRow(
-                rs.getObject("id", UUID.class),
-                rs.getString("type"),
-                rs.getString("status"),
-                rs.getInt("attempts"),
-                rs.getTimestamp("available_at").toInstant(),
-                Optional.ofNullable(rs.getTimestamp("claimed_at")).map(Timestamp::toInstant),
-                Optional.ofNullable(rs.getString("last_error"))))
-            .optional();
+                .param(id)
+                .query((rs, rowNum) -> new OutboxRow(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("type"),
+                        rs.getString("status"),
+                        rs.getInt("attempts"),
+                        rs.getTimestamp("available_at").toInstant(),
+                        Optional.ofNullable(rs.getTimestamp("claimed_at")).map(Timestamp::toInstant),
+                        Optional.ofNullable(rs.getString("last_error"))))
+                .optional();
     }
 
     private static OutboxMessage toMessage(ResultSet rs, int rowNum) throws SQLException {
@@ -218,32 +213,32 @@ public class OutboxRepository {
         // available_at, which retries move forward and which would make an
         // event appear to have happened later each time it failed.
         EventEnvelope envelope = new EventEnvelope(
-            rs.getObject("id", UUID.class),
-            rs.getString("type"),
-            rs.getTimestamp("created_at").toInstant(),
-            Optional.ofNullable(rs.getString("actor")),
-            rs.getString("source"),
-            rs.getObject("correlation_id", UUID.class),
-            rs.getInt("schema_version"));
+                rs.getObject("id", UUID.class),
+                rs.getString("type"),
+                rs.getTimestamp("created_at").toInstant(),
+                Optional.ofNullable(rs.getString("actor")),
+                rs.getString("source"),
+                rs.getObject("correlation_id", UUID.class),
+                rs.getInt("schema_version"));
 
         return new OutboxMessage(
-            rs.getObject("id", UUID.class),
-            rs.getString("type"),
-            rs.getString("payload"),
-            rs.getString("idempotency_key"),
-            rs.getInt("attempts"),
-            envelope,
-            rs.getTimestamp("available_at").toInstant());
+                rs.getObject("id", UUID.class),
+                rs.getString("type"),
+                rs.getString("payload"),
+                rs.getString("idempotency_key"),
+                rs.getInt("attempts"),
+                rs.getObject("claim_token", UUID.class),
+                envelope,
+                rs.getTimestamp("available_at").toInstant());
     }
 
     /** Read model for tests and operator queries. */
     public record OutboxRow(
-        UUID id,
-        String type,
-        String status,
-        int attempts,
-        Instant availableAt,
-        Optional<Instant> claimedAt,
-        Optional<String> lastError) {
-    }
+            UUID id,
+            String type,
+            String status,
+            int attempts,
+            Instant availableAt,
+            Optional<Instant> claimedAt,
+            Optional<String> lastError) {}
 }

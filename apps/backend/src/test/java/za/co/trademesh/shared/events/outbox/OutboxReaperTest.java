@@ -1,12 +1,11 @@
 package za.co.trademesh.shared.events.outbox;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.Map;
 import java.util.UUID;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * A worker killed mid-dispatch leaves its message CLAIMED. Without a reaper
@@ -29,9 +28,8 @@ class OutboxReaperTest extends OutboxTestSupport {
         assertThat(worker.reapOnce()).isEqualTo(1);
 
         assertThat(statusOf(id)).isEqualTo("PENDING");
-        assertThat(jdbcTemplate.queryForObject(
-            "SELECT claimed_at FROM outbox_message WHERE id = ?", Object.class, id))
-            .isNull();
+        assertThat(jdbcTemplate.queryForObject("SELECT claimed_at FROM outbox_message WHERE id = ?", Object.class, id))
+                .isNull();
     }
 
     @Test
@@ -39,8 +37,8 @@ class OutboxReaperTest extends OutboxTestSupport {
         UUID id = claimedMessageAbandonedFor("30 seconds");
 
         assertThat(worker.reapOnce())
-            .as("the default visibility timeout is 5 minutes")
-            .isZero();
+                .as("the default visibility timeout is 5 minutes")
+                .isZero();
 
         assertThat(statusOf(id)).isEqualTo("CLAIMED");
     }
@@ -57,9 +55,8 @@ class OutboxReaperTest extends OutboxTestSupport {
 
         worker.reapOnce();
 
-        assertThat(jdbcTemplate.queryForObject(
-            "SELECT attempts FROM outbox_message WHERE id = ?", Integer.class, id))
-            .isEqualTo(3);
+        assertThat(jdbcTemplate.queryForObject("SELECT attempts FROM outbox_message WHERE id = ?", Integer.class, id))
+                .isEqualTo(3);
     }
 
     @Test
@@ -69,8 +66,8 @@ class OutboxReaperTest extends OutboxTestSupport {
         worker.reapOnce();
 
         assertThat(worker.pollOnce())
-            .as("a recovered message is picked up by the next poll")
-            .isEqualTo(1);
+                .as("a recovered message is picked up by the next poll")
+                .isEqualTo(1);
     }
 
     private UUID claimedMessageAbandonedFor(String interval) {
@@ -78,9 +75,11 @@ class OutboxReaperTest extends OutboxTestSupport {
         UUID id = onlyMessageId();
 
         jdbcTemplate.update(
-            "UPDATE outbox_message SET status = 'CLAIMED', attempts = 1, "
-                + "claimed_at = now() - CAST(? AS interval) WHERE id = ?",
-            interval, id);
+                "UPDATE outbox_message SET status = 'CLAIMED', attempts = 1, "
+                        + "claimed_at = now() - CAST(? AS interval), claim_token = ? WHERE id = ?",
+                interval,
+                UUID.randomUUID(),
+                id);
 
         return id;
     }

@@ -1,9 +1,11 @@
 package za.co.trademesh.shared.events;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,11 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
-
 import za.co.trademesh.support.PostgresIntegrationTest;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Covers acceptance criteria 2 and 5: after-commit reactions use typed events,
@@ -70,15 +68,17 @@ class AfterCommitEventTest extends PostgresIntegrationTest {
     void deliversTheEventWithItsEnvelopeAfterTheTransactionCommits() {
         UUID correlationId = UUID.randomUUID();
 
-        CorrelationContext.runWithin(correlationId, "user-7", () ->
-            transactionTemplate.executeWithoutResult(status -> {
-                jdbcTemplate.update("INSERT INTO after_commit_probe VALUES ('written')");
-                domainEvents.publish(new ThingHappened("detail"));
+        CorrelationContext.runWithin(
+                correlationId,
+                "user-7",
+                () -> transactionTemplate.executeWithoutResult(status -> {
+                    jdbcTemplate.update("INSERT INTO after_commit_probe VALUES ('written')");
+                    domainEvents.publish(new ThingHappened("detail"));
 
-                assertThat(recorder.received())
-                    .as("the listener must not run before the commit")
-                    .isEmpty();
-            }));
+                    assertThat(recorder.received())
+                            .as("the listener must not run before the commit")
+                            .isEmpty();
+                }));
 
         assertThat(recorder.received()).hasSize(1);
         PublishedEvent<ThingHappened> delivered = recorder.received().getFirst();
@@ -92,13 +92,14 @@ class AfterCommitEventTest extends PostgresIntegrationTest {
     @Test
     void publishesNothingWhenTheTransactionRollsBack() {
         assertThatThrownBy(() -> transactionTemplate.executeWithoutResult(status -> {
-            domainEvents.publish(new ThingHappened("never happened"));
-            throw new IllegalStateException("command failed");
-        })).isInstanceOf(IllegalStateException.class);
+                    domainEvents.publish(new ThingHappened("never happened"));
+                    throw new IllegalStateException("command failed");
+                }))
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(recorder.received())
-            .as("an event describes something that happened; a rolled-back command did not")
-            .isEmpty();
+                .as("an event describes something that happened; a rolled-back command did not")
+                .isEmpty();
     }
 
     /**
@@ -117,8 +118,7 @@ class AfterCommitEventTest extends PostgresIntegrationTest {
             domainEvents.publish(new ThingHappened("boom"));
         });
 
-        String surviving = jdbcTemplate.queryForObject(
-            "SELECT note FROM after_commit_probe", String.class);
+        String surviving = jdbcTemplate.queryForObject("SELECT note FROM after_commit_probe", String.class);
 
         assertThat(surviving).isEqualTo("survives");
     }
@@ -132,8 +132,7 @@ class AfterCommitEventTest extends PostgresIntegrationTest {
     void oneFailingListenerDoesNotStopTheOthers() {
         recorder.failOnNextEvent();
 
-        transactionTemplate.executeWithoutResult(status ->
-            domainEvents.publish(new ThingHappened("boom")));
+        transactionTemplate.executeWithoutResult(status -> domainEvents.publish(new ThingHappened("boom")));
 
         assertThat(recorder.secondListenerRan()).isTrue();
     }

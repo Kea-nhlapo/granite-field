@@ -19,12 +19,10 @@ import org.springframework.core.ResolvableTypeProvider;
  * throws; the reaction simply does not happen. Supplying the resolvable type
  * from the runtime event instance is what makes typed listeners work at all.
  */
-public record PublishedEvent<E extends DomainEvent>(EventEnvelope envelope, E event)
-    implements ResolvableTypeProvider {
+public record PublishedEvent<E extends DomainEvent>(EventEnvelope envelope, E event) implements ResolvableTypeProvider {
 
     @Override
     public ResolvableType getResolvableType() {
-        return ResolvableType.forClassWithGenerics(
-            PublishedEvent.class, ResolvableType.forInstance(event));
+        return ResolvableType.forClassWithGenerics(PublishedEvent.class, ResolvableType.forInstance(event));
     }
 }

@@ -29,8 +29,8 @@ public class OutboxScheduler {
     }
 
     @Scheduled(
-        fixedDelayString = "${trademesh.outbox.poll-interval:PT1S}",
-        initialDelayString = "${trademesh.outbox.initial-delay:PT5S}")
+            fixedDelayString = "${trademesh.outbox.poll-interval:PT1S}",
+            initialDelayString = "${trademesh.outbox.initial-delay:PT5S}")
     public void poll() {
         worker.pollOnce();
     }
@@ -40,8 +40,8 @@ public class OutboxScheduler {
      * dies, and the visibility timeout already bounds how long a message waits.
      */
     @Scheduled(
-        fixedDelayString = "${trademesh.outbox.reap-interval:PT1M}",
-        initialDelayString = "${trademesh.outbox.reap-initial-delay:PT1M}")
+            fixedDelayString = "${trademesh.outbox.reap-interval:PT1M}",
+            initialDelayString = "${trademesh.outbox.reap-initial-delay:PT1M}")
     public void reap() {
         worker.reapOnce();
     }

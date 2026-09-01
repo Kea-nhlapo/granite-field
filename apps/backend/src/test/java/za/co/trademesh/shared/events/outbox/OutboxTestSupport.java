@@ -3,7 +3,6 @@ package za.co.trademesh.shared.events.outbox;
 import org.junit.jupiter.api.AfterEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-
 import za.co.trademesh.support.PostgresIntegrationTest;
 
 /**
@@ -27,17 +26,14 @@ abstract class OutboxTestSupport extends PostgresIntegrationTest {
     }
 
     protected String statusOf(java.util.UUID id) {
-        return jdbcTemplate.queryForObject(
-            "SELECT status FROM outbox_message WHERE id = ?", String.class, id);
+        return jdbcTemplate.queryForObject("SELECT status FROM outbox_message WHERE id = ?", String.class, id);
     }
 
     protected java.util.UUID onlyMessageId() {
-        return jdbcTemplate.queryForObject(
-            "SELECT id FROM outbox_message", java.util.UUID.class);
+        return jdbcTemplate.queryForObject("SELECT id FROM outbox_message", java.util.UUID.class);
     }
 
     protected int rowCount() {
-        return jdbcTemplate.queryForObject(
-            "SELECT count(*) FROM outbox_message", Integer.class);
+        return jdbcTemplate.queryForObject("SELECT count(*) FROM outbox_message", Integer.class);
     }
 }

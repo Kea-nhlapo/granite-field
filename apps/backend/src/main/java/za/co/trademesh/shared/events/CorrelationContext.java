@@ -24,13 +24,11 @@ import java.util.function.Supplier;
  */
 public final class CorrelationContext {
 
-    private record Scope(UUID correlationId, String actor) {
-    }
+    private record Scope(UUID correlationId, String actor) {}
 
     private static final ThreadLocal<Scope> CURRENT = new ThreadLocal<>();
 
-    private CorrelationContext() {
-    }
+    private CorrelationContext() {}
 
     /**
      * Correlation id for the current scope, or a fresh one when there is no

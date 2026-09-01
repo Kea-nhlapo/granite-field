@@ -1,7 +1,6 @@
 package za.co.trademesh.shared.events.outbox;
 
 import java.time.Duration;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -19,12 +18,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties("trademesh.outbox")
 public record OutboxProperties(
-    int batchSize,
-    int maxAttempts,
-    Duration baseBackoff,
-    Duration maxBackoff,
-    Duration visibilityTimeout,
-    Boolean enabled) {
+        int batchSize,
+        int maxAttempts,
+        Duration baseBackoff,
+        Duration maxBackoff,
+        Duration visibilityTimeout,
+        Boolean enabled) {
 
     public OutboxProperties {
         if (batchSize <= 0) {

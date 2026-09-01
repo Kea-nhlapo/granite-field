@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
-
 import za.co.trademesh.shared.events.CorrelationContext;
 
 /**
@@ -62,19 +60,19 @@ public class OutboxWorker {
      * a datasource would otherwise fail at startup on a bean it never uses.
      */
     public OutboxWorker(
-        OutboxRepository repository,
-        List<OutboxHandler> handlers,
-        OutboxProperties properties,
-        Clock clock,
-        ObjectProvider<PlatformTransactionManager> transactionManagerProvider) {
+            OutboxRepository repository,
+            List<OutboxHandler> handlers,
+            OutboxProperties properties,
+            Clock clock,
+            ObjectProvider<PlatformTransactionManager> transactionManagerProvider) {
 
         this.repository = repository;
         this.properties = properties;
         this.clock = clock;
         this.transactionManagerProvider = transactionManagerProvider;
 
-        this.handlers = handlers.stream().collect(
-            Collectors.toUnmodifiableMap(OutboxHandler::type, Function.identity()));
+        this.handlers =
+                handlers.stream().collect(Collectors.toUnmodifiableMap(OutboxHandler::type, Function.identity()));
     }
 
     private TransactionTemplate transactions() {
@@ -99,8 +97,8 @@ public class OutboxWorker {
      */
     public int pollOnce() {
         Instant now = Instant.now(clock);
-        List<OutboxMessage> claimed = transactions().execute(status ->
-            repository.claimBatch(properties.batchSize(), now));
+        List<OutboxMessage> claimed =
+                transactions().execute(status -> repository.claimBatch(properties.batchSize(), now));
 
         if (claimed == null || claimed.isEmpty()) {
             return 0;
@@ -113,13 +111,15 @@ public class OutboxWorker {
 
     /** Returns expired claims to PENDING, and reports how many were recovered. */
     public int reapOnce() {
-        Integer reaped = transactions().execute(status ->
-            repository.reapExpiredClaims(Instant.now(clock), properties.visibilityTimeout()));
+        Integer reaped = transactions()
+                .execute(status -> repository.reapExpiredClaims(Instant.now(clock), properties.visibilityTimeout()));
 
         int count = reaped == null ? 0 : reaped;
         if (count > 0) {
-            log.warn("Returned {} outbox messages to PENDING after their claim expired; "
-                + "a worker very likely died mid-dispatch", count);
+            log.warn(
+                    "Returned {} outbox messages to PENDING after their claim expired; "
+                            + "a worker very likely died mid-dispatch",
+                    count);
         }
         return count;
     }
@@ -140,9 +140,7 @@ public class OutboxWorker {
             // thread. Restored from the row because the publishing request's
             // thread-local state is long gone by the time the worker runs.
             CorrelationContext.runWithin(
-                message.correlationId(),
-                message.actor().orElse(null),
-                () -> handleChecked(handler, message));
+                    message.correlationId(), message.actor().orElse(null), () -> handleChecked(handler, message));
 
             recordDone(message);
         } catch (Exception failure) {
@@ -160,16 +158,18 @@ public class OutboxWorker {
 
     private void recordDone(OutboxMessage message) {
         boolean marked = Boolean.TRUE.equals(
-            transactions().execute(status -> repository.markDone(message.id())));
+                transactions().execute(status -> repository.markDone(message.id(), message.claimToken())));
 
         if (!marked) {
             // The reaper revoked the claim while the handler was still running,
             // so another worker may already own this message. Worth saying: it
             // means the handler outran the visibility timeout, and the work
             // will run a second time.
-            log.warn("Outbox message {} ({}) finished but its claim was already revoked; "
-                + "the handler outran the visibility timeout and the work may repeat",
-                message.id(), message.type());
+            log.warn(
+                    "Outbox message {} ({}) finished but its claim was already revoked; "
+                            + "the handler outran the visibility timeout and the work may repeat",
+                    message.id(),
+                    message.type());
         }
     }
 
@@ -178,22 +178,33 @@ public class OutboxWorker {
         String error = cause.getClass().getName() + ": " + cause.getMessage();
 
         if (message.attempts() >= properties.maxAttempts()) {
-            log.error("Outbox message {} ({}) failed on attempt {} of {} and is now DEAD",
-                message.id(), message.type(), message.attempts(), properties.maxAttempts(), cause);
+            log.error(
+                    "Outbox message {} ({}) failed on attempt {} of {} and is now DEAD",
+                    message.id(),
+                    message.type(),
+                    message.attempts(),
+                    properties.maxAttempts(),
+                    cause);
             recordDead(message, error);
             return;
         }
 
         Instant retryAt = Instant.now(clock).plus(backoffFor(message.attempts()));
-        log.warn("Outbox message {} ({}) failed on attempt {}; retrying at {}",
-            message.id(), message.type(), message.attempts(), retryAt, cause);
+        log.warn(
+                "Outbox message {} ({}) failed on attempt {}; retrying at {}",
+                message.id(),
+                message.type(),
+                message.attempts(),
+                retryAt,
+                cause);
 
-        transactions().executeWithoutResult(status ->
-            repository.markForRetry(message.id(), retryAt, error));
+        transactions()
+                .executeWithoutResult(
+                        status -> repository.markForRetry(message.id(), message.claimToken(), retryAt, error));
     }
 
     private void recordDead(OutboxMessage message, String error) {
-        transactions().executeWithoutResult(status -> repository.markDead(message.id(), error));
+        transactions().executeWithoutResult(status -> repository.markDead(message.id(), message.claimToken(), error));
     }
 
     /**

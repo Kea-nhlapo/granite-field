@@ -3,10 +3,8 @@ package za.co.trademesh.shared.events.outbox;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
-
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
-
 import za.co.trademesh.shared.events.CorrelationContext;
 import za.co.trademesh.shared.events.EventEnvelope;
 import za.co.trademesh.shared.events.EventProperties;
@@ -34,10 +32,7 @@ public class OutboxSubmitter {
     private final String source;
 
     public OutboxSubmitter(
-        OutboxRepository repository,
-        ObjectMapper objectMapper,
-        Clock clock,
-        EventProperties eventProperties) {
+            OutboxRepository repository, ObjectMapper objectMapper, Clock clock, EventProperties eventProperties) {
 
         this.repository = repository;
         this.objectMapper = objectMapper;
@@ -64,27 +59,23 @@ public class OutboxSubmitter {
 
     /** Enqueues a message that must not be processed before {@code availableAt}. */
     public boolean submitAt(
-        String type,
-        String idempotencyKey,
-        Object payload,
-        int schemaVersion,
-        Instant availableAt) {
+            String type, String idempotencyKey, Object payload, int schemaVersion, Instant availableAt) {
 
         EventEnvelope envelope = new EventEnvelope(
-            UUID.randomUUID(),
-            type,
-            Instant.now(clock),
-            CorrelationContext.actor(),
-            source,
-            CorrelationContext.correlationId(),
-            schemaVersion);
+                UUID.randomUUID(),
+                type,
+                Instant.now(clock),
+                CorrelationContext.actor(),
+                source,
+                CorrelationContext.correlationId(),
+                schemaVersion);
 
         return repository.enqueue(
-            envelope.eventId(),
-            type,
-            objectMapper.writeValueAsString(payload),
-            idempotencyKey,
-            envelope,
-            availableAt);
+                envelope.eventId(),
+                type,
+                objectMapper.writeValueAsString(payload),
+                idempotencyKey,
+                envelope,
+                availableAt);
     }
 }

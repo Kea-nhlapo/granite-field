@@ -51,6 +51,14 @@ trademesh:
     visibility-timeout: ${TRADEMESH_OUTBOX_VISIBILITY_TIMEOUT:PT5M}
     poll-interval: ${TRADEMESH_OUTBOX_POLL_INTERVAL:PT1S}
     reap-interval: ${TRADEMESH_OUTBOX_REAP_INTERVAL:PT1M}
+  security:
+    jwt:
+      # Required in every environment. Generate at least 32 random bytes and
+      # keep the value outside source control.
+      secret: ${AUTH_JWT_SECRET}
+      issuer: ${AUTH_JWT_ISSUER:https://api.trademesh.local}
+      access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT15M}
+      refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:P30D}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.

@@ -3,7 +3,6 @@ package za.co.trademesh.shared.events.outbox;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
-
 import za.co.trademesh.shared.events.EventEnvelope;
 
 /**
@@ -14,13 +13,14 @@ import za.co.trademesh.shared.events.EventEnvelope;
  * message, not to the worker thread.
  */
 public record OutboxMessage(
-    UUID id,
-    String type,
-    String payload,
-    String idempotencyKey,
-    int attempts,
-    EventEnvelope envelope,
-    Instant availableAt) {
+        UUID id,
+        String type,
+        String payload,
+        String idempotencyKey,
+        int attempts,
+        UUID claimToken,
+        EventEnvelope envelope,
+        Instant availableAt) {
 
     public UUID correlationId() {
         return envelope.correlationId();

@@ -1,21 +1,19 @@
 package za.co.trademesh.shared.events.outbox;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-
 import za.co.trademesh.shared.events.CorrelationContext;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @Import(OutboxWorkerTest.Handlers.class)
 class OutboxWorkerTest extends OutboxTestSupport {
@@ -51,8 +49,8 @@ class OutboxWorkerTest extends OutboxTestSupport {
     @Test
     void handsTheHandlerThePayloadAndTheOriginatingCorrelation() {
         UUID correlationId = UUID.randomUUID();
-        CorrelationContext.runWithin(correlationId, "user-7", () ->
-            submitter.submit(SUCCEEDS, "job-1", Map.of("to", "a@b.test"), 1));
+        CorrelationContext.runWithin(
+                correlationId, "user-7", () -> submitter.submit(SUCCEEDS, "job-1", Map.of("to", "a@b.test"), 1));
 
         worker.pollOnce();
 
@@ -70,8 +68,7 @@ class OutboxWorkerTest extends OutboxTestSupport {
     @Test
     void restoresTheCorrelationScopeAroundTheHandler() {
         UUID correlationId = UUID.randomUUID();
-        CorrelationContext.runWithin(correlationId, "user-7", () ->
-            submitter.submit(SUCCEEDS, "job-1", Map.of(), 1));
+        CorrelationContext.runWithin(correlationId, "user-7", () -> submitter.submit(SUCCEEDS, "job-1", Map.of(), 1));
 
         worker.pollOnce();
 
@@ -101,8 +98,8 @@ class OutboxWorkerTest extends OutboxTestSupport {
 
         assertThat(worker.pollOnce()).isEqualTo(1);
         assertThat(worker.pollOnce())
-            .as("the backoff has not elapsed, so the second poll finds nothing due")
-            .isZero();
+                .as("the backoff has not elapsed, so the second poll finds nothing due")
+                .isZero();
     }
 
     @Test
@@ -142,24 +139,24 @@ class OutboxWorkerTest extends OutboxTestSupport {
 
         assertThat(rowCount()).isEqualTo(1);
         assertThat(worker.pollOnce())
-            .as("a DEAD message is never claimed again")
-            .isZero();
+                .as("a DEAD message is never claimed again")
+                .isZero();
     }
 
     private OutboxRepository.OutboxRow rowFor(UUID id) {
         return jdbcTemplate.queryForObject(
-            "SELECT id, type, status, attempts, available_at, claimed_at, last_error "
-                + "FROM outbox_message WHERE id = ?",
-            (rs, n) -> new OutboxRepository.OutboxRow(
-                rs.getObject("id", UUID.class),
-                rs.getString("type"),
-                rs.getString("status"),
-                rs.getInt("attempts"),
-                rs.getTimestamp("available_at").toInstant(),
-                java.util.Optional.ofNullable(rs.getTimestamp("claimed_at"))
-                    .map(java.sql.Timestamp::toInstant),
-                java.util.Optional.ofNullable(rs.getString("last_error"))),
-            id);
+                "SELECT id, type, status, attempts, available_at, claimed_at, last_error "
+                        + "FROM outbox_message WHERE id = ?",
+                (rs, n) -> new OutboxRepository.OutboxRow(
+                        rs.getObject("id", UUID.class),
+                        rs.getString("type"),
+                        rs.getString("status"),
+                        rs.getInt("attempts"),
+                        rs.getTimestamp("available_at").toInstant(),
+                        java.util.Optional.ofNullable(rs.getTimestamp("claimed_at"))
+                                .map(java.sql.Timestamp::toInstant),
+                        java.util.Optional.ofNullable(rs.getString("last_error"))),
+                id);
     }
 
     @TestConfiguration

@@ -18,7 +18,9 @@ import za.co.trademesh.bootstrap.TradeMeshApplication;
  * application class lives in the sibling package {@code bootstrap}. Tests in
  * {@code integration} or a feature module would otherwise fail to find it.
  */
-@SpringBootTest(classes = TradeMeshApplication.class)
+@SpringBootTest(
+        classes = TradeMeshApplication.class,
+        properties = "trademesh.security.jwt.secret=test-only-auth-secret-32-characters")
 public abstract class PostgresIntegrationTest {
 
     /**
@@ -29,8 +31,8 @@ public abstract class PostgresIntegrationTest {
     public static final String POSTGRES_IMAGE = "postgis/postgis:17-3.5";
 
     @ServiceConnection
-    protected static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer(
-        DockerImageName.parse(POSTGRES_IMAGE).asCompatibleSubstituteFor("postgres"));
+    protected static final PostgreSQLContainer POSTGRES =
+            new PostgreSQLContainer(DockerImageName.parse(POSTGRES_IMAGE).asCompatibleSubstituteFor("postgres"));
 
     static {
         POSTGRES.start();

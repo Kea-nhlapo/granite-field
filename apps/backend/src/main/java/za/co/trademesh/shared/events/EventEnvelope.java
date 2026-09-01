@@ -27,13 +27,13 @@ import java.util.UUID;
  *                      {@link DomainEvent#schemaVersion()}
  */
 public record EventEnvelope(
-    UUID eventId,
-    String type,
-    Instant occurredAt,
-    Optional<String> actor,
-    String source,
-    UUID correlationId,
-    int schemaVersion) {
+        UUID eventId,
+        String type,
+        Instant occurredAt,
+        Optional<String> actor,
+        String source,
+        UUID correlationId,
+        int schemaVersion) {
 
     public EventEnvelope {
         Objects.requireNonNull(eventId, "eventId");

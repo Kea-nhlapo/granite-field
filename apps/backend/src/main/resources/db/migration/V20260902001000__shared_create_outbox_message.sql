@@ -1,4 +1,4 @@
--- Outbox for work that can fail or take time (issue #4).
+-- Persisted outbox for work that can fail or take time (issue #4).
 --
 -- One table, no broker. Ownership of a message is expressed by the status
 -- column and claimed_at, NOT by holding a row lock for the duration of the
@@ -25,6 +25,7 @@ CREATE TABLE outbox_message (
     -- that dies mid-dispatch leaves this set; the reaper uses it to return the
     -- message to PENDING once the visibility timeout has passed.
     claimed_at      timestamptz,
+    claim_token     uuid,
 
     last_error      text,
 
@@ -43,6 +44,10 @@ CREATE TABLE outbox_message (
         CHECK (status IN ('PENDING', 'CLAIMED', 'DONE', 'DEAD')),
     CONSTRAINT outbox_message_attempts_not_negative
         CHECK (attempts >= 0),
+    CONSTRAINT outbox_message_claim_consistent CHECK (
+        (status = 'CLAIMED' AND claimed_at IS NOT NULL AND claim_token IS NOT NULL)
+        OR (status <> 'CLAIMED' AND claimed_at IS NULL AND claim_token IS NULL)
+    ),
     CONSTRAINT outbox_message_idempotent_per_type
         UNIQUE (type, idempotency_key)
 );

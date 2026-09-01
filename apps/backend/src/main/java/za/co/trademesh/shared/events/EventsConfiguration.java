@@ -1,8 +1,5 @@
 package za.co.trademesh.shared.events;
 
-import java.time.Clock;
-
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -16,15 +13,4 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @Configuration
 @EnableScheduling
-public class EventsConfiguration {
-
-    /**
-     * A single injectable clock so that time is a dependency rather than a
-     * static call. Tests substitute a fixed clock and assert on exact instants
-     * instead of tolerating a window around "now".
-     */
-    @Bean
-    public Clock clock() {
-        return Clock.systemUTC();
-    }
-}
+public class EventsConfiguration {}

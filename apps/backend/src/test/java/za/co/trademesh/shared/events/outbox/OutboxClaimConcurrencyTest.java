@@ -1,5 +1,7 @@
 package za.co.trademesh.shared.events.outbox;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,13 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import javax.sql.DataSource;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Proves the claim query is safe for two workers at once.
@@ -42,7 +40,7 @@ class OutboxClaimConcurrencyTest extends OutboxTestSupport {
         }
 
         try (Connection a = dataSource.getConnection();
-             Connection b = dataSource.getConnection()) {
+                Connection b = dataSource.getConnection()) {
 
             a.setAutoCommit(false);
             b.setAutoCommit(false);
@@ -60,9 +58,7 @@ class OutboxClaimConcurrencyTest extends OutboxTestSupport {
 
             Set<UUID> overlap = new HashSet<>(claimedByA);
             overlap.retainAll(claimedByB);
-            assertThat(overlap)
-                .as("no message may be claimed by two workers")
-                .isEmpty();
+            assertThat(overlap).as("no message may be claimed by two workers").isEmpty();
         }
     }
 
@@ -71,15 +67,13 @@ class OutboxClaimConcurrencyTest extends OutboxTestSupport {
         submitter.submit("test.concurrent", "job-0", Map.of(), 1);
 
         try (Connection a = dataSource.getConnection();
-             Connection b = dataSource.getConnection()) {
+                Connection b = dataSource.getConnection()) {
 
             a.setAutoCommit(false);
             b.setAutoCommit(false);
 
             assertThat(claim(a, 10)).hasSize(1);
-            assertThat(claim(b, 10))
-                .as("the only message is already held by A")
-                .isEmpty();
+            assertThat(claim(b, 10)).as("the only message is already held by A").isEmpty();
 
             a.commit();
             b.commit();
@@ -90,7 +84,8 @@ class OutboxClaimConcurrencyTest extends OutboxTestSupport {
     private List<UUID> claim(Connection connection, int batchSize) throws Exception {
         String sql = """
             UPDATE outbox_message
-               SET status = 'CLAIMED', claimed_at = ?, attempts = attempts + 1, updated_at = ?
+               SET status = 'CLAIMED', claimed_at = ?, claim_token = ?,
+                   attempts = attempts + 1, updated_at = ?
              WHERE id IN (
                    SELECT id FROM outbox_message
                     WHERE status = 'PENDING' AND available_at <= ?
@@ -105,9 +100,10 @@ class OutboxClaimConcurrencyTest extends OutboxTestSupport {
 
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setTimestamp(1, now);
-            statement.setTimestamp(2, now);
+            statement.setObject(2, UUID.randomUUID());
             statement.setTimestamp(3, now);
-            statement.setInt(4, batchSize);
+            statement.setTimestamp(4, now);
+            statement.setInt(5, batchSize);
 
             try (ResultSet rs = statement.executeQuery()) {
                 while (rs.next()) {

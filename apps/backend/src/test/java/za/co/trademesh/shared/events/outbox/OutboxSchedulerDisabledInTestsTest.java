@@ -1,12 +1,11 @@
 package za.co.trademesh.shared.events.outbox;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-
 import za.co.trademesh.support.PostgresIntegrationTest;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Guards the assumption every other outbox test rests on.
@@ -29,8 +28,8 @@ class OutboxSchedulerDisabledInTestsTest extends PostgresIntegrationTest {
     @Test
     void theSchedulerDoesNotRunDuringTests() {
         assertThat(context.getBeanNamesForType(OutboxScheduler.class))
-            .as("trademesh.outbox.enabled must stay false in src/test/resources/application.properties")
-            .isEmpty();
+                .as("trademesh.outbox.enabled must stay false in src/test/resources/application.properties")
+                .isEmpty();
     }
 
     @Test
