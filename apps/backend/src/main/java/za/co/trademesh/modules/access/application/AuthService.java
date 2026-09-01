@@ -1,5 +1,11 @@
 package za.co.trademesh.modules.access.application;
 
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.Set;
+import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,13 +19,6 @@ import za.co.trademesh.shared.security.AccountRole;
 import za.co.trademesh.shared.security.JwtProperties;
 import za.co.trademesh.shared.security.JwtTokenService;
 import za.co.trademesh.shared.security.SecureRefreshTokenService;
-
-import java.nio.charset.StandardCharsets;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -37,14 +36,13 @@ public class AuthService {
     private final String dummyPasswordHash;
 
     public AuthService(
-        UserAccountRepository accounts,
-        RefreshSessionRepository refreshSessions,
-        PasswordEncoder passwordEncoder,
-        JwtTokenService jwtTokens,
-        SecureRefreshTokenService refreshTokens,
-        JwtProperties properties,
-        Clock clock
-    ) {
+            UserAccountRepository accounts,
+            RefreshSessionRepository refreshSessions,
+            PasswordEncoder passwordEncoder,
+            JwtTokenService jwtTokens,
+            SecureRefreshTokenService refreshTokens,
+            JwtProperties properties,
+            Clock clock) {
         this.accounts = accounts;
         this.refreshSessions = refreshSessions;
         this.passwordEncoder = passwordEncoder;
@@ -65,12 +63,12 @@ public class AuthService {
 
         Instant now = clock.instant();
         UserAccount account = new UserAccount(
-            UUID.randomUUID(),
-            normalizedEmail,
-            passwordEncoder.encode(password),
-            true,
-            now,
-            Set.of(registrationType.accountRole()));
+                UUID.randomUUID(),
+                normalizedEmail,
+                passwordEncoder.encode(password),
+                true,
+                now,
+                Set.of(registrationType.accountRole()));
 
         try {
             accounts.save(account);
@@ -99,20 +97,20 @@ public class AuthService {
     public AuthTokens refresh(String rawRefreshToken) {
         Instant now = clock.instant();
         String tokenHash = refreshTokens.hash(rawRefreshToken);
-        RefreshSession current = refreshSessions.findActiveByTokenHash(tokenHash, now)
-            .orElseThrow(AccessException::invalidRefreshToken);
+        RefreshSession current =
+                refreshSessions.findActiveByTokenHash(tokenHash, now).orElseThrow(AccessException::invalidRefreshToken);
 
         UserAccount account = accounts.findById(current.userId())
-            .filter(UserAccount::enabled)
-            .orElseThrow(AccessException::invalidRefreshToken);
+                .filter(UserAccount::enabled)
+                .orElseThrow(AccessException::invalidRefreshToken);
 
         String replacementToken = refreshTokens.create();
         RefreshSession replacement = new RefreshSession(
-            UUID.randomUUID(),
-            account.id(),
-            refreshTokens.hash(replacementToken),
-            now.plus(properties.refreshTokenTtl()),
-            now);
+                UUID.randomUUID(),
+                account.id(),
+                refreshTokens.hash(replacementToken),
+                now.plus(properties.refreshTokenTtl()),
+                now);
         refreshSessions.save(replacement);
 
         if (!refreshSessions.revokeAndReplace(current.id(), replacement.id(), now)) {
@@ -132,23 +130,23 @@ public class AuthService {
     private AuthTokens issueTokenPair(UserAccount account, Instant now) {
         String refreshToken = refreshTokens.create();
         refreshSessions.save(new RefreshSession(
-            UUID.randomUUID(),
-            account.id(),
-            refreshTokens.hash(refreshToken),
-            now.plus(properties.refreshTokenTtl()),
-            now));
+                UUID.randomUUID(),
+                account.id(),
+                refreshTokens.hash(refreshToken),
+                now.plus(properties.refreshTokenTtl()),
+                now));
         return createResponse(account, refreshToken);
     }
 
     private AuthTokens createResponse(UserAccount account, String refreshToken) {
         JwtTokenService.AccessToken accessToken = jwtTokens.issue(account.id(), account.roles());
         return new AuthTokens(
-            account.id(),
-            "Bearer",
-            accessToken.value(),
-            properties.accessTokenTtl().toSeconds(),
-            refreshToken,
-            account.roles());
+                account.id(),
+                "Bearer",
+                accessToken.value(),
+                properties.accessTokenTtl().toSeconds(),
+                refreshToken,
+                account.roles());
     }
 
     private static String normalizeEmail(String email) {
@@ -163,12 +161,10 @@ public class AuthService {
     }
 
     public record AuthTokens(
-        UUID userId,
-        String tokenType,
-        String accessToken,
-        long expiresInSeconds,
-        String refreshToken,
-        Set<AccountRole> roles
-    ) {
-    }
+            UUID userId,
+            String tokenType,
+            String accessToken,
+            long expiresInSeconds,
+            String refreshToken,
+            Set<AccountRole> roles) {}
 }

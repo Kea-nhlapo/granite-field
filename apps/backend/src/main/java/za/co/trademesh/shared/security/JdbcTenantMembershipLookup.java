@@ -1,9 +1,8 @@
 package za.co.trademesh.shared.security;
 
+import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-
-import java.util.UUID;
 
 @Repository
 class JdbcTenantMembershipLookup implements TenantMembershipLookup {

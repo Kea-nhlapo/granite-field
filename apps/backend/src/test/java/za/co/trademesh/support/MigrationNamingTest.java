@@ -1,6 +1,6 @@
 package za.co.trademesh.support;
 
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,8 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.Test;
 
 /**
  * Enforces the migration naming agreed in issue #27: a UTC timestamp of digits
@@ -24,19 +23,17 @@ class MigrationNamingTest {
 
     private static final Path MIGRATIONS = Path.of("src", "main", "resources", "db", "migration");
 
-    private static final Pattern VALID =
-        Pattern.compile("^V[0-9]{14}__[a-z0-9]+(_[a-z0-9]+)+[.]sql$");
+    private static final Pattern VALID = Pattern.compile("^V[0-9]{14}__[a-z0-9]+(_[a-z0-9]+)+[.]sql$");
 
     @Test
     void everyMigrationFollowsTheAgreedNamingConvention() throws IOException {
         try (Stream<Path> files = Files.list(MIGRATIONS)) {
             List<String> names = files.map(path -> path.getFileName().toString())
-                .filter(name -> name.endsWith(".sql"))
-                .toList();
+                    .filter(name -> name.endsWith(".sql"))
+                    .toList();
 
             assertThat(names).isNotEmpty();
-            assertThat(names).allSatisfy(name ->
-                assertThat(name)
+            assertThat(names).allSatisfy(name -> assertThat(name)
                     .as("%s must match V<yyyyMMddHHmmss>__<module>_<description>.sql", name)
                     .matches(VALID));
         }

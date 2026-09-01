@@ -1,17 +1,11 @@
 package za.co.trademesh.shared.security;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("trademesh.security.jwt")
-public record JwtProperties(
-    String secret,
-    String issuer,
-    Duration accessTokenTtl,
-    Duration refreshTokenTtl
-) {
+public record JwtProperties(String secret, String issuer, Duration accessTokenTtl, Duration refreshTokenTtl) {
     public JwtProperties {
         if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalArgumentException("AUTH_JWT_SECRET must contain at least 32 bytes");

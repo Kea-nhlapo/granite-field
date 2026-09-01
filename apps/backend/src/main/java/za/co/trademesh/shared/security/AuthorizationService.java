@@ -1,10 +1,9 @@
 package za.co.trademesh.shared.security;
 
+import java.util.UUID;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-
-import java.util.UUID;
 
 @Service("authorizationService")
 public class AuthorizationService {
@@ -45,8 +44,9 @@ public class AuthorizationService {
     }
 
     public boolean hasRole(Authentication authentication, AccountRole role) {
-        return authentication != null && authentication.getAuthorities().stream()
-            .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + role.name()));
+        return authentication != null
+                && authentication.getAuthorities().stream()
+                        .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + role.name()));
     }
 
     private void requireAnyRole(Authentication authentication, AccountRole... roles) {

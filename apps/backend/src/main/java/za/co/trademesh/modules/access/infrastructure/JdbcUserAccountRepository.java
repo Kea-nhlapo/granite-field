@@ -1,11 +1,5 @@
 package za.co.trademesh.modules.access.infrastructure;
 
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import za.co.trademesh.modules.access.domain.UserAccount;
-import za.co.trademesh.modules.access.domain.UserAccountRepository;
-import za.co.trademesh.shared.security.AccountRole;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
@@ -15,6 +9,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import za.co.trademesh.modules.access.domain.UserAccount;
+import za.co.trademesh.modules.access.domain.UserAccountRepository;
+import za.co.trademesh.shared.security.AccountRole;
 
 @Repository
 class JdbcUserAccountRepository implements UserAccountRepository {
@@ -53,15 +52,16 @@ class JdbcUserAccountRepository implements UserAccountRepository {
 
     @Override
     public void save(UserAccount account) {
-        jdbcTemplate.update("""
+        jdbcTemplate.update(
+                """
             INSERT INTO access_user_account (id, email, password_hash, enabled, created_at)
             VALUES (?, ?, ?, ?, ?)
             """,
-            account.id(),
-            account.email(),
-            account.passwordHash(),
-            account.enabled(),
-            OffsetDateTime.ofInstant(account.createdAt(), ZoneOffset.UTC));
+                account.id(),
+                account.email(),
+                account.passwordHash(),
+                account.enabled(),
+                OffsetDateTime.ofInstant(account.createdAt(), ZoneOffset.UTC));
 
         for (AccountRole role : account.roles()) {
             jdbcTemplate.update("""
@@ -83,27 +83,23 @@ class JdbcUserAccountRepository implements UserAccountRepository {
             FROM access_user_role
             WHERE user_id = ?
             ORDER BY role
-            """, String.class, row.id()).stream().map(AccountRole::valueOf).toList());
+            """, String.class, row.id()).stream()
+                .map(AccountRole::valueOf)
+                .toList());
 
-        return Optional.of(new UserAccount(
-            row.id(), row.email(), row.passwordHash(), row.enabled(), row.createdAt(), roles));
+        return Optional.of(
+                new UserAccount(row.id(), row.email(), row.passwordHash(), row.enabled(), row.createdAt(), roles));
     }
 
     private AccountRow mapAccount(ResultSet resultSet, int rowNumber) throws SQLException {
         return new AccountRow(
-            resultSet.getObject("id", UUID.class),
-            resultSet.getString("email"),
-            resultSet.getString("password_hash"),
-            resultSet.getBoolean("enabled"),
-            resultSet.getObject("created_at", OffsetDateTime.class).toInstant());
+                resultSet.getObject("id", UUID.class),
+                resultSet.getString("email"),
+                resultSet.getString("password_hash"),
+                resultSet.getBoolean("enabled"),
+                resultSet.getObject("created_at", OffsetDateTime.class).toInstant());
     }
 
     private record AccountRow(
-        UUID id,
-        String email,
-        String passwordHash,
-        boolean enabled,
-        java.time.Instant createdAt
-    ) {
-    }
+            UUID id, String email, String passwordHash, boolean enabled, java.time.Instant createdAt) {}
 }

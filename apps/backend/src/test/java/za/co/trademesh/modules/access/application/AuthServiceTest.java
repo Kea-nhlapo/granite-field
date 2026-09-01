@@ -1,5 +1,18 @@
 package za.co.trademesh.modules.access.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
@@ -15,20 +28,6 @@ import za.co.trademesh.shared.security.JwtProperties;
 import za.co.trademesh.shared.security.JwtTokenService;
 import za.co.trademesh.shared.security.SecureRefreshTokenService;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 class AuthServiceTest {
 
     private InMemoryAccounts accounts;
@@ -39,30 +38,29 @@ class AuthServiceTest {
         Instant now = Instant.now();
         Clock clock = Clock.fixed(now, ZoneOffset.UTC);
         JwtProperties properties = new JwtProperties(
-            "test-only-auth-secret-32-characters",
-            "https://trademesh.test",
-            Duration.ofMinutes(15),
-            Duration.ofDays(30));
-        var key = new SecretKeySpec(
-            properties.secret().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+                "test-only-auth-secret-32-characters",
+                "https://trademesh.test",
+                Duration.ofMinutes(15),
+                Duration.ofDays(30));
+        var key = new SecretKeySpec(properties.secret().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         var encoder = NimbusJwtEncoder.withSecretKey(key)
-            .algorithm(MacAlgorithm.HS256)
-            .build();
+                .algorithm(MacAlgorithm.HS256)
+                .build();
         accounts = new InMemoryAccounts();
         authService = new AuthService(
-            accounts,
-            new InMemoryRefreshSessions(),
-            PasswordEncoderFactories.createDelegatingPasswordEncoder(),
-            new JwtTokenService(encoder, properties, clock),
-            new SecureRefreshTokenService(),
-            properties,
-            clock);
+                accounts,
+                new InMemoryRefreshSessions(),
+                PasswordEncoderFactories.createDelegatingPasswordEncoder(),
+                new JwtTokenService(encoder, properties, clock),
+                new SecureRefreshTokenService(),
+                properties,
+                clock);
     }
 
     @Test
     void registrationHashesThePasswordAndCreatesOnlyTheChosenPublicRole() {
-        AuthService.AuthTokens tokens = authService.register(
-            "Owner@Example.com", "correct-horse-battery", RegistrationType.BUSINESS_OWNER);
+        AuthService.AuthTokens tokens =
+                authService.register("Owner@Example.com", "correct-horse-battery", RegistrationType.BUSINESS_OWNER);
 
         UserAccount account = accounts.findById(tokens.userId()).orElseThrow();
         assertThat(account.email()).isEqualTo("owner@example.com");
@@ -73,17 +71,15 @@ class AuthServiceTest {
 
     @Test
     void refreshRotatesOnceAndLogoutRevokesTheReplacement() {
-        AuthService.AuthTokens registered = authService.register(
-            "supplier@example.com", "correct-horse-battery", RegistrationType.SUPPLIER);
+        AuthService.AuthTokens registered =
+                authService.register("supplier@example.com", "correct-horse-battery", RegistrationType.SUPPLIER);
 
         AuthService.AuthTokens refreshed = authService.refresh(registered.refreshToken());
         assertThat(refreshed.refreshToken()).isNotEqualTo(registered.refreshToken());
-        assertThatThrownBy(() -> authService.refresh(registered.refreshToken()))
-            .isInstanceOf(AccessException.class);
+        assertThatThrownBy(() -> authService.refresh(registered.refreshToken())).isInstanceOf(AccessException.class);
 
         authService.logout(refreshed.refreshToken());
-        assertThatThrownBy(() -> authService.refresh(refreshed.refreshToken()))
-            .isInstanceOf(AccessException.class);
+        assertThatThrownBy(() -> authService.refresh(refreshed.refreshToken())).isInstanceOf(AccessException.class);
     }
 
     private static final class InMemoryAccounts implements UserAccountRepository {
@@ -129,7 +125,8 @@ class AuthServiceTest {
             if (id == null || revokedAt.containsKey(id)) {
                 return Optional.empty();
             }
-            return Optional.ofNullable(byId.get(id)).filter(session -> session.expiresAt().isAfter(now));
+            return Optional.ofNullable(byId.get(id))
+                    .filter(session -> session.expiresAt().isAfter(now));
         }
 
         @Override

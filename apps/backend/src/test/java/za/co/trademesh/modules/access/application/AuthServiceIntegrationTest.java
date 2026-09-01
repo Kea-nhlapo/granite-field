@@ -1,5 +1,11 @@
 package za.co.trademesh.modules.access.application;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,13 +17,6 @@ import za.co.trademesh.modules.access.domain.RegistrationType;
 import za.co.trademesh.shared.security.AccountRole;
 import za.co.trademesh.shared.security.AuthorizationService;
 import za.co.trademesh.support.PostgresIntegrationTest;
-
-import java.util.List;
-import java.util.UUID;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AuthServiceIntegrationTest extends PostgresIntegrationTest {
 
@@ -40,17 +39,13 @@ class AuthServiceIntegrationTest extends PostgresIntegrationTest {
 
     @Test
     void registrationNormalizesEmailHashesPasswordAndIssuesTokens() {
-        AuthService.AuthTokens tokens = authService.register(
-            "  Owner@Example.COM ", "correct-horse-battery", RegistrationType.BUSINESS_OWNER);
+        AuthService.AuthTokens tokens =
+                authService.register("  Owner@Example.COM ", "correct-horse-battery", RegistrationType.BUSINESS_OWNER);
 
         String storedEmail = jdbcTemplate.queryForObject(
-            "SELECT email FROM access_user_account WHERE id = ?",
-            String.class,
-            tokens.userId());
+                "SELECT email FROM access_user_account WHERE id = ?", String.class, tokens.userId());
         String passwordHash = jdbcTemplate.queryForObject(
-            "SELECT password_hash FROM access_user_account WHERE id = ?",
-            String.class,
-            tokens.userId());
+                "SELECT password_hash FROM access_user_account WHERE id = ?", String.class, tokens.userId());
 
         assertThat(storedEmail).isEqualTo("owner@example.com");
         assertThat(passwordHash).startsWith("{bcrypt}").doesNotContain("correct-horse-battery");
@@ -61,34 +56,33 @@ class AuthServiceIntegrationTest extends PostgresIntegrationTest {
 
     @Test
     void refreshTokenRotatesAndCannotBeUsedTwice() {
-        AuthService.AuthTokens registered = authService.register(
-            "supplier@example.com", "correct-horse-battery", RegistrationType.SUPPLIER);
+        AuthService.AuthTokens registered =
+                authService.register("supplier@example.com", "correct-horse-battery", RegistrationType.SUPPLIER);
 
         AuthService.AuthTokens refreshed = authService.refresh(registered.refreshToken());
 
         assertThat(refreshed.refreshToken()).isNotEqualTo(registered.refreshToken());
         assertThatThrownBy(() -> authService.refresh(registered.refreshToken()))
-            .isInstanceOf(AccessException.class)
-            .extracting(exception -> ((AccessException) exception).code())
-            .isEqualTo("INVALID_REFRESH_TOKEN");
+                .isInstanceOf(AccessException.class)
+                .extracting(exception -> ((AccessException) exception).code())
+                .isEqualTo("INVALID_REFRESH_TOKEN");
     }
 
     @Test
     void logoutRevokesTheRefreshTokenAndIsIdempotent() {
-        AuthService.AuthTokens registered = authService.register(
-            "transporter@example.com", "correct-horse-battery", RegistrationType.TRANSPORTER);
+        AuthService.AuthTokens registered =
+                authService.register("transporter@example.com", "correct-horse-battery", RegistrationType.TRANSPORTER);
 
         authService.logout(registered.refreshToken());
         authService.logout(registered.refreshToken());
 
-        assertThatThrownBy(() -> authService.refresh(registered.refreshToken()))
-            .isInstanceOf(AccessException.class);
+        assertThatThrownBy(() -> authService.refresh(registered.refreshToken())).isInstanceOf(AccessException.class);
     }
 
     @Test
     void databaseMembershipNeverGrantsAccessToAnotherBusiness() {
-        AuthService.AuthTokens owner = authService.register(
-            "owner@example.com", "correct-horse-battery", RegistrationType.BUSINESS_OWNER);
+        AuthService.AuthTokens owner =
+                authService.register("owner@example.com", "correct-horse-battery", RegistrationType.BUSINESS_OWNER);
         UUID ownBusinessId = UUID.randomUUID();
         UUID otherBusinessId = UUID.randomUUID();
         jdbcTemplate.update("""
@@ -98,13 +92,11 @@ class AuthServiceIntegrationTest extends PostgresIntegrationTest {
             """, ownBusinessId, owner.userId());
 
         var authentication = UsernamePasswordAuthenticationToken.authenticated(
-            owner.userId().toString(),
-            "not-used",
-            List.of(new SimpleGrantedAuthority("ROLE_BUSINESS_OWNER")));
+                owner.userId().toString(), "not-used", List.of(new SimpleGrantedAuthority("ROLE_BUSINESS_OWNER")));
 
         assertThatCode(() -> authorizationService.requireBusinessAccess(authentication, ownBusinessId))
-            .doesNotThrowAnyException();
+                .doesNotThrowAnyException();
         assertThatThrownBy(() -> authorizationService.requireBusinessAccess(authentication, otherBusinessId))
-            .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 }

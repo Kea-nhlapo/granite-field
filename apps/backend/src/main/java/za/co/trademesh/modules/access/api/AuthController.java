@@ -20,11 +20,9 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    ResponseEntity<AuthContracts.TokenResponse> register(
-        @Valid @RequestBody AuthContracts.RegisterRequest request
-    ) {
-        AuthService.AuthTokens tokens = authService.register(
-            request.email(), request.password(), request.accountType());
+    ResponseEntity<AuthContracts.TokenResponse> register(@Valid @RequestBody AuthContracts.RegisterRequest request) {
+        AuthService.AuthTokens tokens =
+                authService.register(request.email(), request.password(), request.accountType());
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(tokens));
     }
 
@@ -46,11 +44,11 @@ public class AuthController {
 
     private static AuthContracts.TokenResponse toResponse(AuthService.AuthTokens tokens) {
         return new AuthContracts.TokenResponse(
-            tokens.userId(),
-            tokens.tokenType(),
-            tokens.accessToken(),
-            tokens.expiresInSeconds(),
-            tokens.refreshToken(),
-            tokens.roles());
+                tokens.userId(),
+                tokens.tokenType(),
+                tokens.accessToken(),
+                tokens.expiresInSeconds(),
+                tokens.refreshToken(),
+                tokens.roles());
     }
 }
