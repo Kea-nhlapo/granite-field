@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 import java.util.UUID;
 
 @Repository
-final class JdbcTenantMembershipLookup implements TenantMembershipLookup {
+class JdbcTenantMembershipLookup implements TenantMembershipLookup {
 
     private final JdbcTemplate jdbcTemplate;
 

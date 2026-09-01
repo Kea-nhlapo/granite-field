@@ -13,7 +13,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-final class JdbcRefreshSessionRepository implements RefreshSessionRepository {
+class JdbcRefreshSessionRepository implements RefreshSessionRepository {
 
     private final JdbcTemplate jdbcTemplate;
 

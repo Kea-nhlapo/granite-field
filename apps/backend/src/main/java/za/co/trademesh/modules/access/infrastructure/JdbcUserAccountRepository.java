@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Repository
-final class JdbcUserAccountRepository implements UserAccountRepository {
+class JdbcUserAccountRepository implements UserAccountRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
