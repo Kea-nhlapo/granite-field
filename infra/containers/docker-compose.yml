@@ -1,0 +1,22 @@
+# Local development database. PostGIS is enabled by a Flyway migration,
+# not by hand — see apps/backend/src/main/resources/db/migration.
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    container_name: trademesh-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-trademesh}
+      POSTGRES_USER: ${POSTGRES_USER:-trademesh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trademesh}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trademesh} -d ${POSTGRES_DB:-trademesh}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - trademesh-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  trademesh-postgres-data:

@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 import za.co.trademesh.shared.config.RuntimeProperties;
+import za.co.trademesh.support.PostgresIntegrationTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,7 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class TradeMeshApplicationTests {
+class TradeMeshApplicationTests extends PostgresIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
