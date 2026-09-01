@@ -5,13 +5,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 import za.co.trademesh.modules.probe.config.ModuleProbeProperties;
 import za.co.trademesh.shared.config.RuntimeProperties;
+import za.co.trademesh.shared.security.AccountRole;
+import za.co.trademesh.shared.security.JwtTokenService;
 import za.co.trademesh.support.PostgresIntegrationTest;
 
 // classes is restated because a @SpringBootTest here overrides the one on
@@ -19,7 +24,11 @@ import za.co.trademesh.support.PostgresIntegrationTest;
 // explicitly so tests outside this package can find it.
 @SpringBootTest(
         classes = TradeMeshApplication.class,
-        properties = {"trademesh.runtime.environment=local", "trademesh.probe.name=module-scan-verified"})
+        properties = {
+            "trademesh.runtime.environment=local",
+            "trademesh.probe.name=module-scan-verified",
+            "trademesh.security.jwt.secret=test-only-auth-secret-32-characters"
+        })
 @AutoConfigureMockMvc
 class TradeMeshApplicationTests extends PostgresIntegrationTest {
 
@@ -32,6 +41,9 @@ class TradeMeshApplicationTests extends PostgresIntegrationTest {
     @Autowired
     private ModuleProbeProperties moduleProbeProperties;
 
+    @Autowired
+    private JwtTokenService jwtTokenService;
+
     @Test
     void startsWithSafeLocalDefaults() {
         assertThat(runtimeProperties.environment()).isEqualTo("local");
@@ -43,11 +55,19 @@ class TradeMeshApplicationTests extends PostgresIntegrationTest {
     }
 
     @Test
-    void exposesOnlyTheHealthEndpointByDefault() throws Exception {
+    void exposesHealthWithoutAuthentication() throws Exception {
         mockMvc.perform(get("/actuator/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("UP"));
+    }
 
-        mockMvc.perform(get("/actuator/env")).andExpect(status().isNotFound());
+    @Test
+    void doesNotExposeOtherActuatorEndpoints() throws Exception {
+        String accessToken = jwtTokenService
+                .issue(UUID.randomUUID(), Set.of(AccountRole.BUSINESS_OWNER))
+                .value();
+
+        mockMvc.perform(get("/actuator/env").header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isNotFound());
     }
 }
