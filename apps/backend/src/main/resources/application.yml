@@ -37,6 +37,20 @@ logging:
 trademesh:
   runtime:
     environment: ${TRADEMESH_RUNTIME_ENVIRONMENT:local}
+  events:
+    source: ${TRADEMESH_EVENTS_SOURCE:trademesh-backend}
+  outbox:
+    enabled: ${TRADEMESH_OUTBOX_ENABLED:true}
+    batch-size: ${TRADEMESH_OUTBOX_BATCH_SIZE:50}
+    max-attempts: ${TRADEMESH_OUTBOX_MAX_ATTEMPTS:8}
+    base-backoff: ${TRADEMESH_OUTBOX_BASE_BACKOFF:PT2S}
+    max-backoff: ${TRADEMESH_OUTBOX_MAX_BACKOFF:PT1H}
+    # Must exceed the slowest handler. A handler that outruns this gets a
+    # second worker running beside it, which only an idempotent handler
+    # survives — see OutboxHandler.
+    visibility-timeout: ${TRADEMESH_OUTBOX_VISIBILITY_TIMEOUT:PT5M}
+    poll-interval: ${TRADEMESH_OUTBOX_POLL_INTERVAL:PT1S}
+    reap-interval: ${TRADEMESH_OUTBOX_REAP_INTERVAL:PT1M}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.
