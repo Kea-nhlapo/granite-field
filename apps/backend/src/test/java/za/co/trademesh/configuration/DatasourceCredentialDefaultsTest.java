@@ -38,6 +38,9 @@ class DatasourceCredentialDefaultsTest {
     private static final String NO_DATASOURCE =
         "--spring.autoconfigure.exclude=org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration";
 
+    private static final String TEST_JWT_SECRET =
+        "--trademesh.security.jwt.secret=test-only-auth-secret-32-characters";
+
     @Test
     void aNonLocalProfileRefusesToStartWithoutExplicitDatabaseCredentials() {
         assumeTrue(System.getenv("DATABASE_URL") == null,
@@ -76,7 +79,8 @@ class DatasourceCredentialDefaultsTest {
 
     @Test
     void theLocalProfileSuppliesItsOwnDatasourceDefaults() {
-        try (ConfigurableApplicationContext context = run("local", NO_FLYWAY, NO_DATASOURCE)) {
+        try (ConfigurableApplicationContext context = run(
+            "local", NO_FLYWAY, NO_DATASOURCE, "--spring.main.lazy-initialization=true")) {
             assertThat(context.getEnvironment().getProperty("spring.datasource.url"))
                 .isEqualTo(LOCAL_DEFAULT_URL);
             assertThat(context.getEnvironment().getProperty("spring.datasource.username"))
@@ -85,9 +89,12 @@ class DatasourceCredentialDefaultsTest {
     }
 
     private static ConfigurableApplicationContext run(String profile, String... args) {
+        String[] applicationArgs = new String[args.length + 1];
+        applicationArgs[0] = TEST_JWT_SECRET;
+        System.arraycopy(args, 0, applicationArgs, 1, args.length);
         return new SpringApplicationBuilder(TradeMeshApplication.class)
             .web(WebApplicationType.NONE)
             .profiles(profile)
-            .run(args);
+            .run(applicationArgs);
     }
 }
