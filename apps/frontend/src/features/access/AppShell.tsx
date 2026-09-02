@@ -23,6 +23,8 @@ export function AppShell() {
     const showRouting = showDocuments;
     const showTracking = showDocuments;
     const showHandover = showDocuments;
+    const showInsurance =
+        session !== null && hasAnyRole(session.roles, ["INSURER"]);
 
     return (
         <div className={styles.shell} data-testid="app-shell">
@@ -137,6 +139,18 @@ export function AppShell() {
                             to={`/app/handover/${mockBusinessId}`}
                         >
                             Handover
+                        </NavLink>
+                    ) : null}
+                    {showInsurance ? (
+                        <NavLink
+                            className={({ isActive }) =>
+                                isActive
+                                    ? `${styles.navLink} ${styles.navLinkActive}`
+                                    : styles.navLink
+                            }
+                            to="/app/insurance"
+                        >
+                            Insurance
                         </NavLink>
                     ) : null}
                     <Button

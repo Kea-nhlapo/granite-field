@@ -11,6 +11,8 @@ import { procurementHandlers } from "./procurement-handlers";
 import { routingHandlers } from "./routing-handlers";
 import { trackingHandlers } from "./tracking-handlers";
 import { handoverHandlers } from "./handover-handlers";
+import { insuranceHandlers } from "./insurance-handlers";
+import { riskHandlers } from "./risk-handlers";
 
 export { mockScenarioHeader } from "./mock-http";
 export { resetDocumentMocks } from "./document-handlers";
@@ -37,6 +39,22 @@ export const analystTokens: TokenResponse = {
     accessToken: "mock-analyst-access-token",
     refreshToken: "mock-analyst-refresh-token",
     roles: ["INTERNAL_RISK_ANALYST"],
+};
+
+export const adminTokens: TokenResponse = {
+    ...ownerTokens,
+    userId: "00000000-0000-4000-8000-000000000014",
+    accessToken: "mock-admin-access-token",
+    refreshToken: "mock-admin-refresh-token",
+    roles: ["ADMINISTRATOR"],
+};
+
+export const insurerTokens: TokenResponse = {
+    ...ownerTokens,
+    userId: "00000000-0000-4000-8000-000000000013",
+    accessToken: "mock-insurer-access-token",
+    refreshToken: "mock-insurer-refresh-token",
+    roles: ["INSURER"],
 };
 
 export const supplierTokens: TokenResponse = {
@@ -123,6 +141,12 @@ export const handlers = [
             if (body.email === "analyst@example.com") {
                 return HttpResponse.json(analystTokens);
             }
+            if (body.email === "admin@example.com") {
+                return HttpResponse.json(adminTokens);
+            }
+            if (body.email === "insurer@example.com") {
+                return HttpResponse.json(insurerTokens);
+            }
             return HttpResponse.json(ownerTokens);
         },
     ),
@@ -176,6 +200,26 @@ export const handlers = [
                 );
             }
             if (
+                body.refreshToken === adminTokens.refreshToken ||
+                body.refreshToken === "mock-admin-refresh-token-rotated"
+            ) {
+                return HttpResponse.json({
+                    ...adminTokens,
+                    accessToken: "mock-admin-access-token-rotated",
+                    refreshToken: "mock-admin-refresh-token-rotated",
+                } satisfies TokenResponse);
+            }
+            if (
+                body.refreshToken === insurerTokens.refreshToken ||
+                body.refreshToken === "mock-insurer-refresh-token-rotated"
+            ) {
+                return HttpResponse.json({
+                    ...insurerTokens,
+                    accessToken: "mock-insurer-access-token-rotated",
+                    refreshToken: "mock-insurer-refresh-token-rotated",
+                } satisfies TokenResponse);
+            }
+            if (
                 body.refreshToken === analystTokens.refreshToken ||
                 body.refreshToken === "mock-analyst-refresh-token-rotated"
             ) {
@@ -208,4 +252,6 @@ export const handlers = [
     ...routingHandlers,
     ...trackingHandlers,
     ...handoverHandlers,
+    ...riskHandlers,
+    ...insuranceHandlers,
 ];
