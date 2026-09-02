@@ -59,6 +59,25 @@ services:
       OTP_PROVIDER: ${OTP_PROVIDER:-unconfigured}
       OTP_LOCAL_CODE: ${OTP_LOCAL_CODE:-}
       MOMO_PROVIDER: ${MOMO_PROVIDER:-unconfigured}
+      # Credentials for the integrations above. Compose forwards only what it names,
+      # so a value in .env that is not listed here never reaches the application -
+      # which is why these were invisible before. Empty is fine: the provider
+      # settings decide whether anything reads them.
+      MOMO_BASE_URL: ${MOMO_BASE_URL:-https://sandbox.momodeveloper.mtn.com}
+      MOMO_TARGET_ENVIRONMENT: ${MOMO_TARGET_ENVIRONMENT:-sandbox}
+      MOMO_CALLBACK_HOST: ${MOMO_CALLBACK_HOST:-}
+      MOMO_COLLECTIONS_SUBSCRIPTION_KEY: ${MOMO_COLLECTIONS_SUBSCRIPTION_KEY:-}
+      MOMO_COLLECTIONS_API_USER: ${MOMO_COLLECTIONS_API_USER:-}
+      MOMO_COLLECTIONS_API_KEY: ${MOMO_COLLECTIONS_API_KEY:-}
+      MOMO_DISBURSEMENTS_SUBSCRIPTION_KEY: ${MOMO_DISBURSEMENTS_SUBSCRIPTION_KEY:-}
+      MOMO_DISBURSEMENTS_API_USER: ${MOMO_DISBURSEMENTS_API_USER:-}
+      MOMO_DISBURSEMENTS_API_KEY: ${MOMO_DISBURSEMENTS_API_KEY:-}
+      # Twilio is the only mobile delivery provider the application implements.
+      TWILIO_API_BASE_URL: ${TWILIO_API_BASE_URL:-https://api.twilio.com}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_SMS_NUMBER: ${TWILIO_SMS_NUMBER:-}
+      TWILIO_WHATSAPP_NUMBER: ${TWILIO_WHATSAPP_NUMBER:-}
       DELIVERY_SPEECH_PROVIDER: ${DELIVERY_SPEECH_PROVIDER:-local}
       DELIVERY_DISTANCE_PROVIDER: ${DELIVERY_DISTANCE_PROVIDER:-local}
       MOBILE_NOTIFICATION_PROVIDER: ${MOBILE_NOTIFICATION_PROVIDER:-local}

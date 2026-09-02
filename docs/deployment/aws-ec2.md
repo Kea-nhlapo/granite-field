@@ -189,6 +189,42 @@ Because the backend is verified before the CDN is touched, that failure mode now
 fails the workflow without leaving any doubt about whether the release is
 serving.
 
+### Where credentials live
+
+There are two stores and they do not overlap.
+
+**GitHub repository secrets** are handed to the workflow runner, which exists for
+about three minutes per release. They are never baked into the image.
+
+**`infra/containers/.env` on the instance** is what the running application reads.
+It is not in git and it survives releases.
+
+A repository secret is treated as application configuration unless it is named
+`CI_*`, which marks it as belonging to the pipeline. Everything else is published
+to AWS Parameter Store under `/trademesh/` as a SecureString during the release,
+and `deploy-on-instance.sh` writes those into `.env` before starting the new
+image. Parameter Store owns the keys it holds and overwrites them every release;
+every other key in `.env` - the generated secrets, the provider choices - is left
+alone. Adding an integration credential is therefore a GitHub change and nothing
+else.
+
+The values go through Parameter Store rather than straight into the release
+command because Systems Manager retains the text of every command it runs.
+
+Two things this does **not** do, both of which have bitten this project already:
+
+* **Compose forwards only the variables it names.** A value can sit in `.env` and
+  never reach the application because `docker-compose.aws.yml` does not list it.
+  Every `MOMO_*` and `TWILIO_*` credential was in exactly this state.
+* **Credentials do not switch a feature on.** `MOMO_PROVIDER` and
+  `MOBILE_NOTIFICATION_PROVIDER` select the stand-ins by default and keep doing so
+  no matter what keys arrive. Set them to `http` and `twilio` deliberately, and
+  expect real messages and real sandbox transactions from that moment.
+
+A secret whose name nothing reads is carried all the way to the host and then
+ignored. `INFOBIP_*` is the current example: the application implements Twilio,
+and has no Infobip provider at all.
+
 ### Storage is checked, not assumed
 
 The object storage client is lazy: it connects on the first upload, not at
