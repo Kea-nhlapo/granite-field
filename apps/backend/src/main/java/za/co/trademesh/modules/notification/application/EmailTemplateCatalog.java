@@ -23,6 +23,16 @@ class EmailTemplateCatalog {
                     "Your order status changed",
                     "An order has been confirmed on TradeMesh. Sign in to view the current details.");
         }
+        if (NotificationTemplates.DELIVERY_CONFIRMATION.equals(templateKey)
+                && templateVersion == NotificationTemplates.DELIVERY_CONFIRMATION_VERSION) {
+            String confirmationUrl = required(data, "confirmationUrl");
+            return new RenderedEmail(
+                    "Confirm your delivery",
+                    "A delivery is ready for your approval.\n\n"
+                            + "Review and confirm it here: "
+                            + confirmationUrl
+                            + "\n\nThis secure link expires and should not be forwarded.");
+        }
         throw new IllegalArgumentException("Unsupported email template key or version");
     }
 

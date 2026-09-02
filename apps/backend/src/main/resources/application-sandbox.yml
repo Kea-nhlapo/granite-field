@@ -7,3 +7,10 @@ trademesh:
   integrations:
     momo:
       provider: http
+  delivery:
+    search:
+      speech-provider: google
+      distance-provider: google
+  notifications:
+    mobile:
+      provider: twilio

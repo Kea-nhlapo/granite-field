@@ -35,6 +35,7 @@ public class OpenApiConfiguration {
             Map.entry("businessStartRegisteredOnboarding", "201"),
             Map.entry("capacityMatchingReserve", "201"),
             Map.entry("capacityMatchingSearch", "201"),
+            Map.entry("deliveryPropose", "201"),
             Map.entry("documentComparisonCompare", "201"),
             Map.entry("documentRegister", "202"),
             Map.entry("fileStorageUpload", "201"),
@@ -192,6 +193,7 @@ public class OpenApiConfiguration {
         return controller.equals("AuthController")
                 || (controller.equals("SupplierController")
                         && (method.equals("viewGuest") || method.equals("submitResponse")))
+                || (controller.equals("DeliveryController") && (method.equals("preview") || method.equals("confirm")))
                 || (controller.equals("TelemetryController") && method.equals("ingest"))
                 || (controller.equals("TrustController") && method.equals("publicSummary"));
     }

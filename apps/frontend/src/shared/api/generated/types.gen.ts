@@ -246,6 +246,40 @@ export type LocationResponse = {
     longitude?: number;
 };
 
+export type ProposeDeliveryRequest = {
+    businessId: string;
+    requestId: string;
+    recipientEmail: string;
+    recipientPhone: string;
+    mobileChannel: "SMS" | "WHATSAPP";
+};
+
+export type DeliveryProposalResponse = {
+    proposalId?: string;
+    shipmentId?: string;
+    status?: "PROPOSED" | "ACCEPTED" | "EXPIRED";
+    expiresAt?: string;
+    acceptedAt?: string;
+    newlyCreated?: boolean;
+};
+
+export type SupplierResponse = {
+    supplierProfileId?: string;
+    businessId?: string;
+    displayName?: string;
+    averageRating?: number;
+    successfulDeliveryRate?: number;
+    distanceMetres?: number;
+    durationSeconds?: number;
+    rankingScore?: number;
+};
+
+export type VoiceSearchResponse = {
+    detectedLanguage?: string;
+    transcript?: string;
+    suppliers?: Array<SupplierResponse>;
+};
+
 export type CreateInvitationRequest = {
     requestId: string;
     supplierEmail: string;
@@ -1964,6 +1998,253 @@ export type HandoverConfirmResponses = {
 
 export type HandoverConfirmResponse =
     HandoverConfirmResponses[keyof HandoverConfirmResponses];
+
+export type DeliveryProposeData = {
+    body: ProposeDeliveryRequest;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/propose";
+};
+
+export type DeliveryProposeErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type DeliveryProposeError =
+    DeliveryProposeErrors[keyof DeliveryProposeErrors];
+
+export type DeliveryProposeResponses = {
+    /**
+     * Created
+     */
+    201: DeliveryProposalResponse;
+};
+
+export type DeliveryProposeResponse =
+    DeliveryProposeResponses[keyof DeliveryProposeResponses];
+
+export type DeliveryVoiceSearchData = {
+    body?: {
+        audio: Blob | File;
+    };
+    path?: never;
+    query: {
+        latitude: number;
+        longitude: number;
+    };
+    url: "/api/delivery/voice-search";
+};
+
+export type DeliveryVoiceSearchErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type DeliveryVoiceSearchError =
+    DeliveryVoiceSearchErrors[keyof DeliveryVoiceSearchErrors];
+
+export type DeliveryVoiceSearchResponses = {
+    /**
+     * OK
+     */
+    200: VoiceSearchResponse;
+};
+
+export type DeliveryVoiceSearchResponse =
+    DeliveryVoiceSearchResponses[keyof DeliveryVoiceSearchResponses];
+
+export type DeliveryPreviewData = {
+    body?: never;
+    path: {
+        token: string;
+    };
+    query?: never;
+    url: "/api/delivery/confirm/{token}";
+};
+
+export type DeliveryPreviewErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type DeliveryPreviewError =
+    DeliveryPreviewErrors[keyof DeliveryPreviewErrors];
+
+export type DeliveryPreviewResponses = {
+    /**
+     * OK
+     */
+    200: DeliveryProposalResponse;
+};
+
+export type DeliveryPreviewResponse =
+    DeliveryPreviewResponses[keyof DeliveryPreviewResponses];
+
+export type DeliveryConfirmData = {
+    body?: never;
+    path: {
+        token: string;
+    };
+    query?: never;
+    url: "/api/delivery/confirm/{token}";
+};
+
+export type DeliveryConfirmErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type DeliveryConfirmError =
+    DeliveryConfirmErrors[keyof DeliveryConfirmErrors];
+
+export type DeliveryConfirmResponses = {
+    /**
+     * OK
+     */
+    200: DeliveryProposalResponse;
+};
+
+export type DeliveryConfirmResponse =
+    DeliveryConfirmResponses[keyof DeliveryConfirmResponses];
 
 export type SupplierInviteData = {
     body: CreateInvitationRequest;

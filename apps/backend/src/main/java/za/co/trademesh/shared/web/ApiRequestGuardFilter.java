@@ -27,6 +27,7 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
     private static final Pattern INVITATION_GUEST =
             Pattern.compile("^/api/supplier-invitations/guest/[^/]+(?:/responses)?$");
     private static final Pattern UPLOAD = Pattern.compile("^/api/businesses/[^/]+/files$");
+    private static final Pattern DELIVERY_CONFIRMATION = Pattern.compile("^/api/delivery/confirm/[^/]+$");
 
     private final ApiRateLimitProperties limits;
     private final ApiWebProperties web;
@@ -125,6 +126,9 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
         }
         if (HttpMethod.POST.matches(method) && "/api/handovers/confirmations".equals(path)) {
             return new Limit("qr-validation", limits.qrValidation());
+        }
+        if (DELIVERY_CONFIRMATION.matcher(path).matches()) {
+            return new Limit("delivery-confirmation", limits.invitations());
         }
         return null;
     }
