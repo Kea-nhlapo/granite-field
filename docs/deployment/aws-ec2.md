@@ -204,6 +204,12 @@ The container healthcheck and the watchdog poll `/actuator/health/liveness`
 instead. A storage or database outage should stop a release; it should not restart
 a process that is running perfectly well and can do nothing about it.
 
+The indicator is switched off in the backend test suite
+(`management.health.object-storage.enabled=false`). Those tests have no object
+store, and a check that told the truth there would report DOWN and fail every test
+that asserts the application is healthy - for a reason that has nothing to do with
+the application.
+
 Cloud Readiness runs against a real scratch bucket rather than placeholder keys,
 created by `infra/aws/bootstrap-ci-storage.sh` along with a user whose only
 permission is that bucket. Its objects expire after a day. The three
