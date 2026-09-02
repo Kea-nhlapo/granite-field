@@ -118,6 +118,11 @@ trademesh:
     expiry-batch-size: ${CAPACITY_MATCH_EXPIRY_BATCH_SIZE:100}
     expiry-interval: ${CAPACITY_MATCH_EXPIRY_INTERVAL:PT1M}
     algorithm-version: ${CAPACITY_MATCH_ALGORITHM_VERSION:capacity-match/v1}
+  routing:
+    provider: ${ROUTING_PROVIDER:mock}
+    timeout: ${ROUTING_PROVIDER_TIMEOUT:PT3S}
+    max-waypoints: ${ROUTING_MAX_WAYPOINTS:20}
+    maximum-candidates: ${ROUTING_MAXIMUM_CANDIDATES:3}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.
