@@ -63,7 +63,9 @@ logging:
 trademesh:
   runtime:
     environment: ${TRADEMESH_RUNTIME_ENVIRONMENT:local}
-  web:
+  openapi:
+    # Shared contract. Do not fork request/response shapes in this service.
+    contract: packages/api-contracts/openapi/openapi.yaml  web:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
     cors-max-age: ${CORS_MAX_AGE:PT1H}
     maximum-content-length: ${SERVER_MAX_CONTENT_LENGTH:12MB}
@@ -255,3 +257,4 @@ trademesh:
     security:
       # Local-only key. Production has no fallback and refuses to start without one.
       data-encryption-key: ${NOTIFICATION_DATA_ENCRYPTION_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+
