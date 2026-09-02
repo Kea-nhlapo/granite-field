@@ -1,0 +1,13 @@
+package za.co.trademesh.modules.handover.domain;
+
+public enum HandoverAttemptOutcome {
+    ACCEPTED,
+    OFFLINE_NOT_ALLOWED,
+    CLOCK_SKEW_EXCEEDED,
+    OUTSIDE_LOCATION_TOLERANCE,
+    PARTICIPANT_MISMATCH,
+    PARTY_ALREADY_CONFIRMED,
+    CHALLENGE_REPLAYED,
+    CHALLENGE_EXPIRED,
+    SHIPMENT_STATE_CONFLICT
+}
