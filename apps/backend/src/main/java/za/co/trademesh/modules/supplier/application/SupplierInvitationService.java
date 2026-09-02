@@ -172,7 +172,7 @@ public class SupplierInvitationService {
                 .filter(invitation -> invitation.supplierProfileId().equals(profileId))
                 .filter(invitation -> invitation.supportsConversionAt(now))
                 .orElseThrow(SupplierException::controlNotProven);
-        if (!profile.email().value().equals(account.normalizedEmail())) {
+        if (account.normalizedEmail().filter(profile.email().value()::equals).isEmpty()) {
             throw SupplierException.controlNotProven();
         }
         if (profile.isClaimedBy(userId, businessId)) {

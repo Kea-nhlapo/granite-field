@@ -104,6 +104,15 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
         if (HttpMethod.POST.matches(method) && "/api/auth/login".equals(path)) {
             return new Limit("login", limits.login());
         }
+        if (HttpMethod.POST.matches(method) && "/api/auth/otp/send".equals(path)) {
+            return new Limit("otp-send", limits.otpSend());
+        }
+        if (HttpMethod.POST.matches(method) && "/api/auth/otp/verify".equals(path)) {
+            return new Limit("otp-verify", limits.otpVerify());
+        }
+        if (HttpMethod.POST.matches(method) && "/api/auth/momo/initiate".equals(path)) {
+            return new Limit("momo-initiate", limits.momoInitiate());
+        }
         if ((HttpMethod.POST.matches(method) && INVITATION_CREATE.matcher(path).matches())
                 || INVITATION_GUEST.matcher(path).matches()) {
             return new Limit("invitations", limits.invitations());

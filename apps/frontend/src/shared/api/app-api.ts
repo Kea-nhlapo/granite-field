@@ -1,10 +1,16 @@
 import "./client";
 
 export {
+    authCompleteMomo,
+    authInitiateMomo,
     authLogin,
     authLogout,
+    authMomoStatus,
     authRefresh,
     authRegister,
+    authSendOtp,
+    authValidateMomo,
+    authVerifyOtp,
     businessConfirmRegisteredOnboarding,
     businessGetBusiness,
     businessGetRegisteredOnboarding,
