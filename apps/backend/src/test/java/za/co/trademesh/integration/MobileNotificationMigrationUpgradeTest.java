@@ -14,12 +14,12 @@ import za.co.trademesh.support.PostgresIntegrationTest;
 class MobileNotificationMigrationUpgradeTest extends PostgresIntegrationTest {
 
     @Test
-    void addsConsentedDurableMobileDeliveryAfterEscrow() throws Exception {
+    void addsConsentedDurableMobileDeliveryAfterTrustScores() throws Exception {
         String schema =
                 "mobile_notification_upgrade_" + UUID.randomUUID().toString().replace("-", "");
         try {
-            Flyway beforeMobileNotifications = flyway(schema, MigrationVersion.fromVersion("20260903160000"));
-            assertThat(beforeMobileNotifications.migrate().migrationsExecuted).isEqualTo(25);
+            Flyway beforeMobileNotifications = flyway(schema, MigrationVersion.fromVersion("20260903190000"));
+            assertThat(beforeMobileNotifications.migrate().migrationsExecuted).isEqualTo(27);
             assertThat(tableExists(schema, "mobile_notification")).isFalse();
 
             UUID userId = UUID.randomUUID();
@@ -42,7 +42,7 @@ class MobileNotificationMigrationUpgradeTest extends PostgresIntegrationTest {
                 statement.executeUpdate();
             }
 
-            Flyway mobileNotificationMigration = flyway(schema, MigrationVersion.fromVersion("20260903173000"));
+            Flyway mobileNotificationMigration = flyway(schema, MigrationVersion.fromVersion("20260903200000"));
             assertThat(mobileNotificationMigration.migrate().migrationsExecuted).isOne();
             assertThat(tableExists(schema, "notification_contact_point")).isTrue();
             assertThat(tableExists(schema, "mobile_notification")).isTrue();
