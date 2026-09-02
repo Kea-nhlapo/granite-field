@@ -71,7 +71,7 @@ Supplied by instance user-data, and safe to re-run:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y git openssl docker.io docker-compose-v2
+sudo apt-get install -y git openssl docker.io docker-compose-v2 awscli
 sudo systemctl enable --now docker
 ```
 
