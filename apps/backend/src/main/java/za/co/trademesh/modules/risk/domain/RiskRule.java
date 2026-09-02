@@ -1,0 +1,12 @@
+package za.co.trademesh.modules.risk.domain;
+
+public enum RiskRule {
+    ROUTE_DEVIATION,
+    UNEXPECTED_STOP,
+    TRACKER_OFFLINE,
+    STATIONARY_FUEL_DROP,
+    UNEXPECTED_SEAL_OPENING,
+    DELIVERY_DELAY,
+    DRIVER_ASSIGNMENT_CHANGED,
+    TELEMETRY_DEVICE_CHANGED
+}

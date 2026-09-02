@@ -32,6 +32,12 @@ public interface TelemetryRepository {
 
     List<TelemetryReading> findRecentReadings(UUID shipmentId, int limit);
 
+    Optional<TelemetryReading> findReading(UUID readingId);
+
+    List<TelemetryReading> findReadingsThrough(UUID shipmentId, Instant from, Instant through, int limit);
+
+    List<TelemetryDevice> findOfflineDevices(Instant lastSeenBefore, int limit);
+
     int downsample(Instant recordedBefore, Instant retainedAfter, Duration bucket, int limit);
 
     int markDownsampled(Instant recordedBefore, Instant retainedAfter, Duration bucket, int limit);

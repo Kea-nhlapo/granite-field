@@ -222,6 +222,43 @@ class JdbcTelemetryRepository implements TelemetryRepository {
     }
 
     @Override
+    public Optional<TelemetryReading> findReading(UUID readingId) {
+        return jdbcTemplate
+                .query(
+                        "SELECT " + READING_COLUMNS + " FROM telemetry_reading WHERE id = ?",
+                        this::mapReading,
+                        readingId)
+                .stream()
+                .findFirst();
+    }
+
+    @Override
+    public List<TelemetryReading> findReadingsThrough(UUID shipmentId, Instant from, Instant through, int limit) {
+        return jdbcTemplate.query(
+                "SELECT " + READING_COLUMNS
+                        + " FROM telemetry_reading WHERE shipment_id = ?"
+                        + " AND recorded_at >= ? AND recorded_at <= ?"
+                        + " ORDER BY recorded_at DESC, received_at DESC, id DESC LIMIT ?",
+                this::mapReading,
+                shipmentId,
+                time(from),
+                time(through),
+                limit);
+    }
+
+    @Override
+    public List<TelemetryDevice> findOfflineDevices(Instant lastSeenBefore, int limit) {
+        return jdbcTemplate.query(
+                "SELECT " + DEVICE_COLUMNS
+                        + " FROM telemetry_device WHERE status = 'ACTIVE'"
+                        + " AND COALESCE(last_seen_at, created_at) <= ?"
+                        + " ORDER BY COALESCE(last_seen_at, created_at), id LIMIT ?",
+                this::mapDevice,
+                time(lastSeenBefore),
+                limit);
+    }
+
+    @Override
     public int downsample(Instant recordedBefore, Instant retainedAfter, Duration bucket, int limit) {
         return jdbcTemplate.update("""
             WITH ranked AS (

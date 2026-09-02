@@ -98,6 +98,22 @@ class JdbcShipmentRepository implements ShipmentRepository {
     }
 
     @Override
+    public Optional<Shipment> findById(UUID shipmentId) {
+        return find("SELECT " + SHIPMENT_COLUMNS + " FROM shipment_record WHERE id = ?", shipmentId);
+    }
+
+    @Override
+    public List<Shipment> findOperational(int limit) {
+        return jdbcTemplate.query(
+                "SELECT " + SHIPMENT_COLUMNS
+                        + " FROM shipment_record WHERE status IN"
+                        + " ('AWAITING_COLLECTION', 'COLLECTED', 'IN_TRANSIT', 'DELAYED')"
+                        + " ORDER BY updated_at, id LIMIT ?",
+                this::mapShipment,
+                limit);
+    }
+
+    @Override
     public Optional<Shipment> findByIdForUpdate(UUID businessId, UUID shipmentId) {
         return find(
                 "SELECT " + SHIPMENT_COLUMNS

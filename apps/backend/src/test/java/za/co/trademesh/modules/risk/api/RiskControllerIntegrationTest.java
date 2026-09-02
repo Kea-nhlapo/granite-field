@@ -1,24 +1,19 @@
-package za.co.trademesh.modules.telemetry.api;
+package za.co.trademesh.modules.risk.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.jayway.jsonpath.JsonPath;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,11 +26,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 import za.co.trademesh.modules.access.application.AuthService;
 import za.co.trademesh.modules.access.domain.RegistrationType;
 import za.co.trademesh.modules.aggregation.application.ConsolidatedDemandCatalog;
@@ -46,22 +37,19 @@ import za.co.trademesh.modules.routing.domain.GeoPoint;
 import za.co.trademesh.modules.routing.domain.VehicleLimits;
 import za.co.trademesh.modules.shipment.application.ShipmentService;
 import za.co.trademesh.modules.shipment.domain.ShipmentActionSource;
+import za.co.trademesh.modules.shipment.domain.ShipmentStatus;
 import za.co.trademesh.modules.telemetry.application.TelemetryService;
-import za.co.trademesh.modules.telemetry.events.TelemetryEvent;
 import za.co.trademesh.modules.transport.application.CapacityMatchingService;
 import za.co.trademesh.modules.transport.application.TransportService;
 import za.co.trademesh.modules.transport.domain.Capacity;
 import za.co.trademesh.modules.transport.domain.CargoRestriction;
 import za.co.trademesh.modules.transport.domain.CargoTrait;
 import za.co.trademesh.modules.transport.domain.RoutePoint;
-import za.co.trademesh.shared.events.PublishedEvent;
 import za.co.trademesh.support.PostgresIntegrationTest;
 
 @AutoConfigureMockMvc
-@Import(TelemetryControllerIntegrationTest.DemandTestConfiguration.class)
-@TestPropertySource(
-        properties = {"trademesh.telemetry.maximum-readings-per-window=4", "trademesh.telemetry.maximum-batch-size=4"})
-class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
+@Import(RiskControllerIntegrationTest.DemandTestConfiguration.class)
+class RiskControllerIntegrationTest extends PostgresIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -96,14 +84,10 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private TelemetryEventRecorder eventRecorder;
-
     @BeforeEach
     @AfterEach
     void cleanState() {
         demandCatalog.clear();
-        eventRecorder.clear();
         jdbcTemplate.update("DELETE FROM risk_indicator_transition");
         jdbcTemplate.update("DELETE FROM risk_indicator_evidence");
         jdbcTemplate.update("DELETE FROM risk_indicator");
@@ -149,119 +133,93 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void authenticatesDevicesIngestsBatchesAndMaintainsAnOwnerScopedLiveProjection() throws Exception {
+    void consumesTelemetryPersistsOneActiveIndicatorAndProtectsTheReviewApi() throws Exception {
         ShipmentSetup setup = createShipment();
-        provisionWithoutHumanToken(setup.businessId(), setup.shipmentId()).andExpect(status().isUnauthorized());
+        transition(setup, ShipmentStatus.COLLECTED);
+        transition(setup, ShipmentStatus.IN_TRANSIT);
+        var deviceOne = telemetryService.provision(
+                setup.businessId(),
+                setup.shipmentId(),
+                "Primary tracker",
+                setup.buyer().userId());
+        var deviceTwo = telemetryService.provision(
+                setup.businessId(),
+                setup.shipmentId(),
+                "Replacement tracker",
+                setup.buyer().userId());
+        Instant now = Instant.now().truncatedTo(ChronoUnit.SECONDS);
 
-        String provisioned = provision(setup.buyer(), setup.businessId(), setup.shipmentId())
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.credential").isString())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
-        UUID deviceId = UUID.fromString(JsonPath.read(provisioned, "$.deviceId"));
-        String credential = JsonPath.read(provisioned, "$.credential");
-        assertThat(credential).startsWith(deviceId + ".");
+        telemetryService.ingest(
+                deviceOne.rawCredential(),
+                List.of(
+                        reading(now.minus(20, ChronoUnit.MINUTES), "0", null, false),
+                        reading(now.minus(15, ChronoUnit.MINUTES), "0", null, false),
+                        reading(now.minus(10, ChronoUnit.MINUTES), "0", "310", false),
+                        reading(now.minus(5, ChronoUnit.MINUTES), "0", null, false)));
+        telemetryService.ingest(deviceTwo.rawCredential(), List.of(reading(now, "0", "265", true)));
+
         assertThat(jdbcTemplate.queryForObject(
-                        "SELECT credential_hash FROM telemetry_device WHERE id = ?", String.class, deviceId))
-                .doesNotContain(credential.substring(credential.indexOf('.') + 1));
-
-        Instant newer = Instant.now().minusSeconds(1).truncatedTo(ChronoUnit.MILLIS);
-        Instant older = newer.minusSeconds(30);
-        UUID newerEvent = UUID.randomUUID();
-        UUID olderEvent = UUID.randomUUID();
-        String firstBatch = batch(
-                fullReading(newerEvent, newer, -26.1000, 28.2333, "65.5", "280.0"),
-                fullReading(olderEvent, older, -26.2000, 28.1000, "40.0", "282.0"));
-        ingest(credential, firstBatch)
-                .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.acceptedCount").value(2))
-                .andExpect(jsonPath("$.duplicateCount").value(0));
-
-        live(setup.buyer(), setup.businessId(), setup.shipmentId())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.deviceId").value(deviceId.toString()))
-                .andExpect(jsonPath("$.latitude").value(-26.1))
-                .andExpect(jsonPath("$.longitude").value(28.2333))
-                .andExpect(jsonPath("$.units.speed").value("kilometres per hour"));
-        history(setup.buyer(), setup.businessId(), setup.shipmentId())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.readings.length()").value(2))
-                .andExpect(jsonPath("$.readings[0].clientEventId").value(newerEvent.toString()))
-                .andExpect(jsonPath("$.readings[0].fuelLitres").value(280.0))
-                .andExpect(jsonPath("$.units.temperature").value("degrees Celsius"));
-        history(setup.outsider(), setup.businessId(), setup.shipmentId()).andExpect(status().isForbidden());
-
-        ingest(credential, firstBatch)
-                .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.acceptedCount").value(0))
-                .andExpect(jsonPath("$.duplicateCount").value(2));
-        assertThat(readingCount(deviceId)).isEqualTo(2);
-        ingest(credential, batch(fullReading(newerEvent, newer, -26.1000, 28.2333, "65.5", "279.0")))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.code").value("TELEMETRY_CLIENT_EVENT_CONFLICT"));
-        ingest("not-a-device-credential", firstBatch)
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("TELEMETRY_DEVICE_AUTHENTICATION_FAILED"));
-        ingest(credential, batch(speedReading(UUID.randomUUID(), Instant.now().minus(8, ChronoUnit.DAYS), "20")))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("INVALID_TELEMETRY_READING"));
-
-        UUID thirdEvent = UUID.randomUUID();
-        UUID fourthEvent = UUID.randomUUID();
-        ingest(
-                        credential,
-                        batch(
-                                speedReading(thirdEvent, Instant.now().minusSeconds(2), "30"),
-                                speedReading(fourthEvent, Instant.now().minusSeconds(1), "31")))
-                .andExpect(status().isAccepted())
-                .andExpect(jsonPath("$.acceptedCount").value(2));
-        ingest(credential, batch(speedReading(UUID.randomUUID(), Instant.now(), "32")))
-                .andExpect(status().isTooManyRequests())
-                .andExpect(jsonPath("$.code").value("TELEMETRY_RATE_LIMITED"));
-        assertThat(eventRecorder.readings()).hasSize(4);
-
-        Instant sampledAt = Instant.now().minus(8, ChronoUnit.DAYS).truncatedTo(ChronoUnit.MINUTES);
-        jdbcTemplate.update(
-                "UPDATE telemetry_reading SET recorded_at = ? WHERE client_event_id IN (?, ?, ?)",
-                OffsetDateTime.ofInstant(sampledAt, ZoneOffset.UTC),
-                newerEvent,
-                olderEvent,
-                thirdEvent);
-        jdbcTemplate.update(
-                "UPDATE telemetry_reading SET recorded_at = CURRENT_TIMESTAMP - INTERVAL '100 days'"
-                        + " WHERE client_event_id = ?",
-                fourthEvent);
-        var cleanup = telemetryService.cleanUp();
-        assertThat(cleanup.deletedRedundantSamples()).isEqualTo(2);
-        assertThat(cleanup.markedDownsampled()).isOne();
-        assertThat(cleanup.deletedExpired()).isOne();
+                        "SELECT COUNT(*) FROM risk_indicator WHERE shipment_id = ?", Integer.class, setup.shipmentId()))
+                .isEqualTo(5);
         assertThat(jdbcTemplate.queryForObject(
-                        "SELECT COUNT(*) FROM telemetry_reading WHERE retention_tier = 'DOWNSAMPLED'", Integer.class))
+                        "SELECT COUNT(*) FROM risk_indicator WHERE shipment_id = ? AND rule_code = 'ROUTE_DEVIATION'",
+                        Integer.class,
+                        setup.shipmentId()))
                 .isOne();
 
-        revoke(setup.buyer(), setup.businessId(), deviceId).andExpect(status().isNoContent());
-        ingest(credential, batch(speedReading(UUID.randomUUID(), Instant.now(), "10")))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/internal/risk/shipments/{shipmentId}/indicators", setup.shipmentId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(setup.buyer())))
+                .andExpect(status().isForbidden());
+
+        Account analyst = internalRiskAnalyst();
+        mockMvc.perform(get("/api/internal/risk/shipments/{shipmentId}/indicators", setup.shipmentId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(analyst)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.indicators.length()").value(5))
+                .andExpect(jsonPath("$.indicators[0].ruleVersion").value("operational-risk/v1"))
+                .andExpect(jsonPath("$.indicators[0].evidence").isArray())
+                .andExpect(jsonPath("$.indicators[0].riskScore").doesNotExist());
+
+        UUID indicatorId = jdbcTemplate.queryForObject(
+                "SELECT id FROM risk_indicator WHERE shipment_id = ? AND rule_code = 'UNEXPECTED_SEAL_OPENING'",
+                UUID.class,
+                setup.shipmentId());
+        UUID commandId = UUID.randomUUID();
+        String transition = """
+            {"commandId":"%s","targetState":"ACKNOWLEDGED","note":"Driver contacted."}
+            """.formatted(commandId);
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mockMvc.perform(post("/api/internal/risk/indicators/{indicatorId}/transitions", indicatorId)
+                            .header(HttpHeaders.AUTHORIZATION, bearer(analyst))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(transition))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.state").value("ACKNOWLEDGED"))
+                    .andExpect(jsonPath("$.reviewHistory.length()").value(2));
+        }
+        assertThat(jdbcTemplate.queryForObject(
+                        "SELECT COUNT(*) FROM risk_indicator_transition WHERE indicator_id = ?",
+                        Integer.class,
+                        indicatorId))
+                .isEqualTo(2);
     }
 
     private ShipmentSetup createShipment() {
-        Account buyer = register("telemetry-buyer@example.com", RegistrationType.BUSINESS_OWNER);
-        Account outsider = register("telemetry-outsider@example.com", RegistrationType.BUSINESS_OWNER);
-        Account fleet = register("telemetry-fleet@example.com", RegistrationType.TRANSPORTER);
-        UUID businessId = createBusiness(buyer, "2026/860001/07");
-        UUID fleetBusinessId = createBusiness(fleet, "2026/860002/07");
-        transportService.registerTransporter(fleetBusinessId, "Telemetry Fleet", fleet.userId());
+        Account buyer = register("risk-buyer@example.com", RegistrationType.BUSINESS_OWNER);
+        Account fleet = register("risk-fleet@example.com", RegistrationType.TRANSPORTER);
+        UUID businessId = createBusiness(buyer, "2026/870001/07");
+        UUID fleetBusinessId = createBusiness(fleet, "2026/870002/07");
+        transportService.registerTransporter(fleetBusinessId, "Risk Fleet", fleet.userId());
         Instant start = Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS);
         UUID demandId = demandCatalog.add(businessId, start, start.plus(2, ChronoUnit.HOURS));
         var vehicle = transportService.createVehicle(
                 fleetBusinessId,
                 new TransportService.CreateVehicle(
-                        UUID.randomUUID(), "GP TELEMETRY", "Telemetry truck", amount("500"), amount("50")),
+                        UUID.randomUUID(), "GP RISK 01", "Risk truck", amount("500"), amount("50")),
                 fleet.userId());
         var driver = transportService.createDriver(
                 fleetBusinessId,
-                new TransportService.CreateDriver(UUID.randomUUID(), "Telemetry Driver", "DRV-TELEMETRY"),
+                new TransportService.CreateDriver(UUID.randomUUID(), "Risk Driver", "DRV-RISK"),
                 fleet.userId());
         var assignment = transportService.assignDriver(
                 fleetBusinessId,
@@ -321,11 +279,29 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
                         reservation.id(),
                         assessment.id(),
                         assessment.recommendedCandidateId(),
-                        "Telemetry test shipment",
+                        "Risk test shipment",
                         UUID.randomUUID()),
                 buyer.userId(),
                 ShipmentActionSource.OPERATIONS);
-        return new ShipmentSetup(buyer, outsider, businessId, shipment.id());
+        return new ShipmentSetup(buyer, businessId, shipment.id());
+    }
+
+    private void transition(ShipmentSetup setup, ShipmentStatus status) {
+        shipmentService.transition(
+                setup.businessId(),
+                setup.shipmentId(),
+                new ShipmentService.TransitionShipment(UUID.randomUUID(), status, "Risk test", UUID.randomUUID()),
+                setup.buyer().userId(),
+                ShipmentActionSource.OPERATIONS);
+    }
+
+    private Account internalRiskAnalyst() {
+        String email = "risk-analyst@example.com";
+        Account account = register(email, RegistrationType.BUSINESS_OWNER);
+        jdbcTemplate.update(
+                "INSERT INTO access_user_role (user_id, role) VALUES (?, 'INTERNAL_RISK_ANALYST')", account.userId());
+        var tokens = authService.login(email, "correct-horse-battery");
+        return new Account(tokens.userId(), tokens.accessToken());
     }
 
     private Account register(String email, RegistrationType type) {
@@ -338,81 +314,24 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
         return onboardingService.confirm(onboarding.id(), owner.userId()).id();
     }
 
-    private ResultActions provision(Account account, UUID businessId, UUID shipmentId) throws Exception {
-        return mockMvc.perform(
-                post("/api/businesses/{businessId}/shipments/{shipmentId}/telemetry-devices", businessId, shipmentId)
-                        .header(HttpHeaders.AUTHORIZATION, bearer(account))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"displayName\":\"Truck tracker\"}"));
-    }
-
-    private ResultActions provisionWithoutHumanToken(UUID businessId, UUID shipmentId) throws Exception {
-        return mockMvc.perform(
-                post("/api/businesses/{businessId}/shipments/{shipmentId}/telemetry-devices", businessId, shipmentId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"displayName\":\"Truck tracker\"}"));
-    }
-
-    private ResultActions ingest(String credential, String body) throws Exception {
-        return mockMvc.perform(post("/api/telemetry/readings")
-                .header(TelemetryController.DEVICE_CREDENTIAL_HEADER, credential)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(body));
-    }
-
-    private ResultActions live(Account account, UUID businessId, UUID shipmentId) throws Exception {
-        return mockMvc.perform(
-                get("/api/businesses/{businessId}/shipments/{shipmentId}/telemetry/live", businessId, shipmentId)
-                        .header(HttpHeaders.AUTHORIZATION, bearer(account)));
-    }
-
-    private ResultActions history(Account account, UUID businessId, UUID shipmentId) throws Exception {
-        return mockMvc.perform(
-                get("/api/businesses/{businessId}/shipments/{shipmentId}/telemetry", businessId, shipmentId)
-                        .header(HttpHeaders.AUTHORIZATION, bearer(account)));
-    }
-
-    private ResultActions revoke(Account account, UUID businessId, UUID deviceId) throws Exception {
-        return mockMvc.perform(delete("/api/businesses/{businessId}/telemetry-devices/{deviceId}", businessId, deviceId)
-                .header(HttpHeaders.AUTHORIZATION, bearer(account)));
-    }
-
-    private int readingCount(UUID deviceId) {
-        return jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM telemetry_reading WHERE device_id = ?", Integer.class, deviceId);
-    }
-
-    private static String batch(String... readings) {
-        return "{\"readings\":[" + String.join(",", readings) + "]}";
-    }
-
-    private static String fullReading(
-            UUID clientEventId, Instant recordedAt, double latitude, double longitude, String speed, String fuel) {
-        return """
-            {
-              "clientEventId":"%s",
-              "recordedAt":"%s",
-              "latitude":%s,
-              "longitude":%s,
-              "speedKilometresPerHour":%s,
-              "fuelLitres":%s,
-              "temperatureCelsius":6.5,
-              "sealOpen":false,
-              "batteryPercent":82.0,
-              "networkStatus":"CONNECTED",
-              "networkSignalDbm":-77
-            }
-            """.formatted(clientEventId, recordedAt, latitude, longitude, speed, fuel);
-    }
-
-    private static String speedReading(UUID clientEventId, Instant recordedAt, String speed) {
-        return """
-            {"clientEventId":"%s","recordedAt":"%s","speedKilometresPerHour":%s}
-            """.formatted(clientEventId, recordedAt, speed);
+    private static TelemetryService.ReadingInput reading(
+            Instant recordedAt, String speed, String fuel, Boolean sealOpen) {
+        return new TelemetryService.ReadingInput(
+                UUID.randomUUID(),
+                recordedAt,
+                -24.0000,
+                30.0000,
+                amount(speed),
+                amount(fuel),
+                null,
+                sealOpen,
+                null,
+                null,
+                null);
     }
 
     private static BigDecimal amount(String value) {
-        return new BigDecimal(value);
+        return value == null ? null : new BigDecimal(value);
     }
 
     private static String bearer(Account account) {
@@ -421,7 +340,7 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
 
     private record Account(UUID userId, String accessToken) {}
 
-    private record ShipmentSetup(Account buyer, Account outsider, UUID businessId, UUID shipmentId) {}
+    private record ShipmentSetup(Account buyer, UUID businessId, UUID shipmentId) {}
 
     @TestConfiguration(proxyBeanMethods = false)
     static class DemandTestConfiguration {
@@ -429,28 +348,6 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
         @Primary
         TestDemandCatalog testDemandCatalog() {
             return new TestDemandCatalog();
-        }
-
-        @Bean
-        TelemetryEventRecorder telemetryEventRecorder() {
-            return new TelemetryEventRecorder();
-        }
-    }
-
-    static final class TelemetryEventRecorder {
-        private final List<TelemetryEvent.ReadingAccepted> readings = new CopyOnWriteArrayList<>();
-
-        @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-        public void record(PublishedEvent<TelemetryEvent.ReadingAccepted> event) {
-            readings.add(event.event());
-        }
-
-        List<TelemetryEvent.ReadingAccepted> readings() {
-            return List.copyOf(readings);
-        }
-
-        void clear() {
-            readings.clear();
         }
     }
 
