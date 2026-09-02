@@ -3,7 +3,6 @@ package za.co.trademesh.modules.handover.events;
 import java.math.BigDecimal;
 import java.util.UUID;
 import za.co.trademesh.modules.handover.domain.HandoverParty;
-import za.co.trademesh.modules.handover.domain.HandoverState;
 import za.co.trademesh.modules.handover.domain.HandoverType;
 import za.co.trademesh.shared.events.DomainEvent;
 
@@ -32,7 +31,7 @@ public sealed interface HandoverEvent extends DomainEvent
         }
     }
 
-    record HandoverFinalized(UUID challengeId, UUID shipmentId, HandoverType handoverType, HandoverState outcome)
+    record HandoverFinalized(UUID challengeId, UUID shipmentId, UUID businessId, String handoverType, String outcome)
             implements HandoverEvent {
         @Override
         public String type() {
