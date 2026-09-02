@@ -1891,6 +1891,124 @@ export type NotificationContactSaveResponses = {
 export type NotificationContactSaveResponse =
     NotificationContactSaveResponses[keyof NotificationContactSaveResponses];
 
+export type InfobipWebhookSeenData = {
+    body: string;
+    headers?: {
+        "X-Hub-Signature"?: string;
+    };
+    path?: never;
+    query?: never;
+    url: "/api/notification-provider/infobip/seen";
+};
+
+export type InfobipWebhookSeenErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type InfobipWebhookSeenError =
+    InfobipWebhookSeenErrors[keyof InfobipWebhookSeenErrors];
+
+export type InfobipWebhookSeenResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type InfobipWebhookDeliveryData = {
+    body: string;
+    headers?: {
+        "X-Hub-Signature"?: string;
+    };
+    path?: never;
+    query?: never;
+    url: "/api/notification-provider/infobip/delivery";
+};
+
+export type InfobipWebhookDeliveryErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type InfobipWebhookDeliveryError =
+    InfobipWebhookDeliveryErrors[keyof InfobipWebhookDeliveryErrors];
+
+export type InfobipWebhookDeliveryResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
 export type TelemetryPositionData = {
     body: PositionRequest;
     headers: {
@@ -2138,124 +2256,6 @@ export type SupplierSubmitResponseResponses = {
 
 export type SupplierSubmitResponseResponse =
     SupplierSubmitResponseResponses[keyof SupplierSubmitResponseResponses];
-
-export type InfobipWebhookSeenData = {
-    body: string;
-    headers?: {
-        "X-Hub-Signature"?: string;
-    };
-    path?: never;
-    query?: never;
-    url: "/api/notification-provider/infobip/seen";
-};
-
-export type InfobipWebhookSeenErrors = {
-    /**
-     * The request is invalid
-     */
-    400: ApiProblem;
-    /**
-     * Authentication is required
-     */
-    401: ApiProblem;
-    /**
-     * The caller is not allowed to perform this action
-     */
-    403: ApiProblem;
-    /**
-     * The requested resource was not found
-     */
-    404: ApiProblem;
-    /**
-     * The request conflicts with current state
-     */
-    409: ApiProblem;
-    /**
-     * The request limit was exceeded
-     */
-    429: ApiProblem;
-    /**
-     * The server could not complete the request
-     */
-    500: ApiProblem;
-    /**
-     * An external provider rejected the request
-     */
-    502: ApiProblem;
-    /**
-     * An external provider is temporarily unavailable
-     */
-    503: ApiProblem;
-};
-
-export type InfobipWebhookSeenError =
-    InfobipWebhookSeenErrors[keyof InfobipWebhookSeenErrors];
-
-export type InfobipWebhookSeenResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
-
-export type InfobipWebhookDeliveryData = {
-    body: string;
-    headers?: {
-        "X-Hub-Signature"?: string;
-    };
-    path?: never;
-    query?: never;
-    url: "/api/notification-provider/infobip/delivery";
-};
-
-export type InfobipWebhookDeliveryErrors = {
-    /**
-     * The request is invalid
-     */
-    400: ApiProblem;
-    /**
-     * Authentication is required
-     */
-    401: ApiProblem;
-    /**
-     * The caller is not allowed to perform this action
-     */
-    403: ApiProblem;
-    /**
-     * The requested resource was not found
-     */
-    404: ApiProblem;
-    /**
-     * The request conflicts with current state
-     */
-    409: ApiProblem;
-    /**
-     * The request limit was exceeded
-     */
-    429: ApiProblem;
-    /**
-     * The server could not complete the request
-     */
-    500: ApiProblem;
-    /**
-     * An external provider rejected the request
-     */
-    502: ApiProblem;
-    /**
-     * An external provider is temporarily unavailable
-     */
-    503: ApiProblem;
-};
-
-export type InfobipWebhookDeliveryError =
-    InfobipWebhookDeliveryErrors[keyof InfobipWebhookDeliveryErrors];
-
-export type InfobipWebhookDeliveryResponses = {
-    /**
-     * OK
-     */
-    200: unknown;
-};
 
 export type TrustRecalculateData = {
     body?: never;

@@ -418,6 +418,46 @@ export const notificationContactSave = <ThrowOnError extends boolean = false>(
         },
     });
 
+export const infobipWebhookSeen = <ThrowOnError extends boolean = false>(
+    options: Options<InfobipWebhookSeenData, ThrowOnError>,
+): RequestResult<
+    InfobipWebhookSeenResponses,
+    InfobipWebhookSeenErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        InfobipWebhookSeenResponses,
+        InfobipWebhookSeenErrors,
+        ThrowOnError
+    >({
+        url: "/api/notification-provider/infobip/seen",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const infobipWebhookDelivery = <ThrowOnError extends boolean = false>(
+    options: Options<InfobipWebhookDeliveryData, ThrowOnError>,
+): RequestResult<
+    InfobipWebhookDeliveryResponses,
+    InfobipWebhookDeliveryErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        InfobipWebhookDeliveryResponses,
+        InfobipWebhookDeliveryErrors,
+        ThrowOnError
+    >({
+        url: "/api/notification-provider/infobip/delivery",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
 export const telemetryPosition = <ThrowOnError extends boolean = false>(
     options: Options<TelemetryPositionData, ThrowOnError>,
 ): RequestResult<
@@ -492,46 +532,6 @@ export const supplierSubmitResponse = <ThrowOnError extends boolean = false>(
         ThrowOnError
     >({
         url: "/api/supplier-invitations/guest/{token}/responses",
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
-    });
-
-export const infobipWebhookSeen = <ThrowOnError extends boolean = false>(
-    options: Options<InfobipWebhookSeenData, ThrowOnError>,
-): RequestResult<
-    InfobipWebhookSeenResponses,
-    InfobipWebhookSeenErrors,
-    ThrowOnError
-> =>
-    (options.client ?? client).post<
-        InfobipWebhookSeenResponses,
-        InfobipWebhookSeenErrors,
-        ThrowOnError
-    >({
-        url: "/api/notification-provider/infobip/seen",
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...options.headers,
-        },
-    });
-
-export const infobipWebhookDelivery = <ThrowOnError extends boolean = false>(
-    options: Options<InfobipWebhookDeliveryData, ThrowOnError>,
-): RequestResult<
-    InfobipWebhookDeliveryResponses,
-    InfobipWebhookDeliveryErrors,
-    ThrowOnError
-> =>
-    (options.client ?? client).post<
-        InfobipWebhookDeliveryResponses,
-        InfobipWebhookDeliveryErrors,
-        ThrowOnError
-    >({
-        url: "/api/notification-provider/infobip/delivery",
         ...options,
         headers: {
             "Content-Type": "application/json",
