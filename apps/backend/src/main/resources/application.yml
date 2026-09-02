@@ -165,6 +165,17 @@ trademesh:
             safety-exposure: 0.05
             road-quality: 0.05
             connectivity: 0.05
+  telemetry:
+    maximum-reading-age: ${TELEMETRY_MAXIMUM_READING_AGE:P7D}
+    future-clock-skew: ${TELEMETRY_FUTURE_CLOCK_SKEW:PT5M}
+    rate-limit-window: ${TELEMETRY_RATE_LIMIT_WINDOW:PT1M}
+    maximum-readings-per-window: ${TELEMETRY_MAXIMUM_READINGS_PER_WINDOW:600}
+    maximum-batch-size: ${TELEMETRY_MAXIMUM_BATCH_SIZE:100}
+    downsample-after: ${TELEMETRY_DOWNSAMPLE_AFTER:P7D}
+    downsample-bucket: ${TELEMETRY_DOWNSAMPLE_BUCKET:PT5M}
+    retention: ${TELEMETRY_RETENTION:P90D}
+    cleanup-batch-size: ${TELEMETRY_CLEANUP_BATCH_SIZE:5000}
+    cleanup-interval: ${TELEMETRY_CLEANUP_INTERVAL:PT1H}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.
