@@ -14,7 +14,8 @@ public record ApiRateLimitProperties(
         int qrValidation,
         int otpSend,
         int otpVerify,
-        int momoInitiate) {
+        int momoInitiate,
+        int momoTransactions) {
 
     public ApiRateLimitProperties {
         if (window == null || window.isZero() || window.isNegative()) {
@@ -29,6 +30,7 @@ public record ApiRateLimitProperties(
         requirePositive(otpSend, "otp-send");
         requirePositive(otpVerify, "otp-verify");
         requirePositive(momoInitiate, "momo-initiate");
+        requirePositive(momoTransactions, "momo-transactions");
     }
 
     private static void requirePositive(int value, String name) {

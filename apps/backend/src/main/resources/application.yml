@@ -78,6 +78,7 @@ trademesh:
       otp-send: ${API_RATE_LIMIT_OTP_SEND:10}
       otp-verify: ${API_RATE_LIMIT_OTP_VERIFY:20}
       momo-initiate: ${API_RATE_LIMIT_MOMO_INITIATE:10}
+      momo-transactions: ${API_RATE_LIMIT_MOMO_TRANSACTIONS:10}
   access:
     turnstile:
       provider: ${TURNSTILE_PROVIDER:unconfigured}
@@ -110,6 +111,11 @@ trademesh:
         subscription-key: ${MOMO_DISBURSEMENTS_SUBSCRIPTION_KEY:}
         api-user: ${MOMO_DISBURSEMENTS_API_USER:}
         api-key: ${MOMO_DISBURSEMENTS_API_KEY:}
+  payments:
+    escrow:
+      poll-interval: ${ESCROW_POLL_INTERVAL:PT2S}
+      transaction-timeout: ${ESCROW_TRANSACTION_TIMEOUT:PT2M}
+      stream-timeout: ${ESCROW_STREAM_TIMEOUT:PT30M}
   events:
     source: ${TRADEMESH_EVENTS_SOURCE:trademesh-backend}
   outbox:

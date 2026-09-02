@@ -31,6 +31,11 @@ class JdbcDeliveryProposalRepository implements DeliveryProposalRepository {
     }
 
     @Override
+    public Optional<DeliveryProposal> findById(UUID proposalId) {
+        return one("WHERE id = ?", proposalId);
+    }
+
+    @Override
     public Optional<DeliveryProposal> findByShipment(UUID businessId, UUID shipmentId) {
         return one("WHERE business_id = ? AND shipment_id = ?", businessId, shipmentId);
     }
