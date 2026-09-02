@@ -1,0 +1,9 @@
+{
+    "type": "about:blank",
+    "title": "Supplier invitation request failed",
+    "status": 404,
+    "detail": "This supplier invitation is unavailable.",
+    "instance": "/api",
+    "code": "SUPPLIER_INVITATION_UNAVAILABLE",
+    "requestId": "00000000-0000-4000-8000-000000000099"
+}
