@@ -175,7 +175,9 @@ public class OutboxWorker {
 
     private void recordFailure(OutboxMessage message, Exception failure) {
         Throwable cause = failure instanceof HandlerFailedException ? failure.getCause() : failure;
-        String error = cause.getClass().getName() + ": " + cause.getMessage();
+        // Provider failures can carry recipient addresses, document text, or
+        // tokens in their messages. Persist and log the type only.
+        String error = cause.getClass().getName();
 
         if (message.attempts() >= properties.maxAttempts()) {
             log.error(
@@ -183,8 +185,7 @@ public class OutboxWorker {
                     message.id(),
                     message.type(),
                     message.attempts(),
-                    properties.maxAttempts(),
-                    cause);
+                    properties.maxAttempts());
             recordDead(message, error);
             return;
         }
@@ -195,8 +196,7 @@ public class OutboxWorker {
                 message.id(),
                 message.type(),
                 message.attempts(),
-                retryAt,
-                cause);
+                retryAt);
 
         transactions()
                 .executeWithoutResult(
