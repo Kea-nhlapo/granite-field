@@ -5,7 +5,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import za.co.trademesh.modules.routing.application.RoutingException;
 
-@RestControllerAdvice(assignableTypes = {RoutingController.class, RouteScoringController.class})
+@RestControllerAdvice(
+        assignableTypes = {RoutingController.class, RouteScoringController.class, ShipmentRouteController.class})
 public class RoutingExceptionHandler {
 
     @ExceptionHandler(RoutingException.class)

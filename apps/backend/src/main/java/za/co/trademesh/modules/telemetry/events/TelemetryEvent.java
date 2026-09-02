@@ -18,6 +18,7 @@ public sealed interface TelemetryEvent extends DomainEvent permits TelemetryEven
             UUID shipmentId,
             UUID deviceId,
             Instant recordedAt,
+            Instant receivedAt,
             Double latitude,
             Double longitude,
             BigDecimal speedKilometresPerHour,

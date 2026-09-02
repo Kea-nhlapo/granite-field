@@ -154,6 +154,9 @@ import type {
     InsuranceRecordDecisionData,
     InsuranceRecordDecisionErrors,
     InsuranceRecordDecisionResponses,
+    NearbySupplierNearbyData,
+    NearbySupplierNearbyErrors,
+    NearbySupplierNearbyResponses,
     NotificationPreferenceGetData,
     NotificationPreferenceGetErrors,
     NotificationPreferenceGetResponses,
@@ -208,6 +211,9 @@ import type {
     ShipmentGetData,
     ShipmentGetErrors,
     ShipmentGetResponses,
+    ShipmentRouteRouteData,
+    ShipmentRouteRouteErrors,
+    ShipmentRouteRouteResponses,
     ShipmentTransitionData,
     ShipmentTransitionErrors,
     ShipmentTransitionResponses,
@@ -226,6 +232,9 @@ import type {
     SupplierViewGuestData,
     SupplierViewGuestErrors,
     SupplierViewGuestResponses,
+    TelemetryBackhaulMatchesData,
+    TelemetryBackhaulMatchesErrors,
+    TelemetryBackhaulMatchesResponses,
     TelemetryHistoryData,
     TelemetryHistoryErrors,
     TelemetryHistoryResponses,
@@ -235,6 +244,13 @@ import type {
     TelemetryLiveData,
     TelemetryLiveErrors,
     TelemetryLiveResponses,
+    TelemetryPositionData,
+    TelemetryPositionErrors,
+    TelemetryPositionEventsData,
+    TelemetryPositionEventsErrors,
+    TelemetryPositionEventsResponse,
+    TelemetryPositionEventsResponses,
+    TelemetryPositionResponses,
     TelemetryProvisionData,
     TelemetryProvisionErrors,
     TelemetryProvisionResponses,
@@ -319,6 +335,26 @@ export const notificationPreferenceSet = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/notification-preferences/{category}",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const telemetryPosition = <ThrowOnError extends boolean = false>(
+    options: Options<TelemetryPositionData, ThrowOnError>,
+): RequestResult<
+    TelemetryPositionResponses,
+    TelemetryPositionErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        TelemetryPositionResponses,
+        TelemetryPositionErrors,
+        ThrowOnError
+    >({
+        url: "/api/tracking/{shipmentId}/position",
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -1407,6 +1443,57 @@ export const authLogin = <ThrowOnError extends boolean = false>(
         },
     });
 
+export const telemetryPositionEvents = <ThrowOnError extends boolean = false>(
+    options: Options<
+        TelemetryPositionEventsData,
+        ThrowOnError,
+        TelemetryPositionEventsResponse
+    >,
+): Promise<ServerSentEventsResult<TelemetryPositionEventsResponses>> =>
+    (options.client ?? client).sse.get<
+        TelemetryPositionEventsResponses,
+        TelemetryPositionEventsErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/tracking/{shipmentId}/events",
+        ...options,
+    });
+
+export const telemetryBackhaulMatches = <ThrowOnError extends boolean = false>(
+    options: Options<TelemetryBackhaulMatchesData, ThrowOnError>,
+): RequestResult<
+    TelemetryBackhaulMatchesResponses,
+    TelemetryBackhaulMatchesErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        TelemetryBackhaulMatchesResponses,
+        TelemetryBackhaulMatchesErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/tracking/{shipmentId}/backhaul-matches",
+        ...options,
+    });
+
+export const nearbySupplierNearby = <ThrowOnError extends boolean = false>(
+    options: Options<NearbySupplierNearbyData, ThrowOnError>,
+): RequestResult<
+    NearbySupplierNearbyResponses,
+    NearbySupplierNearbyErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        NearbySupplierNearbyResponses,
+        NearbySupplierNearbyErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/suppliers/nearby",
+        ...options,
+    });
+
 export const supplierViewGuest = <ThrowOnError extends boolean = false>(
     options: Options<SupplierViewGuestData, ThrowOnError>,
 ): RequestResult<
@@ -1513,6 +1600,23 @@ export const deliveryVerificationEvents = <
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/delivery/{shipmentId}/verification/events",
+        ...options,
+    });
+
+export const shipmentRouteRoute = <ThrowOnError extends boolean = false>(
+    options: Options<ShipmentRouteRouteData, ThrowOnError>,
+): RequestResult<
+    ShipmentRouteRouteResponses,
+    ShipmentRouteRouteErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        ShipmentRouteRouteResponses,
+        ShipmentRouteRouteErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/route",
         ...options,
     });
 

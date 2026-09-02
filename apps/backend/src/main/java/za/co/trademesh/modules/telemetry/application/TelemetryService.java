@@ -101,6 +101,40 @@ public class TelemetryService {
 
     @Transactional
     public IngestionResult ingest(String rawCredential, List<ReadingInput> inputs) {
+        return ingest(rawCredential, null, inputs);
+    }
+
+    @Transactional
+    public PositionResult ingestPosition(String rawCredential, UUID shipmentId, PositionInput input) {
+        if (input == null) {
+            throw TelemetryException.invalidRequest();
+        }
+        UUID clientEventId = input.clientEventId() == null ? UUID.randomUUID() : input.clientEventId();
+        Instant recordedAt = input.recordedAt() == null ? clock.instant() : input.recordedAt();
+        ReadingInput reading = new ReadingInput(
+                clientEventId,
+                recordedAt,
+                input.latitude(),
+                input.longitude(),
+                input.speedKilometresPerHour(),
+                null,
+                null,
+                null,
+                input.batteryPercent(),
+                input.networkStatus(),
+                input.networkSignalDbm());
+        IngestionResult result = ingest(rawCredential, requiredId(shipmentId), List.of(reading));
+        ReadingReceipt receipt = result.readings().getFirst();
+        return new PositionResult(
+                shipmentId,
+                receipt,
+                databaseTime(recordedAt),
+                input.latitude(),
+                input.longitude(),
+                decimal(input.speedKilometresPerHour()));
+    }
+
+    private IngestionResult ingest(String rawCredential, UUID expectedShipmentId, List<ReadingInput> inputs) {
         if (inputs == null || inputs.isEmpty() || inputs.size() > properties.maximumBatchSize()) {
             throw TelemetryException.invalidRequest();
         }
@@ -110,6 +144,9 @@ public class TelemetryService {
                 .filter(candidate -> candidate.status() == TelemetryDeviceStatus.ACTIVE)
                 .filter(candidate -> credentials.matches(supplied.credentialHash(), candidate.credentialHash()))
                 .orElseThrow(TelemetryException::deviceAuthenticationFailed);
+        if (expectedShipmentId != null && !device.shipmentId().equals(expectedShipmentId)) {
+            throw TelemetryException.deviceAuthenticationFailed();
+        }
         var access = shipments
                 .findOwned(device.businessId(), device.shipmentId())
                 .orElseThrow(TelemetryException::deviceAuthenticationFailed);
@@ -160,6 +197,7 @@ public class TelemetryService {
                             reading.shipmentId(),
                             reading.deviceId(),
                             reading.recordedAt(),
+                            reading.receivedAt(),
                             reading.latitude(),
                             reading.longitude(),
                             reading.speedKilometresPerHour(),
@@ -189,6 +227,12 @@ public class TelemetryService {
     public TelemetryLivePosition getLivePosition(UUID businessId, UUID shipmentId) {
         requireOwned(businessId, shipmentId);
         return telemetry.findLivePosition(shipmentId).orElseThrow(TelemetryException::livePositionNotFound);
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.Optional<TelemetryLivePosition> findLivePosition(UUID businessId, UUID shipmentId) {
+        requireOwned(businessId, shipmentId);
+        return telemetry.findLivePosition(shipmentId);
     }
 
     @Transactional(readOnly = true)
@@ -342,11 +386,29 @@ public class TelemetryService {
             TelemetryNetworkStatus networkStatus,
             Integer networkSignalDbm) {}
 
+    public record PositionInput(
+            UUID clientEventId,
+            Instant recordedAt,
+            double latitude,
+            double longitude,
+            BigDecimal speedKilometresPerHour,
+            BigDecimal batteryPercent,
+            TelemetryNetworkStatus networkStatus,
+            Integer networkSignalDbm) {}
+
     public record IssuedDevice(TelemetryDevice device, String rawCredential) {}
 
     public record IngestionResult(List<ReadingReceipt> readings) {}
 
     public record ReadingReceipt(UUID clientEventId, UUID readingId, ReceiptStatus status) {}
+
+    public record PositionResult(
+            UUID shipmentId,
+            ReadingReceipt receipt,
+            Instant recordedAt,
+            double latitude,
+            double longitude,
+            BigDecimal speedKilometresPerHour) {}
 
     public enum ReceiptStatus {
         ACCEPTED,

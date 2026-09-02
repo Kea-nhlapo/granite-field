@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
 import za.co.trademesh.modules.routing.application.ResilientRouteProviderGateway;
 import za.co.trademesh.modules.routing.application.RouteProvider;
 import za.co.trademesh.modules.routing.application.RouteProviderGateway;
@@ -19,10 +20,11 @@ class RoutingProviderConfiguration {
         String provider = properties.provider() == null
                 ? ""
                 : properties.provider().strip().toLowerCase(Locale.ROOT);
-        if (!provider.equals("mock")) {
-            throw new IllegalStateException("Unsupported routing provider: " + provider);
-        }
-        return new DeterministicMockRouteProvider();
+        return switch (provider) {
+            case "mock" -> new DeterministicMockRouteProvider();
+            case "google" -> new GoogleDirectionsRouteProvider(RestClient.builder(), properties);
+            default -> throw new IllegalStateException("Unsupported routing provider: " + provider);
+        };
     }
 
     @Bean("routingFallbackProvider")

@@ -48,6 +48,7 @@ public class OpenApiConfiguration {
             Map.entry("shipmentCreate", "201"),
             Map.entry("supplierInvite", "201"),
             Map.entry("telemetryIngest", "202"),
+            Map.entry("telemetryPosition", "202"),
             Map.entry("telemetryProvision", "201"),
             Map.entry("telemetryRevoke", "204"),
             Map.entry("transportAssignDriver", "201"),
@@ -194,7 +195,7 @@ public class OpenApiConfiguration {
                 || (controller.equals("SupplierController")
                         && (method.equals("viewGuest") || method.equals("submitResponse")))
                 || (controller.equals("DeliveryController") && (method.equals("preview") || method.equals("confirm")))
-                || (controller.equals("TelemetryController") && method.equals("ingest"))
+                || (controller.equals("TelemetryController") && (method.equals("ingest") || method.equals("position")))
                 || (controller.equals("TrustController") && method.equals("publicSummary"));
     }
 

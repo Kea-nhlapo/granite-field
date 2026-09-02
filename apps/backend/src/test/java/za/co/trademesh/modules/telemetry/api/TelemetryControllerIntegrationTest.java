@@ -60,7 +60,11 @@ import za.co.trademesh.support.PostgresIntegrationTest;
 @AutoConfigureMockMvc
 @Import(TelemetryControllerIntegrationTest.DemandTestConfiguration.class)
 @TestPropertySource(
-        properties = {"trademesh.telemetry.maximum-readings-per-window=4", "trademesh.telemetry.maximum-batch-size=4"})
+        properties = {
+            "trademesh.telemetry.maximum-readings-per-window=4",
+            "trademesh.telemetry.maximum-batch-size=4",
+            "trademesh.tracking.backhaul-time-window=P2D"
+        })
 class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
 
     @Autowired
@@ -245,23 +249,75 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void pushesShipmentBoundPositionsAndReturnsRouteAndBackhaulData() throws Exception {
+        ShipmentSetup current = createShipment(1);
+        ShipmentSetup candidate = createShipment(2);
+        String provisioned = provision(current.buyer(), current.businessId(), current.shipmentId())
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String credential = JsonPath.read(provisioned, "$.credential");
+        UUID clientEventId = UUID.randomUUID();
+
+        position(credential, current.shipmentId(), """
+                        {
+                          "clientEventId":"%s",
+                          "lat":-26.2040,
+                          "lng":28.0474,
+                          "speedKilometresPerHour":42.5,
+                          "networkStatus":"CONNECTED"
+                        }
+                        """.formatted(clientEventId))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.clientEventId").value(clientEventId.toString()))
+                .andExpect(jsonPath("$.latitude").value(-26.204))
+                .andExpect(jsonPath("$.longitude").value(28.0474));
+        position(credential, UUID.randomUUID(), "{\"lat\":-26.2,\"lng\":28.0}")
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("TELEMETRY_DEVICE_AUTHENTICATION_FAILED"));
+
+        positionEvents(current.buyer(), current.businessId(), current.shipmentId())
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.request()
+                        .asyncStarted());
+        route(current.buyer(), current.businessId(), current.shipmentId())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providerName").value("deterministic-mock"))
+                .andExpect(jsonPath("$.encodedPolyline").isNotEmpty())
+                .andExpect(jsonPath("$.estimatedArrivalAt").isNotEmpty());
+        route(current.fleet(), current.fleetBusinessId(), current.shipmentId()).andExpect(status().isOk());
+        backhaul(current.buyer(), current.businessId(), current.shipmentId())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.matches[0].shipmentId")
+                        .value(candidate.shipmentId().toString()))
+                .andExpect(jsonPath("$.matches[0].roadDistanceMeasured").value(true))
+                .andExpect(jsonPath("$.matches[0].score").isNumber());
+        backhaul(current.outsider(), current.businessId(), current.shipmentId()).andExpect(status().isForbidden());
+    }
+
     private ShipmentSetup createShipment() {
-        Account buyer = register("telemetry-buyer@example.com", RegistrationType.BUSINESS_OWNER);
-        Account outsider = register("telemetry-outsider@example.com", RegistrationType.BUSINESS_OWNER);
-        Account fleet = register("telemetry-fleet@example.com", RegistrationType.TRANSPORTER);
-        UUID businessId = createBusiness(buyer, "2026/860001/07");
-        UUID fleetBusinessId = createBusiness(fleet, "2026/860002/07");
+        return createShipment(1);
+    }
+
+    private ShipmentSetup createShipment(int suffix) {
+        Account buyer = register("telemetry-buyer-" + suffix + "@example.com", RegistrationType.BUSINESS_OWNER);
+        Account outsider = register("telemetry-outsider-" + suffix + "@example.com", RegistrationType.BUSINESS_OWNER);
+        Account fleet = register("telemetry-fleet-" + suffix + "@example.com", RegistrationType.TRANSPORTER);
+        UUID businessId = createBusiness(buyer, "2026/%06d/07".formatted(860_000 + suffix));
+        UUID fleetBusinessId = createBusiness(fleet, "2026/%06d/07".formatted(870_000 + suffix));
         transportService.registerTransporter(fleetBusinessId, "Telemetry Fleet", fleet.userId());
         Instant start = Instant.now().plus(1, ChronoUnit.DAYS).truncatedTo(ChronoUnit.SECONDS);
         UUID demandId = demandCatalog.add(businessId, start, start.plus(2, ChronoUnit.HOURS));
         var vehicle = transportService.createVehicle(
                 fleetBusinessId,
                 new TransportService.CreateVehicle(
-                        UUID.randomUUID(), "GP TELEMETRY", "Telemetry truck", amount("500"), amount("50")),
+                        UUID.randomUUID(), "GP TELEMETRY " + suffix, "Telemetry truck", amount("500"), amount("50")),
                 fleet.userId());
         var driver = transportService.createDriver(
                 fleetBusinessId,
-                new TransportService.CreateDriver(UUID.randomUUID(), "Telemetry Driver", "DRV-TELEMETRY"),
+                new TransportService.CreateDriver(UUID.randomUUID(), "Telemetry Driver", "DRV-TELEMETRY-" + suffix),
                 fleet.userId());
         var assignment = transportService.assignDriver(
                 fleetBusinessId,
@@ -325,7 +381,7 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
                         UUID.randomUUID()),
                 buyer.userId(),
                 ShipmentActionSource.OPERATIONS);
-        return new ShipmentSetup(buyer, outsider, businessId, shipment.id());
+        return new ShipmentSetup(buyer, outsider, fleet, businessId, fleetBusinessId, shipment.id());
     }
 
     private Account register(String email, RegistrationType type) {
@@ -358,6 +414,31 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
                 .header(TelemetryController.DEVICE_CREDENTIAL_HEADER, credential)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body));
+    }
+
+    private ResultActions position(String credential, UUID shipmentId, String body) throws Exception {
+        return mockMvc.perform(post("/api/tracking/{shipmentId}/position", shipmentId)
+                .header(TelemetryController.DEVICE_CREDENTIAL_HEADER, credential)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body));
+    }
+
+    private ResultActions positionEvents(Account account, UUID businessId, UUID shipmentId) throws Exception {
+        return mockMvc.perform(get("/api/tracking/{shipmentId}/events", shipmentId)
+                .queryParam("businessId", businessId.toString())
+                .header(HttpHeaders.AUTHORIZATION, bearer(account)));
+    }
+
+    private ResultActions route(Account account, UUID businessId, UUID shipmentId) throws Exception {
+        return mockMvc.perform(get("/api/delivery/{shipmentId}/route", shipmentId)
+                .queryParam("businessId", businessId.toString())
+                .header(HttpHeaders.AUTHORIZATION, bearer(account)));
+    }
+
+    private ResultActions backhaul(Account account, UUID businessId, UUID shipmentId) throws Exception {
+        return mockMvc.perform(get("/api/tracking/{shipmentId}/backhaul-matches", shipmentId)
+                .queryParam("businessId", businessId.toString())
+                .header(HttpHeaders.AUTHORIZATION, bearer(account)));
     }
 
     private ResultActions live(Account account, UUID businessId, UUID shipmentId) throws Exception {
@@ -421,7 +502,8 @@ class TelemetryControllerIntegrationTest extends PostgresIntegrationTest {
 
     private record Account(UUID userId, String accessToken) {}
 
-    private record ShipmentSetup(Account buyer, Account outsider, UUID businessId, UUID shipmentId) {}
+    private record ShipmentSetup(
+            Account buyer, Account outsider, Account fleet, UUID businessId, UUID fleetBusinessId, UUID shipmentId) {}
 
     @TestConfiguration(proxyBeanMethods = false)
     static class DemandTestConfiguration {
