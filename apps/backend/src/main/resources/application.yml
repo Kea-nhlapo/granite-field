@@ -22,25 +22,59 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:NONE}
+  max-http-request-header-size: ${SERVER_MAX_HTTP_REQUEST_HEADER_SIZE:16KB}
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    whitelabel:
+      enabled: false
+  tomcat:
+    max-http-form-post-size: ${SERVER_MAX_HTTP_FORM_POST_SIZE:11MB}
+    max-swallow-size: ${SERVER_MAX_SWALLOW_SIZE:12MB}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: health,info,metrics
   endpoint:
     health:
       probes:
         enabled: true
       show-details: ${MANAGEMENT_HEALTH_SHOW_DETAILS:never}
+      group:
+        liveness:
+          include: livenessState,ping
+        readiness:
+          include: readinessState,diskSpace,postgis
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
+  structured:
+    format:
+      console: ${LOG_STRUCTURED_FORMAT:logstash}
 
 trademesh:
   runtime:
     environment: ${TRADEMESH_RUNTIME_ENVIRONMENT:local}
+  web:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+    cors-max-age: ${CORS_MAX_AGE:PT1H}
+    maximum-content-length: ${SERVER_MAX_CONTENT_LENGTH:12MB}
+    rate-limits:
+      window: ${API_RATE_LIMIT_WINDOW:PT1M}
+      maximum-tracked-clients: ${API_RATE_LIMIT_MAX_TRACKED_CLIENTS:50000}
+      login: ${API_RATE_LIMIT_LOGIN:10}
+      invitations: ${API_RATE_LIMIT_INVITATIONS:60}
+      uploads: ${API_RATE_LIMIT_UPLOADS:20}
+      telemetry: ${API_RATE_LIMIT_TELEMETRY:120}
+      qr-validation: ${API_RATE_LIMIT_QR_VALIDATION:30}
   events:
     source: ${TRADEMESH_EVENTS_SOURCE:trademesh-backend}
   outbox:
