@@ -176,6 +176,21 @@ trademesh:
     retention: ${TELEMETRY_RETENTION:P90D}
     cleanup-batch-size: ${TELEMETRY_CLEANUP_BATCH_SIZE:5000}
     cleanup-interval: ${TELEMETRY_CLEANUP_INTERVAL:PT1H}
+  risk:
+    # Two off-route readings reduce false alerts from a single noisy GPS fix.
+    route-deviation-metres: ${RISK_ROUTE_DEVIATION_METRES:1000}
+    route-deviation-confirmations: ${RISK_ROUTE_DEVIATION_CONFIRMATIONS:2}
+    stopped-speed-kph: ${RISK_STOPPED_SPEED_KPH:2.0}
+    unexpected-stop-duration: ${RISK_UNEXPECTED_STOP_DURATION:PT20M}
+    maximum-telemetry-gap: ${RISK_MAXIMUM_TELEMETRY_GAP:PT5M}
+    tracker-offline-duration: ${RISK_TRACKER_OFFLINE_DURATION:PT15M}
+    fuel-drop-litres: ${RISK_FUEL_DROP_LITRES:30.0}
+    fuel-drop-window: ${RISK_FUEL_DROP_WINDOW:PT20M}
+    delivery-grace: ${RISK_DELIVERY_GRACE:PT30M}
+    scan-interval: ${RISK_SCAN_INTERVAL:PT1M}
+    scan-batch-size: ${RISK_SCAN_BATCH_SIZE:100}
+    reading-window-limit: ${RISK_READING_WINDOW_LIMIT:1000}
+    rule-version: ${RISK_RULE_VERSION:operational-risk/v1}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.

@@ -85,6 +85,9 @@ class ShipmentControllerIntegrationTest extends PostgresIntegrationTest {
     @AfterEach
     void cleanState() {
         demandCatalog.clear();
+        jdbcTemplate.update("DELETE FROM risk_indicator_transition");
+        jdbcTemplate.update("DELETE FROM risk_indicator_evidence");
+        jdbcTemplate.update("DELETE FROM risk_indicator");
         jdbcTemplate.update("DELETE FROM shipment_transition");
         jdbcTemplate.update("DELETE FROM shipment_assignment");
         jdbcTemplate.update("DELETE FROM shipment_load_cargo_item");
