@@ -1,4 +1,11 @@
+import {
+    MessageBar,
+    MessageBarBody,
+    MessageBarTitle,
+} from "@fluentui/react-components";
 import { Component, type ErrorInfo, type ReactNode } from "react";
+
+import { useAppStyles } from "./app.styles";
 
 type AppErrorBoundaryProps = {
     children: ReactNode;
@@ -7,6 +14,26 @@ type AppErrorBoundaryProps = {
 type AppErrorBoundaryState = {
     hasError: boolean;
 };
+
+function AppErrorState() {
+    const styles = useAppStyles();
+
+    return (
+        <main className={styles.page} role="alert">
+            <div className={styles.shell}>
+                <div className={styles.brandBar} />
+                <div className={styles.card}>
+                    <MessageBar intent="error">
+                        <MessageBarTitle>Something went wrong</MessageBarTitle>
+                        <MessageBarBody>
+                            Refresh the page and try again.
+                        </MessageBarBody>
+                    </MessageBar>
+                </div>
+            </div>
+        </main>
+    );
+}
 
 export class AppErrorBoundary extends Component<
     AppErrorBoundaryProps,
@@ -28,12 +55,7 @@ export class AppErrorBoundary extends Component<
 
     public render() {
         if (this.state.hasError) {
-            return (
-                <main className="app-state" role="alert">
-                    <h1>Something went wrong</h1>
-                    <p>Refresh the page and try again.</p>
-                </main>
-            );
+            return <AppErrorState />;
         }
 
         return this.props.children;

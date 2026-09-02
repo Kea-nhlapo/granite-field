@@ -3,7 +3,7 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, expect, test } from "vitest";
 
 import { notificationPreferenceGet, trustPublicSummary } from "./app-api";
-import { setApiAccessToken } from "./client";
+import { getApiAccessToken, setApiAccessToken } from "./client";
 import { handlers } from "./mocks/handlers";
 import { runtimeConfig } from "../lib/runtime-config";
 
@@ -41,5 +41,6 @@ test("the generated SDK adds bearer auth to protected operations", async () => {
     const result = await notificationPreferenceGet();
 
     expect(result.error).toBeUndefined();
+    expect(getApiAccessToken()).toBe("test-access-token");
     expect(authorization).toBe("Bearer test-access-token");
 });

@@ -1,16 +1,24 @@
-import { lazy, Suspense } from "react";
+import { BrowserRouter, useRoutes } from "react-router-dom";
 
+import { SessionProvider } from "../features/access/SessionProvider";
+import { appRoutes } from "./app-routes";
 import { AppErrorBoundary } from "./AppErrorBoundary";
-import { AppLoading } from "./AppLoading";
+import { FluentAppProvider } from "./FluentAppProvider";
 
-const RootRoute = lazy(() => import("./routes/RootRoute"));
+export function AppRoutes() {
+    return useRoutes(appRoutes);
+}
 
 export function App() {
     return (
-        <AppErrorBoundary>
-            <Suspense fallback={<AppLoading />}>
-                <RootRoute />
-            </Suspense>
-        </AppErrorBoundary>
+        <FluentAppProvider>
+            <AppErrorBoundary>
+                <SessionProvider>
+                    <BrowserRouter>
+                        <AppRoutes />
+                    </BrowserRouter>
+                </SessionProvider>
+            </AppErrorBoundary>
+        </FluentAppProvider>
     );
 }
