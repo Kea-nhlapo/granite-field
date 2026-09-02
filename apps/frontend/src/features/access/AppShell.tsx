@@ -22,6 +22,7 @@ export function AppShell() {
     const showLogistics = showDocuments;
     const showRouting = showDocuments;
     const showTracking = showDocuments;
+    const showHandover = showDocuments;
 
     return (
         <div className={styles.shell} data-testid="app-shell">
@@ -124,6 +125,18 @@ export function AppShell() {
                             to={`/app/tracking/${mockBusinessId}`}
                         >
                             Tracking
+                        </NavLink>
+                    ) : null}
+                    {showHandover ? (
+                        <NavLink
+                            className={({ isActive }) =>
+                                isActive
+                                    ? `${styles.navLink} ${styles.navLinkActive}`
+                                    : styles.navLink
+                            }
+                            to={`/app/handover/${mockBusinessId}`}
+                        >
+                            Handover
                         </NavLink>
                     ) : null}
                     <Button
