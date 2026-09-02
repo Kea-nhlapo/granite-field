@@ -12,6 +12,7 @@ import OnboardingPage from "../features/business/OnboardingPage";
 import GuestInvitePage from "../features/guest/GuestInvitePage";
 import DocumentReviewPage from "../features/documents/DocumentReviewPage";
 import ProcurementPage from "../features/procurement/ProcurementPage";
+import LogisticsPage from "../features/logistics/LogisticsPage";
 
 function HomeRedirect() {
     const { session, status } = useSession();
@@ -107,6 +108,30 @@ export const appRoutes: RouteObject[] = [
                     </RequireRole>
                 ),
                 path: "procurement/:businessId/orders/:orderId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <LogisticsPage />
+                    </RequireRole>
+                ),
+                path: "logistics/:businessId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <LogisticsPage />
+                    </RequireRole>
+                ),
+                path: "logistics/:businessId/suggestions/:suggestionId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <LogisticsPage />
+                    </RequireRole>
+                ),
+                path: "logistics/:businessId/capacity-matches/:searchId",
             },
         ],
         element: (
