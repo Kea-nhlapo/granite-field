@@ -1,0 +1,10 @@
+{
+    "businessId": "00000000-0000-4000-8000-000000000001",
+    "verifiedBadges": [],
+    "completedTransactionCount": 0,
+    "deliverySuccessRate": 0,
+    "rating": { "outOf": 5, "ratingCount": 0, "status": "NO_RATINGS" },
+    "historyBand": "NO_COMPLETED_HISTORY",
+    "calculationVersion": "trust-summary/v1",
+    "calculatedAt": "2026-09-02T12:00:00Z"
+}

@@ -1,0 +1,9 @@
+{
+    "type": "about:blank",
+    "title": "Request validation failed",
+    "status": 400,
+    "detail": "The request is missing required data or contains an invalid value.",
+    "instance": "/api",
+    "code": "INVALID_REQUEST",
+    "requestId": "00000000-0000-4000-8000-000000000099"
+}

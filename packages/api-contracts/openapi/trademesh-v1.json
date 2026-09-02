@@ -1,0 +1,5134 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "TradeMesh API",
+    "description": "Reviewed contract for the TradeMesh web client and partner integrations.",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "/", "description": "Current TradeMesh API host" }],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/api/notification-preferences/{category}": {
+      "put": {
+        "tags": ["notification-preference-controller"],
+        "operationId": "notificationPreferenceSet",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUPPLIER_INVITATION",
+                "PROCUREMENT_UPDATE",
+                "SHIPMENT_UPDATE",
+                "SECURITY_ALERT"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/PreferenceResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/telemetry/readings": {
+      "post": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryIngest",
+        "parameters": [
+          {
+            "name": "X-Telemetry-Credential",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/IngestReadingsRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/IngestionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": []
+      }
+    },
+    "/api/supplier-profiles/{supplierProfileId}/conversion": {
+      "post": {
+        "tags": ["supplier-controller"],
+        "operationId": "supplierConvert",
+        "parameters": [
+          {
+            "name": "supplierProfileId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertSupplierRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupplierProfileResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/supplier-invitations/guest/{token}/responses": {
+      "post": {
+        "tags": ["supplier-controller"],
+        "operationId": "supplierSubmitResponse",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SubmitResponseRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/InvitationResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": []
+      }
+    },
+    "/api/internal/trust/businesses/{businessId}/recalculation": {
+      "post": {
+        "tags": ["trust-controller"],
+        "operationId": "trustRecalculate",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternalCalculationResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/internal/risk/indicators/{indicatorId}/transitions": {
+      "post": {
+        "tags": ["risk-controller"],
+        "operationId": "riskTransition",
+        "parameters": [
+          {
+            "name": "indicatorId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TransitionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/IndicatorResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/internal/insurance/cases": {
+      "post": {
+        "tags": ["insurance-controller"],
+        "operationId": "insuranceCreateCase",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateCaseRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/insurance/cases/{caseId}/decisions": {
+      "post": {
+        "tags": ["insurance-controller"],
+        "operationId": "insuranceRecordDecision",
+        "parameters": [
+          {
+            "name": "caseId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RecordDecisionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/DecisionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/handovers/confirmations": {
+      "post": {
+        "tags": ["handover-controller"],
+        "operationId": "handoverConfirm",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmHandoverRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ChallengeResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{buyerBusinessId}/supplier-invitations": {
+      "post": {
+        "tags": ["supplier-controller"],
+        "operationId": "supplierInvite",
+        "parameters": [
+          {
+            "name": "buyerBusinessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvitationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedInvitationResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{buyerBusinessId}/supplier-invitations/{invitationId}/revocation": {
+      "post": {
+        "tags": ["supplier-controller"],
+        "operationId": "supplierRevoke",
+        "parameters": [
+          {
+            "name": "buyerBusinessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/InvitationResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/vehicles": {
+      "post": {
+        "tags": ["transport-controller"],
+        "operationId": "transportCreateVehicle",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateVehicleRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/VehicleResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/profile": {
+      "get": {
+        "tags": ["transport-controller"],
+        "operationId": "transportGetProfile",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/TransporterResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      },
+      "post": {
+        "tags": ["transport-controller"],
+        "operationId": "transportRegister",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterTransporterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/TransporterResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/drivers": {
+      "post": {
+        "tags": ["transport-controller"],
+        "operationId": "transportCreateDriver",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateDriverRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/DriverResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/capacity-offers": {
+      "post": {
+        "tags": ["transport-controller"],
+        "operationId": "transportPublishOffer",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishCapacityOfferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapacityOfferResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/capacity-offers/{offerId}/cancellation": {
+      "post": {
+        "tags": ["transport-controller"],
+        "operationId": "transportCancelOffer",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "offerId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapacityOfferResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/assignments": {
+      "post": {
+        "tags": ["transport-controller"],
+        "operationId": "transportAssignDriver",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AssignDriverRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/AssignmentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/assignments/{assignmentId}/end": {
+      "post": {
+        "tags": ["transport-controller"],
+        "operationId": "transportEndAssignment",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/AssignmentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments": {
+      "post": {
+        "tags": ["shipment-controller"],
+        "operationId": "shipmentCreate",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateShipmentRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ShipmentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments/{shipmentId}/transitions": {
+      "post": {
+        "tags": ["shipment-controller"],
+        "operationId": "shipmentTransition",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransitionShipmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ShipmentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments/{shipmentId}/telemetry-devices": {
+      "post": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryProvision",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvisionDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedDeviceResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments/{shipmentId}/handovers/challenges": {
+      "post": {
+        "tags": ["handover-controller"],
+        "operationId": "handoverIssue",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/IssueChallengeRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedChallengeResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments/{shipmentId}/assignments": {
+      "post": {
+        "tags": ["shipment-controller"],
+        "operationId": "shipmentChangeAssignment",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAssignmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ShipmentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/routing/calculations": {
+      "post": {
+        "tags": ["routing-controller"],
+        "operationId": "routingCalculate",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CalculateRoutesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteCalculationResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/routing/calculations/{calculationId}/assessments": {
+      "post": {
+        "tags": ["route-scoring-controller"],
+        "operationId": "routeScoringScore",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "calculationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScoreRoutesRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteAssessmentResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/procurement/requests": {
+      "post": {
+        "tags": ["procurement-controller"],
+        "operationId": "procurementCreateRequest",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateProductRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductRequestResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/procurement/requests/{requestId}/quotes": {
+      "post": {
+        "tags": ["procurement-controller"],
+        "operationId": "procurementCreateQuote",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateQuoteRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/QuoteResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/procurement/requests/{requestId}/cancellation": {
+      "post": {
+        "tags": ["procurement-controller"],
+        "operationId": "procurementCancelRequest",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductRequestResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/procurement/quotes/{quoteId}/confirmations": {
+      "post": {
+        "tags": ["procurement-controller"],
+        "operationId": "procurementConfirmQuote",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "quoteId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ConfirmQuoteRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/OrderResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/logistics/capacity-matches": {
+      "post": {
+        "tags": ["capacity-matching-controller"],
+        "operationId": "capacityMatchingSearch",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SearchRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/SearchResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/logistics/capacity-matches/{searchId}/reservations": {
+      "post": {
+        "tags": ["capacity-matching-controller"],
+        "operationId": "capacityMatchingReserve",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "searchId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReservationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ReservationResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/logistics/capacity-matches/{searchId}/reservation-release": {
+      "post": {
+        "tags": ["capacity-matching-controller"],
+        "operationId": "capacityMatchingRelease",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "searchId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ReservationResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/files": {
+      "post": {
+        "tags": ["file-storage-controller"],
+        "operationId": "fileStorageUpload",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INVOICE",
+                "DELIVERY_PROOF",
+                "COMPANY_DOCUMENT",
+                "INSURANCE_DOCUMENT"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": { "type": "string", "format": "binary" }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileMetadataResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/documents": {
+      "post": {
+        "tags": ["document-controller"],
+        "operationId": "documentRegister",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/DocumentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/documents/{documentId}/confirmations": {
+      "post": {
+        "tags": ["document-controller"],
+        "operationId": "documentConfirm",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/DocumentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/documents/comparisons": {
+      "post": {
+        "tags": ["document-comparison-controller"],
+        "operationId": "documentComparisonCompare",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompareDocumentsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ComparisonResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/aggregation/suggestions": {
+      "post": {
+        "tags": ["demand-aggregation-controller"],
+        "operationId": "demandAggregationSuggest",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestDemandGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/SuggestionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/onboarding/registered": {
+      "post": {
+        "tags": ["business-controller"],
+        "operationId": "businessStartRegisteredOnboarding",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRegisteredOnboardingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisteredOnboardingResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/onboarding/registered/{onboardingId}/confirmation": {
+      "post": {
+        "tags": ["business-controller"],
+        "operationId": "businessConfirmRegisteredOnboarding",
+        "parameters": [
+          {
+            "name": "onboardingId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessProfileResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authRegister",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/TokenResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authRefresh",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RefreshRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/TokenResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authLogout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LogoutRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": { "description": "No Content" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/TokenResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": []
+      }
+    },
+    "/api/supplier-invitations/guest/{token}": {
+      "get": {
+        "tags": ["supplier-controller"],
+        "operationId": "supplierViewGuest",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GuestInvitationResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": []
+      }
+    },
+    "/api/public/businesses/{businessId}/trust": {
+      "get": {
+        "tags": ["trust-controller"],
+        "operationId": "trustPublicSummary",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSummaryResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        },
+        "security": []
+      }
+    },
+    "/api/notification-preferences": {
+      "get": {
+        "tags": ["notification-preference-controller"],
+        "operationId": "notificationPreferenceGet",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/PreferencesResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/internal/risk/shipments/{shipmentId}/indicators": {
+      "get": {
+        "tags": ["risk-controller"],
+        "operationId": "riskList",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndicatorListResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/insurance/cases/{caseId}/evidence": {
+      "get": {
+        "tags": ["insurance-controller"],
+        "operationId": "insuranceEvidence",
+        "parameters": [
+          {
+            "name": "caseId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePackageResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}": {
+      "get": {
+        "tags": ["business-controller"],
+        "operationId": "businessGetBusiness",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessProfileResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/vehicles/{vehicleId}": {
+      "get": {
+        "tags": ["transport-controller"],
+        "operationId": "transportGetVehicle",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/VehicleResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/vehicles/{vehicleId}/assignments": {
+      "get": {
+        "tags": ["transport-controller"],
+        "operationId": "transportAssignmentHistory",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AssignmentResponse" }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/drivers/{driverId}": {
+      "get": {
+        "tags": ["transport-controller"],
+        "operationId": "transportGetDriver",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "driverId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/DriverResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/transport/capacity-offers/{offerId}": {
+      "get": {
+        "tags": ["transport-controller"],
+        "operationId": "transportGetOffer",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "offerId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapacityOfferResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments/{shipmentId}": {
+      "get": {
+        "tags": ["shipment-controller"],
+        "operationId": "shipmentGet",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ShipmentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments/{shipmentId}/telemetry": {
+      "get": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryHistory",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 100 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadingHistoryResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments/{shipmentId}/telemetry/live": {
+      "get": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryLive",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivePositionResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/shipments/{shipmentId}/handovers/challenges/{challengeId}": {
+      "get": {
+        "tags": ["handover-controller"],
+        "operationId": "handoverGet",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "challengeId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ChallengeResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/routing/calculations/{calculationId}": {
+      "get": {
+        "tags": ["routing-controller"],
+        "operationId": "routingGet",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "calculationId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteCalculationResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/routing/assessments/{assessmentId}": {
+      "get": {
+        "tags": ["route-scoring-controller"],
+        "operationId": "routeScoringGet",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "assessmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteAssessmentResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/procurement/requests/{requestId}": {
+      "get": {
+        "tags": ["procurement-controller"],
+        "operationId": "procurementGetRequest",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductRequestResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/procurement/quotes/{quoteId}": {
+      "get": {
+        "tags": ["procurement-controller"],
+        "operationId": "procurementGetQuote",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "quoteId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/QuoteResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/procurement/orders/{orderId}": {
+      "get": {
+        "tags": ["procurement-controller"],
+        "operationId": "procurementGetOrder",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/OrderResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/logistics/capacity-matches/{searchId}": {
+      "get": {
+        "tags": ["capacity-matching-controller"],
+        "operationId": "capacityMatchingGet",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "searchId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/SearchResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/files/{fileId}": {
+      "get": {
+        "tags": ["file-storage-controller"],
+        "operationId": "fileStorageMetadata",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileMetadataResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/files/{fileId}/download": {
+      "get": {
+        "tags": ["file-storage-controller"],
+        "operationId": "fileStorageDownload",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "fileId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadAccessResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/documents/{documentId}": {
+      "get": {
+        "tags": ["document-controller"],
+        "operationId": "documentGet",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "documentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/DocumentResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/documents/comparisons/{comparisonId}": {
+      "get": {
+        "tags": ["document-comparison-controller"],
+        "operationId": "documentComparisonGet",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "comparisonId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ComparisonResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/aggregation/suggestions/{suggestionId}": {
+      "get": {
+        "tags": ["demand-aggregation-controller"],
+        "operationId": "demandAggregationGet",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "suggestionId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/SuggestionResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/onboarding/registered/{onboardingId}": {
+      "get": {
+        "tags": ["business-controller"],
+        "operationId": "businessGetRegisteredOnboarding",
+        "parameters": [
+          {
+            "name": "onboardingId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisteredOnboardingResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    },
+    "/api/businesses/{businessId}/telemetry-devices/{deviceId}": {
+      "delete": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryRevoke",
+        "parameters": [
+          {
+            "name": "businessId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "deviceId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "No Content" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdatePreferenceRequest": {
+        "type": "object",
+        "properties": { "emailEnabled": { "type": "boolean" } },
+        "required": ["emailEnabled"]
+      },
+      "PreferenceResponse": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string", "format": "uuid" },
+          "category": {
+            "type": "string",
+            "enum": [
+              "SUPPLIER_INVITATION",
+              "PROCUREMENT_UPDATE",
+              "SHIPMENT_UPDATE",
+              "SECURITY_ALERT"
+            ]
+          },
+          "emailEnabled": { "type": "boolean" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "IngestReadingsRequest": {
+        "type": "object",
+        "properties": {
+          "readings": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReadingRequest" },
+            "minItems": 1
+          }
+        },
+        "required": ["readings"]
+      },
+      "ReadingRequest": {
+        "type": "object",
+        "properties": {
+          "clientEventId": { "type": "string", "format": "uuid" },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "speedKilometresPerHour": { "type": "number" },
+          "fuelLitres": { "type": "number" },
+          "temperatureCelsius": { "type": "number" },
+          "sealOpen": { "type": "boolean" },
+          "batteryPercent": { "type": "number" },
+          "networkStatus": {
+            "type": "string",
+            "enum": ["CONNECTED", "LIMITED", "OFFLINE", "UNKNOWN"]
+          },
+          "networkSignalDbm": { "type": "integer", "format": "int32" }
+        },
+        "required": ["clientEventId", "recordedAt"]
+      },
+      "IngestionResponse": {
+        "type": "object",
+        "properties": {
+          "readings": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReadingReceiptResponse" }
+          },
+          "acceptedCount": { "type": "integer", "format": "int32" },
+          "duplicateCount": { "type": "integer", "format": "int32" }
+        }
+      },
+      "ReadingReceiptResponse": {
+        "type": "object",
+        "properties": {
+          "clientEventId": { "type": "string", "format": "uuid" },
+          "readingId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["ACCEPTED", "DUPLICATE"] }
+        }
+      },
+      "ConvertSupplierRequest": {
+        "type": "object",
+        "properties": {
+          "invitationToken": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 0
+          },
+          "businessId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["invitationToken"]
+      },
+      "SupplierProfileResponse": {
+        "type": "object",
+        "properties": {
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "supplierEmail": { "type": "string" },
+          "status": { "type": "string", "enum": ["TEMPORARY", "REGISTERED"] },
+          "claimedUserId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "convertedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SubmitResponseRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "responseReference": { "type": "string", "format": "uuid" }
+        },
+        "required": ["requestId", "responseReference"]
+      },
+      "InvitationResponse": {
+        "type": "object",
+        "properties": {
+          "invitationId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "responseReference": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "RESPONDED", "REVOKED", "EXPIRED"]
+          },
+          "respondedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "InternalCalculationResponse": {
+        "type": "object",
+        "properties": {
+          "publicSummary": {
+            "$ref": "#/components/schemas/PublicSummaryResponse"
+          },
+          "successfulDeliveryCount": { "type": "integer", "format": "int32" },
+          "sourceEvidenceThroughSequence": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PublicSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "verifiedBadges": { "type": "array", "items": { "type": "string" } },
+          "completedTransactionCount": { "type": "integer", "format": "int32" },
+          "deliverySuccessRate": { "type": "number" },
+          "rating": { "$ref": "#/components/schemas/RatingResponse" },
+          "historyBand": {
+            "type": "string",
+            "enum": [
+              "NO_COMPLETED_HISTORY",
+              "LIMITED_COMPLETED_HISTORY",
+              "ESTABLISHED_COMPLETED_HISTORY"
+            ]
+          },
+          "calculationVersion": { "type": "string" },
+          "calculatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RatingResponse": {
+        "type": "object",
+        "properties": {
+          "average": { "type": "number" },
+          "outOf": { "type": "integer", "format": "int32" },
+          "ratingCount": { "type": "integer", "format": "int32" },
+          "status": { "type": "string" }
+        }
+      },
+      "TransitionRequest": {
+        "type": "object",
+        "properties": {
+          "commandId": { "type": "string", "format": "uuid" },
+          "targetState": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "ACKNOWLEDGED",
+              "INVESTIGATING",
+              "RESOLVED",
+              "FALSE_POSITIVE"
+            ]
+          },
+          "note": { "type": "string", "maxLength": 1000, "minLength": 0 }
+        },
+        "required": ["commandId", "note", "targetState"]
+      },
+      "EvidenceResponse": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "referenceId": { "type": "string", "format": "uuid" },
+          "observedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "IndicatorResponse": {
+        "type": "object",
+        "properties": {
+          "indicatorId": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "rule": {
+            "type": "string",
+            "enum": [
+              "ROUTE_DEVIATION",
+              "UNEXPECTED_STOP",
+              "TRACKER_OFFLINE",
+              "STATIONARY_FUEL_DROP",
+              "UNEXPECTED_SEAL_OPENING",
+              "DELIVERY_DELAY",
+              "DRIVER_ASSIGNMENT_CHANGED",
+              "TELEMETRY_DEVICE_CHANGED"
+            ]
+          },
+          "ruleVersion": { "type": "string" },
+          "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+          "explanation": { "type": "string" },
+          "state": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "ACKNOWLEDGED",
+              "INVESTIGATING",
+              "RESOLVED",
+              "FALSE_POSITIVE"
+            ]
+          },
+          "firstObservedAt": { "type": "string", "format": "date-time" },
+          "lastObservedAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "evidence": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EvidenceResponse" }
+          },
+          "reviewHistory": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TransitionResponse" }
+          }
+        }
+      },
+      "TransitionResponse": {
+        "type": "object",
+        "properties": {
+          "transitionId": { "type": "string", "format": "uuid" },
+          "fromState": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "ACKNOWLEDGED",
+              "INVESTIGATING",
+              "RESOLVED",
+              "FALSE_POSITIVE"
+            ]
+          },
+          "toState": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "ACKNOWLEDGED",
+              "INVESTIGATING",
+              "RESOLVED",
+              "FALSE_POSITIVE"
+            ]
+          },
+          "actorUserId": { "type": "string", "format": "uuid" },
+          "note": { "type": "string" },
+          "occurredAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateCaseRequest": {
+        "type": "object",
+        "properties": {
+          "clientRequestId": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "purpose": {
+            "type": "string",
+            "enum": ["CLAIM_REVIEW", "LOSS_INVESTIGATION", "CARGO_RISK_REVIEW"]
+          },
+          "assignedInsurerUserId": { "type": "string", "format": "uuid" }
+        },
+        "required": [
+          "assignedInsurerUserId",
+          "clientRequestId",
+          "purpose",
+          "shipmentId"
+        ]
+      },
+      "CaseResponse": {
+        "type": "object",
+        "properties": {
+          "caseId": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "purpose": {
+            "type": "string",
+            "enum": ["CLAIM_REVIEW", "LOSS_INVESTIGATION", "CARGO_RISK_REVIEW"]
+          },
+          "assignedInsurerUserId": { "type": "string", "format": "uuid" },
+          "createdByUserId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RecordDecisionRequest": {
+        "type": "object",
+        "properties": {
+          "commandId": { "type": "string", "format": "uuid" },
+          "outcome": {
+            "type": "string",
+            "enum": ["DEMO_APPROVED", "DEMO_DECLINED", "NEEDS_MORE_EVIDENCE"]
+          },
+          "note": { "type": "string", "maxLength": 1000, "minLength": 1 }
+        },
+        "required": ["commandId", "note", "outcome"]
+      },
+      "DecisionResponse": {
+        "type": "object",
+        "properties": {
+          "decisionId": { "type": "string", "format": "uuid" },
+          "caseId": { "type": "string", "format": "uuid" },
+          "outcome": {
+            "type": "string",
+            "enum": ["DEMO_APPROVED", "DEMO_DECLINED", "NEEDS_MORE_EVIDENCE"]
+          },
+          "note": { "type": "string" },
+          "decidedByUserId": { "type": "string", "format": "uuid" },
+          "decidedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ConfirmHandoverRequest": {
+        "type": "object",
+        "properties": {
+          "commandId": { "type": "string", "format": "uuid" },
+          "qrPayload": { "type": "string", "maxLength": 128, "minLength": 0 },
+          "captureMode": { "type": "string", "enum": ["ONLINE", "OFFLINE"] },
+          "observedAt": { "type": "string", "format": "date-time" },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "maximum": 90.0,
+            "minimum": -90.0
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "maximum": 180.0,
+            "minimum": -180.0
+          },
+          "quantityOutcome": {
+            "type": "string",
+            "enum": ["MATCHED", "DISPUTED"]
+          },
+          "quantityNote": { "type": "string", "maxLength": 500, "minLength": 0 }
+        },
+        "required": [
+          "captureMode",
+          "commandId",
+          "observedAt",
+          "qrPayload",
+          "quantityOutcome"
+        ]
+      },
+      "ChallengeResponse": {
+        "type": "object",
+        "properties": {
+          "challengeId": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "type": { "type": "string", "enum": ["COLLECTION", "DELIVERY"] },
+          "deliveryOrderId": { "type": "string", "format": "uuid" },
+          "state": {
+            "type": "string",
+            "enum": ["PENDING", "COMPLETED", "DISPUTED", "EXPIRED"]
+          },
+          "initiatorUserId": { "type": "string", "format": "uuid" },
+          "counterpartyUserId": { "type": "string", "format": "uuid" },
+          "expectedLocation": {
+            "$ref": "#/components/schemas/LocationResponse"
+          },
+          "locationToleranceMetres": { "type": "integer", "format": "int32" },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": "string", "format": "date-time" },
+          "confirmations": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ConfirmationResponse" }
+          }
+        }
+      },
+      "ConfirmationResponse": {
+        "type": "object",
+        "properties": {
+          "confirmationId": { "type": "string", "format": "uuid" },
+          "actorUserId": { "type": "string", "format": "uuid" },
+          "party": { "type": "string", "enum": ["INITIATOR", "COUNTERPARTY"] },
+          "observedAt": { "type": "string", "format": "date-time" },
+          "receivedAt": { "type": "string", "format": "date-time" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "distanceMetres": { "type": "number", "format": "double" },
+          "quantityOutcome": {
+            "type": "string",
+            "enum": ["MATCHED", "DISPUTED"]
+          },
+          "quantityNote": { "type": "string" }
+        }
+      },
+      "LocationResponse": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" }
+        }
+      },
+      "CreateInvitationRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "supplierEmail": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0
+          }
+        },
+        "required": ["requestId", "supplierEmail"]
+      },
+      "CreatedInvitationResponse": {
+        "type": "object",
+        "properties": {
+          "invitationId": { "type": "string", "format": "uuid" },
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "purpose": { "type": "string", "enum": ["QUOTE_RESPONSE"] },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "invitationToken": { "type": "string" }
+        }
+      },
+      "CreateVehicleRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "registrationNumber": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 0
+          },
+          "description": { "type": "string", "maxLength": 255, "minLength": 0 },
+          "maximumWeightKg": { "type": "number", "minimum": 0 },
+          "maximumVolumeCubicMetres": { "type": "number", "minimum": 0 }
+        },
+        "required": [
+          "description",
+          "maximumVolumeCubicMetres",
+          "maximumWeightKg",
+          "registrationNumber",
+          "requestId"
+        ]
+      },
+      "CapacityResponse": {
+        "type": "object",
+        "properties": {
+          "weightKg": { "type": "number" },
+          "volumeCubicMetres": { "type": "number" }
+        }
+      },
+      "VehicleResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "transporterId": { "type": "string", "format": "uuid" },
+          "registrationNumber": { "type": "string" },
+          "description": { "type": "string" },
+          "maximumCapacity": {
+            "$ref": "#/components/schemas/CapacityResponse"
+          },
+          "status": { "type": "string", "enum": ["ACTIVE"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RegisterTransporterRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string", "maxLength": 255, "minLength": 0 }
+        },
+        "required": ["displayName"]
+      },
+      "TransporterResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string" },
+          "status": { "type": "string", "enum": ["ACTIVE"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateDriverRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string", "maxLength": 255, "minLength": 0 },
+          "driverReference": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 0
+          }
+        },
+        "required": ["displayName", "driverReference", "requestId"]
+      },
+      "DriverResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "transporterId": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string" },
+          "driverReference": { "type": "string" },
+          "status": { "type": "string", "enum": ["ACTIVE"] },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CapacityRequest": {
+        "type": "object",
+        "properties": {
+          "weightKg": { "type": "number", "minimum": 0 },
+          "volumeCubicMetres": { "type": "number", "minimum": 0 }
+        },
+        "required": ["volumeCubicMetres", "weightKg"]
+      },
+      "PublishCapacityOfferRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "driverAssignmentId": { "type": "string", "format": "uuid" },
+          "routePoints": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RoutePointRequest" },
+            "maxItems": 100,
+            "minItems": 2
+          },
+          "corridorRadiusMetres": { "type": "integer", "format": "int32" },
+          "departureWindowStart": { "type": "string", "format": "date-time" },
+          "departureWindowEnd": { "type": "string", "format": "date-time" },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "restrictions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "DRY_GOODS_ONLY",
+                "FOOD_GRADE_ONLY",
+                "NO_HAZARDOUS_GOODS",
+                "NO_HIGH_VALUE_CARGO",
+                "NO_TEMPERATURE_CONTROLLED_CARGO"
+              ]
+            },
+            "maxItems": 5,
+            "minItems": 0
+          },
+          "capacity": { "$ref": "#/components/schemas/CapacityRequest" }
+        },
+        "required": [
+          "capacity",
+          "departureWindowEnd",
+          "departureWindowStart",
+          "driverAssignmentId",
+          "expiresAt",
+          "requestId",
+          "restrictions",
+          "routePoints",
+          "vehicleId"
+        ]
+      },
+      "RoutePointRequest": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string", "maxLength": 255, "minLength": 0 },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" }
+        }
+      },
+      "CapacityOfferResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "transporterId": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "driverAssignmentId": { "type": "string", "format": "uuid" },
+          "routePoints": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RoutePointResponse" }
+          },
+          "corridorRadiusMetres": { "type": "integer", "format": "int32" },
+          "departureWindow": {
+            "$ref": "#/components/schemas/DepartureWindowResponse"
+          },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "restrictions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "DRY_GOODS_ONLY",
+                "FOOD_GRADE_ONLY",
+                "NO_HAZARDOUS_GOODS",
+                "NO_HIGH_VALUE_CARGO",
+                "NO_TEMPERATURE_CONTROLLED_CARGO"
+              ]
+            }
+          },
+          "totalCapacity": { "$ref": "#/components/schemas/CapacityResponse" },
+          "remainingCapacity": {
+            "$ref": "#/components/schemas/CapacityResponse"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "CANCELLED", "EXPIRED"]
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "cancelledAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DepartureWindowResponse": {
+        "type": "object",
+        "properties": {
+          "start": { "type": "string", "format": "date-time" },
+          "end": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RoutePointResponse": {
+        "type": "object",
+        "properties": {
+          "sequence": { "type": "integer", "format": "int32" },
+          "label": { "type": "string" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" }
+        }
+      },
+      "AssignDriverRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "driverId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["driverId", "requestId", "vehicleId"]
+      },
+      "AssignmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "transporterId": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "driverId": { "type": "string", "format": "uuid" },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "endedAt": { "type": "string", "format": "date-time" },
+          "active": { "type": "boolean" }
+        }
+      },
+      "CreateShipmentRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "demandGroupSuggestionId": { "type": "string", "format": "uuid" },
+          "capacitySearchId": { "type": "string", "format": "uuid" },
+          "capacityReservationId": { "type": "string", "format": "uuid" },
+          "routeAssessmentId": { "type": "string", "format": "uuid" },
+          "routeCandidateId": { "type": "string", "format": "uuid" },
+          "reason": { "type": "string", "maxLength": 500, "minLength": 0 },
+          "correlationId": { "type": "string", "format": "uuid" }
+        },
+        "required": [
+          "capacityReservationId",
+          "capacitySearchId",
+          "correlationId",
+          "demandGroupSuggestionId",
+          "reason",
+          "requestId",
+          "routeAssessmentId",
+          "routeCandidateId"
+        ]
+      },
+      "CargoItemResponse": {
+        "type": "object",
+        "properties": {
+          "productCode": { "type": "string" },
+          "unitOfMeasure": { "type": "string" }
+        }
+      },
+      "LoadOrderResponse": {
+        "type": "object",
+        "properties": {
+          "orderId": { "type": "string", "format": "uuid" },
+          "buyerBusinessId": { "type": "string", "format": "uuid" },
+          "destinationLabel": { "type": "string" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "deliveryWindowStart": { "type": "string", "format": "date-time" },
+          "deliveryWindowEnd": { "type": "string", "format": "date-time" },
+          "cargoItems": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CargoItemResponse" }
+          }
+        }
+      },
+      "ShipmentResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "requestedByBusinessId": { "type": "string", "format": "uuid" },
+          "demandGroupSuggestionId": { "type": "string", "format": "uuid" },
+          "capacitySearchId": { "type": "string", "format": "uuid" },
+          "capacityReservationId": { "type": "string", "format": "uuid" },
+          "capacityOfferId": { "type": "string", "format": "uuid" },
+          "transporterId": { "type": "string", "format": "uuid" },
+          "reservedCapacity": {
+            "$ref": "#/components/schemas/CapacityResponse"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "AWAITING_COLLECTION",
+              "COLLECTED",
+              "IN_TRANSIT",
+              "DELAYED",
+              "DELIVERED",
+              "DISPUTED",
+              "CANCELLED"
+            ]
+          },
+          "loadOrders": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LoadOrderResponse" }
+          },
+          "currentAssignment": {
+            "$ref": "#/components/schemas/AssignmentResponse"
+          },
+          "assignmentHistory": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/AssignmentResponse" }
+          },
+          "transitionHistory": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TransitionResponse" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TransitionShipmentRequest": {
+        "type": "object",
+        "properties": {
+          "commandId": { "type": "string", "format": "uuid" },
+          "targetStatus": {
+            "type": "string",
+            "enum": [
+              "AWAITING_COLLECTION",
+              "COLLECTED",
+              "IN_TRANSIT",
+              "DELAYED",
+              "DELIVERED",
+              "DISPUTED",
+              "CANCELLED"
+            ]
+          },
+          "reason": { "type": "string", "maxLength": 500, "minLength": 0 },
+          "correlationId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["commandId", "correlationId", "reason", "targetStatus"]
+      },
+      "ProvisionDeviceRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string", "maxLength": 120, "minLength": 0 }
+        },
+        "required": ["displayName"]
+      },
+      "IssuedDeviceResponse": {
+        "type": "object",
+        "properties": {
+          "deviceId": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string" },
+          "status": { "type": "string", "enum": ["ACTIVE", "REVOKED"] },
+          "credential": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "IssueChallengeRequest": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "enum": ["COLLECTION", "DELIVERY"] },
+          "deliveryOrderId": { "type": "string", "format": "uuid" },
+          "counterpartyUserId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["counterpartyUserId", "type"]
+      },
+      "IssuedChallengeResponse": {
+        "type": "object",
+        "properties": {
+          "challenge": { "$ref": "#/components/schemas/ChallengeResponse" },
+          "qrPayload": { "type": "string" }
+        }
+      },
+      "ChangeAssignmentRequest": {
+        "type": "object",
+        "properties": {
+          "commandId": { "type": "string", "format": "uuid" },
+          "transportAssignmentId": { "type": "string", "format": "uuid" },
+          "routeAssessmentId": { "type": "string", "format": "uuid" },
+          "routeCandidateId": { "type": "string", "format": "uuid" },
+          "reason": { "type": "string", "maxLength": 500, "minLength": 0 },
+          "correlationId": { "type": "string", "format": "uuid" }
+        },
+        "required": [
+          "commandId",
+          "correlationId",
+          "reason",
+          "routeAssessmentId",
+          "routeCandidateId",
+          "transportAssignmentId"
+        ]
+      },
+      "CalculateRoutesRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "recalculationOfId": { "type": "string", "format": "uuid" },
+          "origin": { "$ref": "#/components/schemas/PointRequest" },
+          "destination": { "$ref": "#/components/schemas/PointRequest" },
+          "waypoints": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PointRequest" },
+            "maxItems": 20,
+            "minItems": 0
+          },
+          "vehicleLimits": {
+            "$ref": "#/components/schemas/VehicleLimitsRequest"
+          },
+          "avoidances": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["FERRIES", "HIGHWAYS", "TOLLS", "UNPAVED_ROADS"]
+            }
+          }
+        },
+        "required": [
+          "avoidances",
+          "destination",
+          "origin",
+          "requestId",
+          "vehicleLimits",
+          "waypoints"
+        ]
+      },
+      "PointRequest": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string", "maxLength": 255, "minLength": 0 },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "maximum": 90.0,
+            "minimum": -90.0
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "maximum": 180.0,
+            "minimum": -180.0
+          }
+        }
+      },
+      "VehicleLimitsRequest": {
+        "type": "object",
+        "properties": {
+          "maximumWeightKg": { "type": "number", "minimum": 0.001 },
+          "maximumHeightMetres": { "type": "number", "minimum": 0.001 },
+          "maximumWidthMetres": { "type": "number", "minimum": 0.001 },
+          "maximumLengthMetres": { "type": "number", "minimum": 0.001 }
+        },
+        "required": [
+          "maximumHeightMetres",
+          "maximumLengthMetres",
+          "maximumWeightKg",
+          "maximumWidthMetres"
+        ]
+      },
+      "CandidateResponse": {
+        "type": "object",
+        "properties": {
+          "candidateId": { "type": "string", "format": "uuid" },
+          "sequence": { "type": "integer", "format": "int32" },
+          "label": { "type": "string" },
+          "geometry": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PointResponse" }
+          },
+          "distanceMetres": { "type": "integer", "format": "int64" },
+          "durationSeconds": { "type": "integer", "format": "int64" },
+          "tollEstimateZar": { "type": "number" },
+          "segments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SegmentResponse" }
+          }
+        }
+      },
+      "PointResponse": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" }
+        }
+      },
+      "RouteCalculationResponse": {
+        "type": "object",
+        "properties": {
+          "calculationId": { "type": "string", "format": "uuid" },
+          "requestedByBusinessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "recalculationOfId": { "type": "string", "format": "uuid" },
+          "origin": { "$ref": "#/components/schemas/PointResponse" },
+          "destination": { "$ref": "#/components/schemas/PointResponse" },
+          "waypoints": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PointResponse" }
+          },
+          "vehicleLimits": {
+            "$ref": "#/components/schemas/VehicleLimitsResponse"
+          },
+          "avoidances": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["FERRIES", "HIGHWAYS", "TOLLS", "UNPAVED_ROADS"]
+            }
+          },
+          "providerName": { "type": "string" },
+          "providerVersion": { "type": "string" },
+          "fallbackUsed": { "type": "boolean" },
+          "fallbackReason": { "type": "string" },
+          "candidates": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CandidateResponse" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SegmentResponse": {
+        "type": "object",
+        "properties": {
+          "segmentId": { "type": "string", "format": "uuid" },
+          "sequence": { "type": "integer", "format": "int32" },
+          "fromLabel": { "type": "string" },
+          "toLabel": { "type": "string" },
+          "geometry": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PointResponse" }
+          },
+          "distanceMetres": { "type": "integer", "format": "int64" },
+          "durationSeconds": { "type": "integer", "format": "int64" },
+          "tollEstimateZar": { "type": "number" }
+        }
+      },
+      "VehicleLimitsResponse": {
+        "type": "object",
+        "properties": {
+          "maximumWeightKg": { "type": "number" },
+          "maximumHeightMetres": { "type": "number" },
+          "maximumWidthMetres": { "type": "number" },
+          "maximumLengthMetres": { "type": "number" }
+        }
+      },
+      "ScoreRoutesRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "cargoProfile": { "type": "string", "maxLength": 64, "minLength": 0 },
+          "weightOverrides": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          }
+        },
+        "required": ["cargoProfile", "requestId"]
+      },
+      "CandidateScoreResponse": {
+        "type": "object",
+        "properties": {
+          "candidateId": { "type": "string", "format": "uuid" },
+          "label": { "type": "string" },
+          "totalScore": { "type": "number" },
+          "confidence": { "type": "number" },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "FASTEST",
+                "LOWEST_COST",
+                "SAFEST",
+                "BEST_CONNECTIVITY",
+                "RECOMMENDED"
+              ]
+            }
+          },
+          "factors": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FactorScoreResponse" }
+          },
+          "reasons": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "FactorScoreResponse": {
+        "type": "object",
+        "properties": {
+          "factor": {
+            "type": "string",
+            "enum": [
+              "TIME",
+              "DISTANCE",
+              "FUEL",
+              "TOLLS",
+              "SAFETY_EXPOSURE",
+              "ROAD_QUALITY",
+              "CONNECTIVITY"
+            ]
+          },
+          "rawValue": { "type": "number" },
+          "rawUnit": { "type": "string" },
+          "normalizedValue": { "type": "number" },
+          "weight": { "type": "number" },
+          "contribution": { "type": "number" },
+          "dataAvailable": { "type": "boolean" }
+        }
+      },
+      "RouteAssessmentResponse": {
+        "type": "object",
+        "properties": {
+          "assessmentId": { "type": "string", "format": "uuid" },
+          "calculationId": { "type": "string", "format": "uuid" },
+          "requestedByBusinessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "cargoProfile": { "type": "string" },
+          "algorithmVersion": { "type": "string" },
+          "scoreScale": { "type": "string" },
+          "weights": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          },
+          "recommendedCandidateId": { "type": "string", "format": "uuid" },
+          "options": {
+            "type": "object",
+            "additionalProperties": { "type": "string", "format": "uuid" }
+          },
+          "candidates": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CandidateScoreResponse" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateProductRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "destinationLabel": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 0
+          },
+          "destinationLatitude": { "type": "number", "format": "double" },
+          "destinationLongitude": { "type": "number", "format": "double" },
+          "deliveryWindowStart": { "type": "string", "format": "date-time" },
+          "deliveryWindowEnd": { "type": "string", "format": "date-time" },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductRequestItemRequest"
+            },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "deliveryWindowEnd",
+          "deliveryWindowStart",
+          "destinationLabel",
+          "items",
+          "requestId"
+        ]
+      },
+      "ProductRequestItemRequest": {
+        "type": "object",
+        "properties": {
+          "itemId": { "type": "string", "format": "uuid" },
+          "productCode": { "type": "string", "maxLength": 100, "minLength": 0 },
+          "description": { "type": "string", "maxLength": 500, "minLength": 0 },
+          "quantity": { "type": "number", "minimum": 0 },
+          "unitOfMeasure": {
+            "type": "string",
+            "enum": ["EACH", "CASE", "BOX", "KG", "LITRE", "PALLET"]
+          }
+        },
+        "required": ["description", "itemId", "quantity", "unitOfMeasure"]
+      },
+      "DeliveryWindowResponse": {
+        "type": "object",
+        "properties": {
+          "start": { "type": "string", "format": "date-time" },
+          "end": { "type": "string", "format": "date-time" }
+        }
+      },
+      "DestinationResponse": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" }
+        }
+      },
+      "ProductRequestItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "productCode": { "type": "string" },
+          "description": { "type": "string" },
+          "quantity": { "type": "number" },
+          "unitOfMeasure": {
+            "type": "string",
+            "enum": ["EACH", "CASE", "BOX", "KG", "LITRE", "PALLET"]
+          }
+        }
+      },
+      "ProductRequestResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "buyerBusinessId": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["OPEN", "QUOTED", "ORDERED", "CANCELLED"]
+          },
+          "destination": { "$ref": "#/components/schemas/DestinationResponse" },
+          "deliveryWindow": {
+            "$ref": "#/components/schemas/DeliveryWindowResponse"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductRequestItemResponse"
+            }
+          },
+          "createdByUserId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CreateQuoteRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "sourceDocumentId": { "type": "string", "format": "uuid" },
+          "currency": { "type": "string", "maxLength": 3, "minLength": 3 },
+          "taxAmount": { "type": "number", "minimum": 0 },
+          "validUntil": { "type": "string", "format": "date-time" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/QuoteItemRequest" },
+            "maxItems": 100,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "currency",
+          "items",
+          "requestId",
+          "sourceDocumentId",
+          "supplierProfileId",
+          "taxAmount",
+          "validUntil"
+        ]
+      },
+      "QuoteItemRequest": {
+        "type": "object",
+        "properties": {
+          "requestItemId": { "type": "string", "format": "uuid" },
+          "unitPrice": { "type": "number", "minimum": 0 }
+        },
+        "required": ["requestItemId", "unitPrice"]
+      },
+      "MoneySummary": {
+        "type": "object",
+        "properties": {
+          "currency": { "type": "string" },
+          "subtotal": { "type": "number" },
+          "taxAmount": { "type": "number" },
+          "total": { "type": "number" }
+        }
+      },
+      "QuoteItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "requestItemId": { "type": "string", "format": "uuid" },
+          "description": { "type": "string" },
+          "quantity": { "type": "number" },
+          "unitOfMeasure": {
+            "type": "string",
+            "enum": ["EACH", "CASE", "BOX", "KG", "LITRE", "PALLET"]
+          },
+          "unitPrice": { "type": "number" },
+          "lineTotal": { "type": "number" }
+        }
+      },
+      "QuoteResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "buyerBusinessId": { "type": "string", "format": "uuid" },
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "sourceDocumentId": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "ACCEPTED", "WITHDRAWN", "EXPIRED"]
+          },
+          "money": { "$ref": "#/components/schemas/MoneySummary" },
+          "validUntil": { "type": "string", "format": "date-time" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/QuoteItemResponse" }
+          },
+          "createdByUserId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ConfirmQuoteRequest": {
+        "type": "object",
+        "properties": { "requestId": { "type": "string", "format": "uuid" } },
+        "required": ["requestId"]
+      },
+      "OrderItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "sourceRequestItemId": { "type": "string", "format": "uuid" },
+          "productCode": { "type": "string" },
+          "description": { "type": "string" },
+          "quantity": { "type": "number" },
+          "unitOfMeasure": {
+            "type": "string",
+            "enum": ["EACH", "CASE", "BOX", "KG", "LITRE", "PALLET"]
+          },
+          "unitPrice": { "type": "number" },
+          "lineTotal": { "type": "number" }
+        }
+      },
+      "OrderResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "sourceQuoteId": { "type": "string", "format": "uuid" },
+          "buyerBusinessId": { "type": "string", "format": "uuid" },
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "sourceDocumentId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["CONFIRMED"] },
+          "money": { "$ref": "#/components/schemas/MoneySummary" },
+          "destination": { "$ref": "#/components/schemas/DestinationResponse" },
+          "deliveryWindow": {
+            "$ref": "#/components/schemas/DeliveryWindowResponse"
+          },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/OrderItemResponse" }
+          },
+          "confirmedByUserId": { "type": "string", "format": "uuid" },
+          "confirmedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SearchRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "demandGroupSuggestionId": { "type": "string", "format": "uuid" },
+          "requiredCapacity": {
+            "$ref": "#/components/schemas/CapacityRequest"
+          },
+          "cargoTraits": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "DRY_GOODS",
+                "FOOD_GRADE",
+                "HAZARDOUS_GOODS",
+                "HIGH_VALUE",
+                "TEMPERATURE_CONTROLLED"
+              ]
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "cargoTraits",
+          "demandGroupSuggestionId",
+          "requestId",
+          "requiredCapacity"
+        ]
+      },
+      "ConstraintResponse": {
+        "type": "object",
+        "properties": {
+          "constraint": {
+            "type": "string",
+            "enum": [
+              "WEIGHT_CAPACITY",
+              "VOLUME_CAPACITY",
+              "CARGO_RESTRICTIONS",
+              "DELIVERY_WINDOW",
+              "ROUTE_CORRIDOR"
+            ]
+          },
+          "outcome": { "type": "string", "enum": ["PASS", "FAIL"] },
+          "explanation": { "type": "string" }
+        }
+      },
+      "SearchResponse": {
+        "type": "object",
+        "properties": {
+          "searchId": { "type": "string", "format": "uuid" },
+          "requestedByBusinessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "demandGroupSuggestionId": { "type": "string", "format": "uuid" },
+          "algorithmVersion": { "type": "string" },
+          "requiredCapacity": {
+            "$ref": "#/components/schemas/CapacityResponse"
+          },
+          "cargoTraits": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "DRY_GOODS",
+                "FOOD_GRADE",
+                "HAZARDOUS_GOODS",
+                "HIGH_VALUE",
+                "TEMPERATURE_CONTROLLED"
+              ]
+            }
+          },
+          "deliveryWindowStart": { "type": "string", "format": "date-time" },
+          "deliveryWindowEnd": { "type": "string", "format": "date-time" },
+          "orderCount": { "type": "integer", "format": "int32" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "MATCHED",
+              "NO_MATCH",
+              "RESERVED",
+              "ASSIGNED",
+              "RELEASED",
+              "EXPIRED"
+            ]
+          },
+          "candidates": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CandidateResponse" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ReservationRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "offerId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["offerId", "requestId"]
+      },
+      "ReservationResponse": {
+        "type": "object",
+        "properties": {
+          "reservationId": { "type": "string", "format": "uuid" },
+          "matchSearchId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "offerId": { "type": "string", "format": "uuid" },
+          "reservedCapacity": {
+            "$ref": "#/components/schemas/CapacityResponse"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ACTIVE", "CONSUMED", "RELEASED", "EXPIRED"]
+          },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "releasedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FileMetadataResponse": {
+        "type": "object",
+        "properties": {
+          "fileId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "category": {
+            "type": "string",
+            "enum": [
+              "INVOICE",
+              "DELIVERY_PROOF",
+              "COMPANY_DOCUMENT",
+              "INSURANCE_DOCUMENT"
+            ]
+          },
+          "originalFilename": { "type": "string" },
+          "contentType": { "type": "string" },
+          "sizeBytes": { "type": "integer", "format": "int64" },
+          "sha256": { "type": "string" },
+          "scanStatus": {
+            "type": "string",
+            "enum": ["CLEAN", "INFECTED", "ERROR"]
+          },
+          "storageStatus": {
+            "type": "string",
+            "enum": ["UPLOADING", "AVAILABLE", "FAILED"]
+          },
+          "uploadedByUserId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "storedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RegisterDocumentRequest": {
+        "type": "object",
+        "properties": {
+          "storedFileId": { "type": "string", "format": "uuid" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "PURCHASE_ORDER",
+              "QUOTE",
+              "INVOICE",
+              "DELIVERY_NOTE",
+              "INSURANCE_DOCUMENT",
+              "COMPANY_DOCUMENT"
+            ]
+          },
+          "requestId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["requestId", "storedFileId", "type"]
+      },
+      "DocumentResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "storedFileId": { "type": "string", "format": "uuid" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "PURCHASE_ORDER",
+              "QUOTE",
+              "INVOICE",
+              "DELIVERY_NOTE",
+              "INSURANCE_DOCUMENT",
+              "COMPANY_DOCUMENT"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "UPLOADED",
+              "QUEUED",
+              "PROCESSING",
+              "PARSED",
+              "FAILED",
+              "CONFIRMED"
+            ]
+          },
+          "processingAttempts": { "type": "integer", "format": "int32" },
+          "createdByUserId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "extraction": { "$ref": "#/components/schemas/ExtractionResponse" },
+          "confirmation": {
+            "$ref": "#/components/schemas/ConfirmationResponse"
+          },
+          "stateHistory": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StateTransitionResponse" }
+          }
+        }
+      },
+      "ExtractedFieldResponse": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "value": { "type": "string" },
+          "confidence": { "type": "number" },
+          "sourcePage": { "type": "integer", "format": "int32" },
+          "sourceRegion": { "type": "string" }
+        }
+      },
+      "ExtractionResponse": {
+        "type": "object",
+        "properties": {
+          "extractionId": { "type": "string", "format": "uuid" },
+          "provider": { "type": "string" },
+          "parserVersion": { "type": "string" },
+          "rawResultReference": { "type": "string" },
+          "fields": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ExtractedFieldResponse" }
+          },
+          "completedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "StateTransitionResponse": {
+        "type": "object",
+        "properties": {
+          "fromState": {
+            "type": "string",
+            "enum": [
+              "UPLOADED",
+              "QUEUED",
+              "PROCESSING",
+              "PARSED",
+              "FAILED",
+              "CONFIRMED"
+            ]
+          },
+          "toState": {
+            "type": "string",
+            "enum": [
+              "UPLOADED",
+              "QUEUED",
+              "PROCESSING",
+              "PARSED",
+              "FAILED",
+              "CONFIRMED"
+            ]
+          },
+          "reason": { "type": "string" },
+          "actor": { "type": "string" },
+          "occurredAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ConfirmDocumentRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConfirmationFieldRequest"
+            },
+            "maxItems": 500,
+            "minItems": 0
+          }
+        },
+        "required": ["fields", "requestId"]
+      },
+      "ConfirmationFieldRequest": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string", "maxLength": 255, "minLength": 0 },
+          "value": { "type": "string", "maxLength": 4000, "minLength": 0 }
+        },
+        "required": ["path", "value"]
+      },
+      "CompareDocumentsRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "referenceDocumentId": { "type": "string", "format": "uuid" },
+          "comparedDocumentId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["comparedDocumentId", "referenceDocumentId", "requestId"]
+      },
+      "ComparedValueResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": { "type": "string", "format": "uuid" },
+          "confirmedValue": { "type": "string" }
+        }
+      },
+      "ComparisonResponse": {
+        "type": "object",
+        "properties": {
+          "comparisonId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "ruleSetVersion": { "type": "string" },
+          "reference": { "$ref": "#/components/schemas/SourceResponse" },
+          "compared": { "$ref": "#/components/schemas/SourceResponse" },
+          "mismatches": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/MismatchResponse" }
+          },
+          "createdByUserId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MismatchResponse": {
+        "type": "object",
+        "properties": {
+          "indicatorId": { "type": "string", "format": "uuid" },
+          "rule": {
+            "type": "string",
+            "enum": [
+              "DOCUMENT_QUANTITY_MISMATCH",
+              "DOCUMENT_PRICE_MISMATCH",
+              "DOCUMENT_SUPPLIER_MISMATCH",
+              "DOCUMENT_CUSTOMER_MISMATCH",
+              "DOCUMENT_DESTINATION_MISMATCH",
+              "DOCUMENT_DATE_MISMATCH",
+              "DUPLICATE_DOCUMENT_CONTENT"
+            ]
+          },
+          "ruleVersion": { "type": "integer", "format": "int32" },
+          "fieldPath": { "type": "string" },
+          "severity": { "type": "string", "enum": ["LOW", "MEDIUM", "HIGH"] },
+          "reference": { "$ref": "#/components/schemas/ComparedValueResponse" },
+          "compared": { "$ref": "#/components/schemas/ComparedValueResponse" },
+          "explanation": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SourceResponse": {
+        "type": "object",
+        "properties": {
+          "documentId": { "type": "string", "format": "uuid" },
+          "documentType": {
+            "type": "string",
+            "enum": [
+              "PURCHASE_ORDER",
+              "QUOTE",
+              "INVOICE",
+              "DELIVERY_NOTE",
+              "INSURANCE_DOCUMENT",
+              "COMPANY_DOCUMENT"
+            ]
+          },
+          "confirmationId": { "type": "string", "format": "uuid" },
+          "confirmationRevision": { "type": "integer", "format": "int32" }
+        }
+      },
+      "SuggestDemandGroupRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "anchorOrderId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["anchorOrderId", "requestId"]
+      },
+      "OrderEvaluationResponse": {
+        "type": "object",
+        "properties": {
+          "orderId": { "type": "string", "format": "uuid" },
+          "role": { "type": "string", "enum": ["ANCHOR", "CANDIDATE"] },
+          "included": { "type": "boolean" },
+          "distanceMeters": { "type": "number", "format": "double" },
+          "windowOverlapSeconds": { "type": "integer", "format": "int64" },
+          "cargoOverlapRatio": { "type": "number", "format": "double" },
+          "score": { "type": "number", "format": "double" },
+          "passedChecks": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ANCHOR_ORDER",
+                "SUPPLIER_OR_PICKUP_COMPATIBLE",
+                "WITHIN_DISTANCE",
+                "DELIVERY_WINDOW_OVERLAP",
+                "CARGO_COMPATIBLE"
+              ]
+            }
+          },
+          "exclusionReasons": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "SUPPLIER_OR_PICKUP_MISMATCH",
+                "DISTANCE_EXCEEDS_LIMIT",
+                "DELIVERY_WINDOWS_DO_NOT_OVERLAP",
+                "CARGO_PROFILE_UNAVAILABLE",
+                "CARGO_NOT_COMPATIBLE"
+              ]
+            }
+          },
+          "checks": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ConstraintResponse" }
+          }
+        }
+      },
+      "SuggestionResponse": {
+        "type": "object",
+        "properties": {
+          "suggestionId": { "type": "string", "format": "uuid" },
+          "requestedByBusinessId": { "type": "string", "format": "uuid" },
+          "anchorOrderId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["ACTIVE", "NO_MATCH"] },
+          "algorithmVersion": { "type": "string" },
+          "thresholds": { "$ref": "#/components/schemas/ThresholdResponse" },
+          "score": { "type": "number", "format": "double" },
+          "includedOrderCount": { "type": "integer", "format": "int32" },
+          "orders": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/OrderEvaluationResponse" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ThresholdResponse": {
+        "type": "object",
+        "properties": {
+          "searchRadiusMeters": { "type": "number", "format": "double" },
+          "maximumDistanceMeters": { "type": "number", "format": "double" },
+          "minimumWindowOverlap": { "type": "string" },
+          "minimumCargoOverlapRatio": { "type": "number", "format": "double" },
+          "candidateLimit": { "type": "integer", "format": "int32" }
+        }
+      },
+      "StartRegisteredOnboardingRequest": {
+        "type": "object",
+        "properties": {
+          "registrationNumber": { "type": "string", "minLength": 1 }
+        },
+        "required": ["registrationNumber"]
+      },
+      "RegisteredOnboardingResponse": {
+        "type": "object",
+        "properties": {
+          "onboardingId": { "type": "string", "format": "uuid" },
+          "registrationNumber": { "type": "string" },
+          "legalName": { "type": "string" },
+          "tradingName": { "type": "string" },
+          "registeredAddress": { "type": "string" },
+          "state": {
+            "type": "string",
+            "enum": ["PENDING_CONFIRMATION", "CONFIRMED"]
+          },
+          "trusted": { "type": "boolean" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "confirmedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "BusinessProfileResponse": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "registrationNumber": { "type": "string" },
+          "legalName": { "type": "string" },
+          "tradingName": { "type": "string" },
+          "registeredAddress": { "type": "string" },
+          "verificationStatus": {
+            "type": "string",
+            "enum": ["REGISTRY_VERIFIED"]
+          },
+          "lifecycleStatus": { "type": "string", "enum": ["ACTIVE"] },
+          "trusted": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email", "minLength": 1 },
+          "password": { "type": "string", "minLength": 1 },
+          "accountType": {
+            "type": "string",
+            "enum": ["BUSINESS_OWNER", "SUPPLIER", "TRANSPORTER"]
+          }
+        },
+        "required": ["accountType", "email", "password"]
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string", "format": "uuid" },
+          "tokenType": { "type": "string" },
+          "accessToken": { "type": "string" },
+          "expiresInSeconds": { "type": "integer", "format": "int64" },
+          "refreshToken": { "type": "string" },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "BUSINESS_OWNER",
+                "BUSINESS_MEMBER",
+                "SUPPLIER",
+                "TRANSPORTER",
+                "DRIVER",
+                "INTERNAL_RISK_ANALYST",
+                "INSURER",
+                "ADMINISTRATOR"
+              ]
+            },
+            "uniqueItems": true
+          }
+        }
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": { "refreshToken": { "type": "string", "minLength": 1 } },
+        "required": ["refreshToken"]
+      },
+      "LogoutRequest": {
+        "type": "object",
+        "properties": { "refreshToken": { "type": "string", "minLength": 1 } },
+        "required": ["refreshToken"]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email", "minLength": 1 },
+          "password": { "type": "string", "minLength": 1 }
+        },
+        "required": ["email", "password"]
+      },
+      "GuestInvitationResponse": {
+        "type": "object",
+        "properties": {
+          "invitationId": { "type": "string", "format": "uuid" },
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "buyerBusinessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "purpose": { "type": "string", "enum": ["QUOTE_RESPONSE"] },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "PreferencesResponse": {
+        "type": "object",
+        "properties": {
+          "preferences": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PreferenceResponse" }
+          }
+        }
+      },
+      "IndicatorListResponse": {
+        "type": "object",
+        "properties": {
+          "indicators": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/IndicatorResponse" }
+          }
+        }
+      },
+      "ActualRoute": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RoutePoint" }
+          },
+          "possiblyTruncated": { "type": "boolean" }
+        }
+      },
+      "Assignment": {
+        "type": "object",
+        "properties": {
+          "assignmentId": { "type": "string", "format": "uuid" },
+          "vehicleId": { "type": "string", "format": "uuid" },
+          "vehicleRegistrationNumber": { "type": "string" },
+          "vehicleDescription": { "type": "string" },
+          "driverId": { "type": "string", "format": "uuid" },
+          "driverDisplayName": { "type": "string" },
+          "driverReference": { "type": "string" },
+          "routeCandidateId": { "type": "string", "format": "uuid" },
+          "cargoProfile": { "type": "string" },
+          "routeAlgorithmVersion": { "type": "string" },
+          "routeScore": { "type": "number" },
+          "routeConfidence": { "type": "number" },
+          "approvedRoute": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RoutePoint" }
+          },
+          "distanceMetres": { "type": "integer", "format": "int64" },
+          "durationSeconds": { "type": "integer", "format": "int64" },
+          "tollEstimateZar": { "type": "number" },
+          "startedAt": { "type": "string", "format": "date-time" },
+          "endedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "CargoItem": {
+        "type": "object",
+        "properties": {
+          "productCode": { "type": "string" },
+          "unitOfMeasure": { "type": "string" }
+        }
+      },
+      "CargoStop": {
+        "type": "object",
+        "properties": {
+          "orderId": { "type": "string", "format": "uuid" },
+          "buyerBusinessId": { "type": "string", "format": "uuid" },
+          "destinationLabel": { "type": "string" },
+          "deliveryWindowStart": { "type": "string", "format": "date-time" },
+          "deliveryWindowEnd": { "type": "string", "format": "date-time" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CargoItem" }
+          }
+        }
+      },
+      "Confirmation": {
+        "type": "object",
+        "properties": {
+          "confirmationId": { "type": "string", "format": "uuid" },
+          "party": { "type": "string" },
+          "observedAt": { "type": "string", "format": "date-time" },
+          "receivedAt": { "type": "string", "format": "date-time" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "distanceMetres": { "type": "number", "format": "double" },
+          "quantityOutcome": { "type": "string" },
+          "quantityNote": { "type": "string" }
+        }
+      },
+      "Entry": {
+        "type": "object",
+        "properties": {
+          "sequence": { "type": "integer", "format": "int64" },
+          "evidenceId": { "type": "string", "format": "uuid" },
+          "eventId": { "type": "string", "format": "uuid" },
+          "type": { "type": "string" },
+          "subjectType": { "type": "string" },
+          "subjectId": { "type": "string", "format": "uuid" },
+          "occurredAt": { "type": "string", "format": "date-time" },
+          "actor": { "type": "string" },
+          "source": { "type": "string" },
+          "correlationId": { "type": "string", "format": "uuid" },
+          "schemaVersion": { "type": "integer", "format": "int32" },
+          "correctionOfId": { "type": "string", "format": "uuid" },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": { "type": "string" }
+          },
+          "files": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/FileReference" }
+          },
+          "payloadChecksum": { "type": "string" },
+          "integrity": {
+            "type": "string",
+            "enum": ["VERIFIED", "CHECKSUM_MISMATCH"]
+          }
+        }
+      },
+      "EvidencePackageResponse": {
+        "type": "object",
+        "properties": {
+          "insuranceCase": { "$ref": "#/components/schemas/CaseResponse" },
+          "shipment": { "$ref": "#/components/schemas/ShipmentSnapshot" },
+          "orders": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/OrderSnapshot" }
+          },
+          "sourceDocuments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SourceDocument" }
+          },
+          "actualRoute": { "$ref": "#/components/schemas/ActualRoute" },
+          "handovers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Handover" }
+          },
+          "riskIndicators": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/RiskIndicator" }
+          },
+          "evidenceTimeline": {
+            "$ref": "#/components/schemas/ShipmentEvidencePackage"
+          },
+          "decisions": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DecisionResponse" }
+          },
+          "missingEvidence": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "EvidenceReference": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string" },
+          "id": { "type": "string", "format": "uuid" },
+          "observedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "FileReference": {
+        "type": "object",
+        "properties": {
+          "fileId": { "type": "string", "format": "uuid" },
+          "sha256": { "type": "string" }
+        }
+      },
+      "Handover": {
+        "type": "object",
+        "properties": {
+          "challengeId": { "type": "string", "format": "uuid" },
+          "type": { "type": "string" },
+          "deliveryOrderId": { "type": "string", "format": "uuid" },
+          "state": { "type": "string" },
+          "expectedLocationLabel": { "type": "string" },
+          "expectedLatitude": { "type": "number", "format": "double" },
+          "expectedLongitude": { "type": "number", "format": "double" },
+          "locationToleranceMetres": { "type": "integer", "format": "int32" },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "confirmations": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Confirmation" }
+          }
+        }
+      },
+      "LineItem": {
+        "type": "object",
+        "properties": {
+          "productCode": { "type": "string" },
+          "description": { "type": "string" },
+          "quantity": { "type": "number" },
+          "unitOfMeasure": { "type": "string" },
+          "unitPrice": { "type": "number" },
+          "lineTotal": { "type": "number" }
+        }
+      },
+      "OrderSnapshot": {
+        "type": "object",
+        "properties": {
+          "orderId": { "type": "string", "format": "uuid" },
+          "buyerBusinessId": { "type": "string", "format": "uuid" },
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "sourceDocumentId": { "type": "string", "format": "uuid" },
+          "currency": { "type": "string" },
+          "subtotal": { "type": "number" },
+          "taxAmount": { "type": "number" },
+          "total": { "type": "number" },
+          "items": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LineItem" }
+          },
+          "confirmedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RiskIndicator": {
+        "type": "object",
+        "properties": {
+          "indicatorId": { "type": "string", "format": "uuid" },
+          "rule": { "type": "string" },
+          "ruleVersion": { "type": "string" },
+          "severity": { "type": "string" },
+          "explanation": { "type": "string" },
+          "state": { "type": "string" },
+          "firstObservedAt": { "type": "string", "format": "date-time" },
+          "lastObservedAt": { "type": "string", "format": "date-time" },
+          "evidence": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/EvidenceReference" }
+          }
+        }
+      },
+      "RoutePoint": {
+        "type": "object",
+        "properties": {
+          "readingId": { "type": "string", "format": "uuid" },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "receivedAt": { "type": "string", "format": "date-time" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" }
+        }
+      },
+      "ShipmentEvidencePackage": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "entries": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Entry" }
+          }
+        }
+      },
+      "ShipmentSnapshot": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string" },
+          "reservedWeightKg": { "type": "number" },
+          "reservedVolumeCubicMetres": { "type": "number" },
+          "cargoStops": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/CargoStop" }
+          },
+          "assignments": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Assignment" }
+          },
+          "statusHistory": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/StatusChange" }
+          },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SourceDocument": {
+        "type": "object",
+        "properties": {
+          "documentId": { "type": "string", "format": "uuid" },
+          "documentType": { "type": "string" },
+          "documentState": { "type": "string" },
+          "fileId": { "type": "string", "format": "uuid" },
+          "fileSha256": { "type": "string" },
+          "fileAvailability": { "type": "string" },
+          "documentCreatedAt": { "type": "string", "format": "date-time" },
+          "fileStoredAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "StatusChange": {
+        "type": "object",
+        "properties": {
+          "fromStatus": { "type": "string" },
+          "toStatus": { "type": "string" },
+          "occurredAt": { "type": "string", "format": "date-time" },
+          "source": { "type": "string" }
+        }
+      },
+      "ReadingHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "readings": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ReadingResponse" }
+          },
+          "units": { "$ref": "#/components/schemas/UnitsResponse" }
+        }
+      },
+      "ReadingResponse": {
+        "type": "object",
+        "properties": {
+          "readingId": { "type": "string", "format": "uuid" },
+          "deviceId": { "type": "string", "format": "uuid" },
+          "clientEventId": { "type": "string", "format": "uuid" },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "receivedAt": { "type": "string", "format": "date-time" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "speedKilometresPerHour": { "type": "number" },
+          "fuelLitres": { "type": "number" },
+          "temperatureCelsius": { "type": "number" },
+          "sealOpen": { "type": "boolean" },
+          "batteryPercent": { "type": "number" },
+          "networkStatus": {
+            "type": "string",
+            "enum": ["CONNECTED", "LIMITED", "OFFLINE", "UNKNOWN"]
+          },
+          "networkSignalDbm": { "type": "integer", "format": "int32" },
+          "retentionTier": { "type": "string", "enum": ["RAW", "DOWNSAMPLED"] }
+        }
+      },
+      "UnitsResponse": {
+        "type": "object",
+        "properties": {
+          "coordinates": { "type": "string" },
+          "speed": { "type": "string" },
+          "fuel": { "type": "string" },
+          "temperature": { "type": "string" },
+          "battery": { "type": "string" },
+          "networkSignal": { "type": "string" }
+        }
+      },
+      "LivePositionResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "deviceId": { "type": "string", "format": "uuid" },
+          "readingId": { "type": "string", "format": "uuid" },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "receivedAt": { "type": "string", "format": "date-time" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "speedKilometresPerHour": { "type": "number" },
+          "batteryPercent": { "type": "number" },
+          "networkStatus": {
+            "type": "string",
+            "enum": ["CONNECTED", "LIMITED", "OFFLINE", "UNKNOWN"]
+          },
+          "networkSignalDbm": { "type": "integer", "format": "int32" },
+          "units": { "$ref": "#/components/schemas/UnitsResponse" }
+        }
+      },
+      "DownloadAccessResponse": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ApiProblem": {
+        "type": "object",
+        "properties": {
+          "type": { "type": "string", "example": "about:blank" },
+          "title": { "type": "string", "example": "The request is invalid" },
+          "status": { "type": "integer", "format": "int32", "example": 400 },
+          "detail": {
+            "type": "string",
+            "example": "One or more fields are invalid."
+          },
+          "instance": { "type": "string", "example": "/api/auth/login" },
+          "code": { "type": "string", "example": "INVALID_REQUEST" },
+          "requestId": {
+            "type": "string",
+            "example": "01JEXAMPLE00000000000000000"
+          }
+        },
+        "required": [
+          "code",
+          "detail",
+          "instance",
+          "requestId",
+          "status",
+          "title",
+          "type"
+        ]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request is invalid",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "title": "The request is invalid",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "type": "about:blank",
+              "status": 400,
+              "instance": "/api/example",
+              "code": "INVALID_REQUEST",
+              "detail": "The request is invalid."
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication is required",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "title": "Authentication is required",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "type": "about:blank",
+              "status": 401,
+              "instance": "/api/example",
+              "code": "AUTHENTICATION_REQUIRED",
+              "detail": "Authentication is required."
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The caller is not allowed to perform this action",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "title": "The caller is not allowed to perform this action",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "type": "about:blank",
+              "status": 403,
+              "instance": "/api/example",
+              "code": "ACCESS_DENIED",
+              "detail": "The caller is not allowed to perform this action."
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource was not found",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "title": "The requested resource was not found",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "type": "about:blank",
+              "status": 404,
+              "instance": "/api/example",
+              "code": "NOT_FOUND",
+              "detail": "The requested resource was not found."
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "The request conflicts with current state",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "title": "The request conflicts with current state",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "type": "about:blank",
+              "status": 409,
+              "instance": "/api/example",
+              "code": "STATE_CONFLICT",
+              "detail": "The request conflicts with current state."
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "The request limit was exceeded",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "title": "The request limit was exceeded",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "type": "about:blank",
+              "status": 429,
+              "instance": "/api/example",
+              "code": "RATE_LIMIT_EXCEEDED",
+              "detail": "The request limit was exceeded."
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "The server could not complete the request",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "title": "The server could not complete the request",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "type": "about:blank",
+              "status": 500,
+              "instance": "/api/example",
+              "code": "INTERNAL_ERROR",
+              "detail": "The server could not complete the request."
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
