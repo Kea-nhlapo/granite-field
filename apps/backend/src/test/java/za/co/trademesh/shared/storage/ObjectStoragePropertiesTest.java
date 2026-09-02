@@ -10,7 +10,13 @@ class ObjectStoragePropertiesTest {
     @Test
     void neverPrintsCredentialsAndKeepsPresignedAccessShortLived() {
         var properties = new ObjectStorageProperties(
-                "https://storage.example", "private-key", "private-secret", "files", 100, Duration.ofDays(30), "af-south-1");
+                "https://storage.example",
+                "private-key",
+                "private-secret",
+                "files",
+                100,
+                Duration.ofDays(30),
+                "af-south-1");
 
         assertThat(properties.downloadTtl()).isEqualTo(Duration.ofMinutes(15));
         assertThat(properties.toString())
