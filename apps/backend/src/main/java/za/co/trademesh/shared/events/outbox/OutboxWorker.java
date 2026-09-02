@@ -114,7 +114,7 @@ public class OutboxWorker {
     /** Returns expired claims to PENDING, and reports how many were recovered. */
     public int reapOnce() {
         Integer reaped = transactions().execute(status ->
-            repository.reapExpiredClaims(Instant.now(clock), properties.visibilityTimeout()));
+            repository.reapExpiredClaims(properties.visibilityTimeout()));
 
         int count = reaped == null ? 0 : reaped;
         if (count > 0) {
@@ -160,7 +160,7 @@ public class OutboxWorker {
 
     private void recordDone(OutboxMessage message) {
         boolean marked = Boolean.TRUE.equals(
-            transactions().execute(status -> repository.markDone(message.id())));
+            transactions().execute(status -> repository.markDone(message.id(), message.claimedAt())));
 
         if (!marked) {
             // The reaper revoked the claim while the handler was still running,
@@ -189,11 +189,11 @@ public class OutboxWorker {
             message.id(), message.type(), message.attempts(), retryAt, cause);
 
         transactions().executeWithoutResult(status ->
-            repository.markForRetry(message.id(), retryAt, error));
+            repository.markForRetry(message.id(), message.claimedAt(), retryAt, error));
     }
 
     private void recordDead(OutboxMessage message, String error) {
-        transactions().executeWithoutResult(status -> repository.markDead(message.id(), error));
+        transactions().executeWithoutResult(status -> repository.markDead(message.id(), message.claimedAt(), error));
     }
 
     /**

@@ -119,7 +119,7 @@ public class OutboxRepository {
                         ORDER BY available_at
                         LIMIT ?
                           FOR UPDATE SKIP LOCKED)
-             RETURNING id, type, payload, idempotency_key, attempts, available_at,
+             RETURNING id, type, payload, idempotency_key, attempts, claimed_at, available_at,
                        created_at, correlation_id, actor, source, schema_version
                 """)
             .param(Timestamp.from(now))
@@ -133,42 +133,49 @@ public class OutboxRepository {
     /**
      * Marks a claimed message finished.
      *
-     * <p>Guarded on status = 'CLAIMED' so a worker whose claim the reaper has
-     * already revoked cannot mark DONE a message another worker now owns.
+     * <p>Guarded on both {@code status = 'CLAIMED'} and {@code claimed_at = ?} so a
+     * worker whose claim the reaper has already revoked, or whose visibility window
+     * has been re-claimed by another worker, cannot mark DONE a message it no longer
+     * owns. The {@code claimedAt} token is the value returned by {@link #claimBatch}
+     * and carried in {@link OutboxMessage}; including it in the predicate makes each
+     * update an optimistic ownership check.
      */
-    public boolean markDone(UUID id) {
+    public boolean markDone(UUID id, Instant claimedAt) {
         return jdbc().sql("""
                 UPDATE outbox_message
                    SET status = 'DONE', claimed_at = NULL, last_error = NULL, updated_at = now()
-                 WHERE id = ? AND status = 'CLAIMED'
+                 WHERE id = ? AND status = 'CLAIMED' AND claimed_at = ?
                 """)
             .param(id)
+            .param(Timestamp.from(claimedAt))
             .update() == 1;
     }
 
     /** Returns a failed message to PENDING with a later availability. */
-    public boolean markForRetry(UUID id, Instant availableAt, String error) {
+    public boolean markForRetry(UUID id, Instant claimedAt, Instant availableAt, String error) {
         return jdbc().sql("""
                 UPDATE outbox_message
                    SET status = 'PENDING', claimed_at = NULL, available_at = ?,
                        last_error = ?, updated_at = now()
-                 WHERE id = ? AND status = 'CLAIMED'
+                 WHERE id = ? AND status = 'CLAIMED' AND claimed_at = ?
                 """)
             .param(Timestamp.from(availableAt))
             .param(error)
             .param(id)
+            .param(Timestamp.from(claimedAt))
             .update() == 1;
     }
 
     /** Retires a message that has exhausted its attempts. The row is kept. */
-    public boolean markDead(UUID id, String error) {
+    public boolean markDead(UUID id, Instant claimedAt, String error) {
         return jdbc().sql("""
                 UPDATE outbox_message
                    SET status = 'DEAD', claimed_at = NULL, last_error = ?, updated_at = now()
-                 WHERE id = ? AND status = 'CLAIMED'
+                 WHERE id = ? AND status = 'CLAIMED' AND claimed_at = ?
                 """)
             .param(error)
             .param(id)
+            .param(Timestamp.from(claimedAt))
             .update() == 1;
     }
 
@@ -180,17 +187,23 @@ public class OutboxRepository {
      * queue drains to a permanent standstill that no error is ever logged for.
      *
      * <p>attempts is not incremented here; the claim that died already counted.
+     *
+     * <p>Both sides of the comparison use PostgreSQL's {@code now()} so that the
+     * cutoff is computed entirely on the database server. Passing a Java
+     * {@code Timestamp} via JDBC is subject to JVM-timezone interpretation by the
+     * JDBC driver, which can shift the cutoff and cause the reaper to find zero
+     * rows even when expired claims are present.
      */
-    public int reapExpiredClaims(Instant now, Duration visibilityTimeout) {
+    public int reapExpiredClaims(Duration visibilityTimeout) {
         return jdbc().sql("""
                 UPDATE outbox_message
                    SET status = 'PENDING', claimed_at = NULL,
                        last_error = 'claim expired; worker presumed dead',
-                       updated_at = ?
-                 WHERE status = 'CLAIMED' AND claimed_at < ?
+                       updated_at = now()
+                 WHERE status = 'CLAIMED'
+                   AND claimed_at < now() - make_interval(secs => ?)
                 """)
-            .param(Timestamp.from(now))
-            .param(Timestamp.from(now.minus(visibilityTimeout)))
+            .param(visibilityTimeout.toSeconds())
             .update();
     }
 
@@ -226,12 +239,15 @@ public class OutboxRepository {
             rs.getObject("correlation_id", UUID.class),
             rs.getInt("schema_version"));
 
+        // claimed_at is non-null here: claimBatch only returns rows it just
+        // marked CLAIMED, so the column is always set in this result set.
         return new OutboxMessage(
             rs.getObject("id", UUID.class),
             rs.getString("type"),
             rs.getString("payload"),
             rs.getString("idempotency_key"),
             rs.getInt("attempts"),
+            rs.getTimestamp("claimed_at").toInstant(),
             envelope,
             rs.getTimestamp("available_at").toInstant());
     }
