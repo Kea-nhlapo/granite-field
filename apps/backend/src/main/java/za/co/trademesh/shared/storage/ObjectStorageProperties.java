@@ -5,7 +5,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("trademesh.storage")
 public record ObjectStorageProperties(
-        String endpoint, String accessKey, String secretKey, String bucket, long maxUploadBytes, Duration downloadTtl) {
+        String endpoint,
+        String accessKey,
+        String secretKey,
+        String bucket,
+        long maxUploadBytes,
+        Duration downloadTtl,
+        String region) {
 
     private static final long DEFAULT_MAX_UPLOAD_BYTES = 10L * 1024L * 1024L;
     private static final Duration DEFAULT_DOWNLOAD_TTL = Duration.ofMinutes(5);
@@ -13,6 +19,9 @@ public record ObjectStorageProperties(
     private static final Duration MAXIMUM_DOWNLOAD_TTL = Duration.ofMinutes(15);
 
     public ObjectStorageProperties {
+        if (region != null && region.isBlank()) {
+            region = null;
+        }
         if (bucket == null || bucket.isBlank()) {
             bucket = "trademesh";
         }
@@ -42,6 +51,7 @@ public record ObjectStorageProperties(
     @Override
     public String toString() {
         return "ObjectStorageProperties[endpoint=" + endpoint + ", accessKey=<redacted>, secretKey=<redacted>, bucket="
-                + bucket + ", maxUploadBytes=" + maxUploadBytes + ", downloadTtl=" + downloadTtl + "]";
+                + bucket + ", maxUploadBytes=" + maxUploadBytes + ", downloadTtl=" + downloadTtl + ", region="
+                + region + "]";
     }
 }

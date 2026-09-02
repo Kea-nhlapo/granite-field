@@ -1,13 +1,20 @@
 package za.co.trademesh.shared.storage.scanner;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import za.co.trademesh.shared.storage.FileScanStatus;
 import za.co.trademesh.shared.storage.FileScanner;
 
-/** Production stays fail-closed until a real malware-scanning adapter is configured. */
+/**
+ * Rejects every upload. This is the default when no scanner provider is configured, so an
+ * environment that forgets to choose one refuses uploads rather than accepting unscanned files.
+ */
 @Component
-@Profile("!local")
+@ConditionalOnProperty(
+        prefix = "trademesh.storage.file-scanner",
+        name = "provider",
+        havingValue = FileScannerProperties.FAIL_CLOSED,
+        matchIfMissing = true)
 class FailClosedFileScanner implements FileScanner {
 
     @Override

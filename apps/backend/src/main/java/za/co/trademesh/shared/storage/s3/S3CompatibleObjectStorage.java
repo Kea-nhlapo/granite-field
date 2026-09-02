@@ -119,10 +119,15 @@ class S3CompatibleObjectStorage implements ObjectStorage {
         synchronized (this) {
             if (client == null) {
                 properties.requireConfigured();
-                client = MinioClient.builder()
+                var builder = MinioClient.builder()
                         .endpoint(properties.endpoint())
-                        .credentials(properties.accessKey(), properties.secretKey())
-                        .build();
+                        .credentials(properties.accessKey(), properties.secretKey());
+                // AWS S3 in an opt-in region rejects requests signed for a region it
+                // cannot negotiate, so pin it when the deployment supplies one.
+                if (properties.region() != null) {
+                    builder = builder.region(properties.region());
+                }
+                client = builder.build();
             }
             return client;
         }

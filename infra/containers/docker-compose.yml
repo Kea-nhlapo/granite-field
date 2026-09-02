@@ -2,17 +2,57 @@
 # extension at initdb; a Flyway migration REQUIRES it and fails if absent.
 # Non-local environments get it from provisioning — see docs/adr/0002.
 services:
+  backend:
+    build:
+      context: ../../apps/backend
+      dockerfile: Dockerfile
+    image: ${BACKEND_IMAGE:-trademesh-backend:local}
+    container_name: trademesh-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_DEFAULT: ${SPRING_PROFILES_DEFAULT:-local}
+      TRADEMESH_RUNTIME_ENVIRONMENT: ${TRADEMESH_RUNTIME_ENVIRONMENT:-aws-ec2}
+      LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-INFO}
+      MANAGEMENT_HEALTH_SHOW_DETAILS: never
+      SERVER_PORT: 8080
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in infra/containers/.env}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-https://api.trademesh.local}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-trademesh}
+      DATABASE_USERNAME: ${POSTGRES_USER:-trademesh}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/containers/.env}
+      OBJECT_STORAGE_ENDPOINT: http://minio:9000
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY in infra/containers/.env}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY in infra/containers/.env}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-trademesh}
+      NOTIFICATION_DATA_ENCRYPTION_KEY: ${NOTIFICATION_DATA_ENCRYPTION_KEY:?Set NOTIFICATION_DATA_ENCRYPTION_KEY in infra/containers/.env}
+      DOCUMENT_EXTRACTION_PROVIDER: ${DOCUMENT_EXTRACTION_PROVIDER:-mock}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-local}
+    ports:
+      - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:${BACKEND_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+    stop_grace_period: 30s
+
   postgres:
     image: postgis/postgis:17-3.5
     container_name: trademesh-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-trademesh}
       POSTGRES_USER: ${POSTGRES_USER:-trademesh}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-trademesh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/containers/.env}
     ports:
-      # Loopback-only. The default credentials below are conveniences, not
-      # secrets; publishing on 0.0.0.0 would put a trademesh/trademesh database
-      # on every network the developer machine is attached to.
+      # Loopback-only. Publishing PostgreSQL on 0.0.0.0 would expose the
+      # deployment database on every network the host is attached to.
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trademesh} -d ${POSTGRES_DB:-trademesh}"]
@@ -27,8 +67,8 @@ services:
     container_name: trademesh-minio
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${OBJECT_STORAGE_ACCESS_KEY:-trademesh-minio}
-      MINIO_ROOT_PASSWORD: ${OBJECT_STORAGE_SECRET_KEY:-trademesh-minio}
+      MINIO_ROOT_USER: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY in infra/containers/.env}
+      MINIO_ROOT_PASSWORD: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY in infra/containers/.env}
     ports:
       - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
       - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class FileUploadValidatorTest {
 
     private final ObjectStorageProperties properties =
-            new ObjectStorageProperties("endpoint", "key", "secret", "bucket", 8, Duration.ofMinutes(5));
+            new ObjectStorageProperties("endpoint", "key", "secret", "bucket", 8, Duration.ofMinutes(5), null);
     private final FileUploadValidator validator = new FileUploadValidator(properties);
 
     @Test

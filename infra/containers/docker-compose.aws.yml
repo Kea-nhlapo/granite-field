@@ -1,0 +1,107 @@
+# Cloud deployment stack for a single EC2 host.
+#
+# Differences from the local stack in docker-compose.yml:
+#   * object storage is real Amazon S3, so no MinIO container runs here;
+#   * clamd scans uploads, because the cloud profile is not allowed the mock scanner;
+#   * every service declares a memory limit, because an unbounded JVM on a shared
+#     host starves PostgreSQL and clamd and is then killed by the kernel; and
+#   * every service restarts on boot, so a host reboot brings the whole stack back
+#     rather than a backend with no database to talk to.
+#
+# Sized for a t3.large (8 GiB). Adjust the limits together if you change instance type.
+services:
+  backend:
+    build:
+      context: ../../apps/backend
+      dockerfile: Dockerfile
+    image: ${BACKEND_IMAGE:-trademesh-backend:local}
+    container_name: trademesh-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clamav:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_DEFAULT: ${SPRING_PROFILES_DEFAULT:?Set SPRING_PROFILES_DEFAULT in .env}
+      TRADEMESH_RUNTIME_ENVIRONMENT: ${TRADEMESH_RUNTIME_ENVIRONMENT:-aws-ec2}
+      LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-INFO}
+      MANAGEMENT_HEALTH_SHOW_DETAILS: never
+      SERVER_PORT: 8080
+      # 75% of the container limit below, not of the host.
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in .env}
+      AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:?Set AUTH_JWT_ISSUER in .env}
+      NOTIFICATION_DATA_ENCRYPTION_KEY: ${NOTIFICATION_DATA_ENCRYPTION_KEY:?Set NOTIFICATION_DATA_ENCRYPTION_KEY in .env}
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-trademesh}
+      DATABASE_USERNAME: ${POSTGRES_USER:-trademesh}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      # Real S3. Presigned download URLs generated here resolve for remote clients,
+      # which the MinIO-on-loopback topology could not do.
+      OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:?Set OBJECT_STORAGE_ENDPOINT in .env}
+      OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:?Set OBJECT_STORAGE_REGION in .env}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:?Set OBJECT_STORAGE_BUCKET in .env}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY in .env}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY in .env}
+      FILE_SCANNER_PROVIDER: ${FILE_SCANNER_PROVIDER:?Set FILE_SCANNER_PROVIDER in .env}
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+      COMPANY_REGISTRY_PROVIDER: ${COMPANY_REGISTRY_PROVIDER:?Set COMPANY_REGISTRY_PROVIDER in .env}
+      DOCUMENT_EXTRACTION_PROVIDER: ${DOCUMENT_EXTRACTION_PROVIDER:-mock}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-local}
+    ports:
+      # Reachable only from the CloudFront prefix list; see the security group.
+      - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:${BACKEND_PORT:-8080}:8080"
+    mem_limit: 3g
+    memswap_limit: 3g
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 5
+    stop_grace_period: 30s
+
+  postgres:
+    image: postgis/postgis:17-3.5
+    container_name: trademesh-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-trademesh}
+      POSTGRES_USER: ${POSTGRES_USER:-trademesh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    # No published ports. Only the Compose network reaches the database.
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    mem_limit: 1g
+    memswap_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trademesh} -d ${POSTGRES_DB:-trademesh}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  clamav:
+    image: clamav/clamav:1.4
+    container_name: trademesh-clamav
+    restart: unless-stopped
+    environment:
+      # Signatures refresh in the background; the image ships a usable set.
+      CLAMAV_NO_MILTERD: "true"
+    # No published ports. Only the backend talks to clamd.
+    volumes:
+      - clamav-signatures:/var/lib/clamav
+    mem_limit: 2g
+    memswap_limit: 2g
+    healthcheck:
+      # clamd answers PING once the signature database is loaded, which takes
+      # a couple of minutes on a cold start. The backend waits for this.
+      test: ["CMD-SHELL", "clamdcheck.sh || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 300s
+      retries: 10
+
+volumes:
+  postgres-data:
+  clamav-signatures:
