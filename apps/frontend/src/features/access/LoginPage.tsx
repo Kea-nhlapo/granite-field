@@ -9,10 +9,17 @@ import {
     Title1,
 } from "@fluentui/react-components";
 import { useState, type FormEvent } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import {
+    Link as RouterLink,
+    Navigate,
+    useNavigate,
+    useSearchParams,
+} from "react-router-dom";
 
 import { AppLoading } from "../../app/AppLoading";
 import { useAccessStyles } from "./access.styles";
+import { homePathForRoles } from "./home-path";
+import type { AppRole } from "./roles";
 import { useSession } from "./SessionProvider";
 
 export default function LoginPage() {
@@ -30,7 +37,12 @@ export default function LoginPage() {
     }
 
     if (status === "authenticated" && session) {
-        return <Navigate replace to={safeFrom(searchParams.get("from"))} />;
+        return (
+            <Navigate
+                replace
+                to={safeFrom(searchParams.get("from"), session.roles)}
+            />
+        );
     }
 
     async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -46,7 +58,9 @@ export default function LoginPage() {
             return;
         }
 
-        navigate(safeFrom(searchParams.get("from")), { replace: true });
+        navigate(safeFrom(searchParams.get("from"), result.session.roles), {
+            replace: true,
+        });
     }
 
     return (
@@ -56,10 +70,7 @@ export default function LoginPage() {
                     <Title1 as="h1" className={styles.title}>
                         Sign in
                     </Title1>
-                    <Body1 as="p">
-                        Use your TradeMesh account. Session details come from
-                        the API token response only.
-                    </Body1>
+                    <Body1 as="p">Sign in with your email and password.</Body1>
                     {error ? (
                         <MessageBar intent="error" role="alert">
                             <MessageBarBody>{error}</MessageBarBody>
@@ -93,15 +104,19 @@ export default function LoginPage() {
                     >
                         Sign in
                     </Button>
+                    <Body1>
+                        New here?{" "}
+                        <RouterLink to="/signup">Create an account</RouterLink>
+                    </Body1>
                 </form>
             </Card>
         </main>
     );
 }
 
-function safeFrom(value: string | null) {
+function safeFrom(value: string | null, roles?: ReadonlySet<AppRole>) {
     if (!value || !value.startsWith("/app")) {
-        return "/app";
+        return homePathForRoles(roles);
     }
 
     return value;

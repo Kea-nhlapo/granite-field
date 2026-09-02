@@ -147,6 +147,9 @@ export const handlers = [
             if (body.email === "insurer@example.com") {
                 return HttpResponse.json(insurerTokens);
             }
+            if (body.email === "supplier@example.com") {
+                return HttpResponse.json(supplierTokens);
+            }
             return HttpResponse.json(ownerTokens);
         },
     ),
@@ -168,6 +171,13 @@ export const handlers = [
                     400,
                     "Request validation failed",
                     "INVALID_REQUEST",
+                );
+            }
+            if (body.email === "taken@example.com") {
+                return problem(
+                    409,
+                    "That email is already registered",
+                    "CONFLICT",
                 );
             }
             if (body.accountType === "SUPPLIER") {

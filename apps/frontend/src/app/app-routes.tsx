@@ -7,7 +7,12 @@ import LoginPage from "../features/access/LoginPage";
 import { RequireRole } from "../features/access/RequireRole";
 import { RequireSession } from "../features/access/RequireSession";
 import { useSession } from "../features/access/SessionProvider";
+import CustomerSettingsPage from "../features/access/CustomerSettingsPage";
+import CustomerTrustPage from "../features/access/CustomerTrustPage";
+import SignupPage from "../features/access/SignupPage";
+import SupplierHomePage from "../features/access/SupplierHomePage";
 import WorkspacePage from "../features/access/WorkspacePage";
+import { homePathForRoles } from "../features/access/home-path";
 import OnboardingPage from "../features/business/OnboardingPage";
 import GuestInvitePage from "../features/guest/GuestInvitePage";
 import DocumentReviewPage from "../features/documents/DocumentReviewPage";
@@ -46,7 +51,12 @@ function HomeRedirect() {
         return <AppLoading />;
     }
 
-    return <Navigate replace to={session ? "/app" : "/login"} />;
+    return (
+        <Navigate
+            replace
+            to={session ? homePathForRoles(session.roles) : "/login"}
+        />
+    );
 }
 
 export const appRoutes: RouteObject[] = [
@@ -59,6 +69,14 @@ export const appRoutes: RouteObject[] = [
         path: "/login",
     },
     {
+        element: <SignupPage kind="customer" />,
+        path: "/signup",
+    },
+    {
+        element: <SignupPage kind="supplier" />,
+        path: "/signup/supplier",
+    },
+    {
         element: <GuestInvitePage />,
         path: "/supplier-invitations/guest/:token",
     },
@@ -67,6 +85,30 @@ export const appRoutes: RouteObject[] = [
             {
                 element: <WorkspacePage />,
                 index: true,
+            },
+            {
+                element: (
+                    <RequireRole roles={["SUPPLIER"]}>
+                        <SupplierHomePage />
+                    </RequireRole>
+                ),
+                path: "supplier",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <CustomerSettingsPage />
+                    </RequireRole>
+                ),
+                path: "settings",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <CustomerTrustPage />
+                    </RequireRole>
+                ),
+                path: "trust",
             },
             {
                 element: (
