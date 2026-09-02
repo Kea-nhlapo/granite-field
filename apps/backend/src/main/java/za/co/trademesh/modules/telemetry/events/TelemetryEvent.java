@@ -6,7 +6,8 @@ import java.util.UUID;
 import za.co.trademesh.modules.telemetry.domain.TelemetryNetworkStatus;
 import za.co.trademesh.shared.events.DomainEvent;
 
-public sealed interface TelemetryEvent extends DomainEvent permits TelemetryEvent.ReadingAccepted {
+public sealed interface TelemetryEvent extends DomainEvent
+        permits TelemetryEvent.ReadingAccepted, TelemetryEvent.BackhaulMatchesFound {
 
     @Override
     default int schemaVersion() {
@@ -33,6 +34,21 @@ public sealed interface TelemetryEvent extends DomainEvent permits TelemetryEven
         @Override
         public String type() {
             return "TELEMETRY_READING_ACCEPTED";
+        }
+    }
+
+    record BackhaulMatchesFound(
+            UUID shipmentId,
+            UUID businessId,
+            UUID topCandidateShipmentId,
+            int matchCount,
+            long pickupDistanceMetres,
+            BigDecimal trustScore)
+            implements TelemetryEvent {
+
+        @Override
+        public String type() {
+            return "BACKHAUL_MATCH_FOUND";
         }
     }
 }

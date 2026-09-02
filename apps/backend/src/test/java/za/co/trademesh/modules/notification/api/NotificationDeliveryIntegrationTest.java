@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -21,12 +22,19 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import za.co.trademesh.modules.access.application.AuthService;
 import za.co.trademesh.modules.access.domain.RegistrationType;
 import za.co.trademesh.modules.business.application.RegisteredBusinessOnboardingService;
+import za.co.trademesh.modules.handover.events.HandoverEvent;
 import za.co.trademesh.modules.notification.application.LocalEmailCapture;
+import za.co.trademesh.modules.notification.application.LocalMobileCapture;
 import za.co.trademesh.modules.notification.application.NotificationRequests;
 import za.co.trademesh.modules.notification.application.NotificationTemplates;
+import za.co.trademesh.modules.payment.events.PaymentEvent;
+import za.co.trademesh.modules.telemetry.events.TelemetryEvent;
+import za.co.trademesh.shared.events.DomainEvents;
 import za.co.trademesh.shared.events.outbox.OutboxWorker;
 import za.co.trademesh.support.PostgresIntegrationTest;
 
@@ -50,15 +58,25 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
     private LocalEmailCapture emailCapture;
 
     @Autowired
+    private LocalMobileCapture mobileCapture;
+
+    @Autowired
+    private DomainEvents domainEvents;
+
+    @Autowired
     private OutboxWorker outboxWorker;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     @BeforeEach
     @AfterEach
     void cleanState() {
         emailCapture.clear();
+        mobileCapture.clear();
         jdbcTemplate.update("DELETE FROM email_delivery_attempt");
         jdbcTemplate.update("DELETE FROM email_notification_template_data");
         jdbcTemplate.update("DELETE FROM email_notification");
@@ -67,6 +85,7 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
         jdbcTemplate.update("DELETE FROM supplier_invitation");
         jdbcTemplate.update("DELETE FROM supplier_profile");
         jdbcTemplate.update("DELETE FROM access_refresh_session");
+        jdbcTemplate.update("DELETE FROM access_phone_identity");
         jdbcTemplate.update("DELETE FROM access_business_membership");
         jdbcTemplate.update("DELETE FROM business_registered_onboarding");
         jdbcTemplate.update("DELETE FROM business_profile");
@@ -187,6 +206,52 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
         assertThatThrownBy(() -> notifications.requestEmail(conflicting))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("idempotency key");
+    }
+
+    @Test
+    void queuesEncryptedIdempotentWhatsAppUpdatesForOperationalEvents() {
+        Account owner = register("mobile-events@example.com");
+        UUID businessId = createBusiness(owner, "2026/810002/07");
+        String phone = "+27821234567";
+        jdbcTemplate.update(
+                "INSERT INTO access_phone_identity (phone_number, user_id, verification_method, verified_at) VALUES (?, ?, 'TWILIO_OTP', CURRENT_TIMESTAMP)",
+                phone,
+                owner.userId());
+        UUID shipmentId = UUID.randomUUID();
+        UUID candidateShipmentId = UUID.randomUUID();
+        UUID challengeId = UUID.randomUUID();
+        UUID escrowId = UUID.randomUUID();
+
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            var match = new TelemetryEvent.BackhaulMatchesFound(
+                    shipmentId, businessId, candidateShipmentId, 2, 3_400, new BigDecimal("0.87"));
+            domainEvents.publish(match);
+            domainEvents.publish(match);
+            domainEvents.publish(
+                    new HandoverEvent.HandoverFinalized(challengeId, shipmentId, businessId, "DELIVERY", "DISPUTED"));
+            domainEvents.publish(
+                    new PaymentEvent.Released(escrowId, shipmentId, businessId, new BigDecimal("8500.00"), "ZAR"));
+        });
+
+        var payloads = jdbcTemplate.queryForList(
+                "SELECT payload::text FROM outbox_message WHERE type = 'MOBILE_NOTIFICATION_DELIVERY_REQUESTED' ORDER BY created_at",
+                String.class);
+        assertThat(payloads).hasSize(3).allSatisfy(payload -> assertThat(payload)
+                .doesNotContain(phone, "quantity did not match", "8500.00"));
+
+        assertThat(outboxWorker.pollOnce()).isEqualTo(3);
+        assertThat(mobileCapture.capturedMessages()).hasSize(3).allSatisfy(message -> {
+            assertThat(message.recipientPhone()).isEqualTo(phone);
+            assertThat(message.channel())
+                    .isEqualTo(
+                            za.co.trademesh.modules.notification.application.MobileNotificationRequests.MobileChannel
+                                    .WHATSAPP);
+        });
+        assertThat(mobileCapture.capturedMessages())
+                .extracting(LocalMobileCapture.CapturedMessage::body)
+                .anySatisfy(body -> assertThat(body).contains("backhaul", "3.4 km", "87/100"))
+                .anySatisfy(body -> assertThat(body).contains("did not match", "blocked"))
+                .anySatisfy(body -> assertThat(body).contains("ZAR 8500.00", "released"));
     }
 
     private Account register(String email) {

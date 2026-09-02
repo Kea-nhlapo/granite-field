@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.co.trademesh.modules.shipment.application.ShipmentAccessCatalog;
 import za.co.trademesh.modules.telemetry.domain.TelemetryRepository;
+import za.co.trademesh.modules.telemetry.events.TelemetryEvent;
+import za.co.trademesh.shared.events.DomainEvents;
 
 @Service
 public class BackhaulMatchingService {
@@ -23,6 +25,7 @@ public class BackhaulMatchingService {
     private final BackhaulCandidateCatalog candidates;
     private final BackhaulDistanceClient distances;
     private final TrackingProperties properties;
+    private final DomainEvents events;
     private final Clock clock;
 
     public BackhaulMatchingService(
@@ -31,16 +34,18 @@ public class BackhaulMatchingService {
             BackhaulCandidateCatalog candidates,
             BackhaulDistanceClient distances,
             TrackingProperties properties,
+            DomainEvents events,
             Clock clock) {
         this.shipments = shipments;
         this.telemetry = telemetry;
         this.candidates = candidates;
         this.distances = distances;
         this.properties = properties;
+        this.events = events;
         this.clock = clock;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<BackhaulMatch> find(UUID businessId, UUID shipmentId) {
         UUID business = required(businessId);
         UUID shipment = required(shipmentId);
@@ -68,13 +73,24 @@ public class BackhaulMatchingService {
             measured = Map.of();
         }
         Map<UUID, BackhaulDistanceClient.Distance> roadDistances = measured;
-        return found.stream()
+        List<BackhaulMatch> matches = found.stream()
                 .map(candidate -> score(candidate, roadDistances.get(candidate.shipmentId())))
                 .sorted(Comparator.comparing(BackhaulMatch::score)
                         .reversed()
                         .thenComparing(BackhaulMatch::pickupDistanceMetres)
                         .thenComparing(BackhaulMatch::shipmentId))
                 .toList();
+        if (!matches.isEmpty()) {
+            BackhaulMatch best = matches.getFirst();
+            events.publish(new TelemetryEvent.BackhaulMatchesFound(
+                    shipment,
+                    business,
+                    best.shipmentId(),
+                    matches.size(),
+                    best.pickupDistanceMetres(),
+                    best.trustScore()));
+        }
+        return matches;
     }
 
     private BackhaulMatch score(

@@ -21,8 +21,9 @@ class JdbcVerifiedPhoneCatalog implements VerifiedPhoneCatalog {
                 .query("""
                 SELECT phone.phone_number
                   FROM access_business_membership membership
-                  JOIN access_phone_identity phone ON phone.user_id = membership.user_id
+                 JOIN access_phone_identity phone ON phone.user_id = membership.user_id
                  WHERE membership.business_id = ?
+                   AND membership.membership_status = 'ACTIVE'
                  ORDER BY CASE membership.membership_role WHEN 'BUSINESS_OWNER' THEN 0 ELSE 1 END,
                           membership.created_at,
                           phone.phone_number

@@ -1,7 +1,9 @@
 package za.co.trademesh.modules.telemetry.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
@@ -17,6 +19,8 @@ import org.junit.jupiter.api.Test;
 import za.co.trademesh.modules.shipment.application.ShipmentAccessCatalog;
 import za.co.trademesh.modules.telemetry.domain.TelemetryLivePosition;
 import za.co.trademesh.modules.telemetry.domain.TelemetryRepository;
+import za.co.trademesh.modules.telemetry.events.TelemetryEvent;
+import za.co.trademesh.shared.events.DomainEvents;
 
 class BackhaulMatchingServiceTest {
 
@@ -38,8 +42,9 @@ class BackhaulMatchingServiceTest {
         BackhaulDistanceClient distances = (latitude, longitude, pickups) -> Map.of(
                 nearShipment, new BackhaulDistanceClient.Distance(2_500, 300),
                 trustedShipment, new BackhaulDistanceClient.Distance(6_000, 600));
+        DomainEvents events = mock(DomainEvents.class);
         var service = new BackhaulMatchingService(
-                shipments, telemetry, candidates, distances, properties(), Clock.fixed(NOW, ZoneOffset.UTC));
+                shipments, telemetry, candidates, distances, properties(), events, Clock.fixed(NOW, ZoneOffset.UTC));
 
         var result = service.find(businessId, currentShipment);
 
@@ -50,6 +55,7 @@ class BackhaulMatchingServiceTest {
         assertThat(result.getFirst().roadDistanceMeasured()).isTrue();
         assertThat(result.getFirst().pickupDistanceMetres()).isEqualTo(2_500);
         assertThat(result.getFirst().score()).isBetween(new BigDecimal("0.000000"), new BigDecimal("1.000000"));
+        verify(events).publish(any(TelemetryEvent.BackhaulMatchesFound.class));
     }
 
     @Test
@@ -68,7 +74,13 @@ class BackhaulMatchingServiceTest {
             throw new IllegalStateException("distance provider unavailable");
         };
         var service = new BackhaulMatchingService(
-                shipments, telemetry, candidates, distances, properties(), Clock.fixed(NOW, ZoneOffset.UTC));
+                shipments,
+                telemetry,
+                candidates,
+                distances,
+                properties(),
+                mock(DomainEvents.class),
+                Clock.fixed(NOW, ZoneOffset.UTC));
 
         var match = service.find(businessId, currentShipment).getFirst();
 

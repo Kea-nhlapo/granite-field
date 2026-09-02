@@ -288,7 +288,12 @@ public class HandoverService implements DeliveryReleaseGate {
         }
         completeShipment(confirmed, outcome, actor, shipment);
         events.publish(
-                new HandoverEvent.HandoverFinalized(confirmed.id(), confirmed.shipmentId(), confirmed.type(), outcome),
+                new HandoverEvent.HandoverFinalized(
+                        confirmed.id(),
+                        confirmed.shipmentId(),
+                        confirmed.businessId(),
+                        confirmed.type().name(),
+                        outcome.name()),
                 actor.toString());
         return handovers.findByNonceHashForUpdate(nonceHash).orElseThrow();
     }
@@ -425,7 +430,12 @@ public class HandoverService implements DeliveryReleaseGate {
                 handovers.findByNonceHashForUpdate(nonceHash).orElseThrow(HandoverException::notFound);
         completeShipment(finalized, outcome, actor, shipment);
         events.publish(
-                new HandoverEvent.HandoverFinalized(finalized.id(), finalized.shipmentId(), finalized.type(), outcome),
+                new HandoverEvent.HandoverFinalized(
+                        finalized.id(),
+                        finalized.shipmentId(),
+                        finalized.businessId(),
+                        finalized.type().name(),
+                        outcome.name()),
                 actor.toString());
         return finalized;
     }
