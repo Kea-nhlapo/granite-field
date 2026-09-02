@@ -19,6 +19,7 @@ import za.co.trademesh.modules.transport.domain.CargoRestriction;
 import za.co.trademesh.modules.transport.domain.Driver;
 import za.co.trademesh.modules.transport.domain.DriverStatus;
 import za.co.trademesh.modules.transport.domain.DriverVehicleAssignment;
+import za.co.trademesh.modules.transport.domain.OfferRouteFit;
 import za.co.trademesh.modules.transport.domain.RoutePoint;
 import za.co.trademesh.modules.transport.domain.TransportRepository;
 import za.co.trademesh.modules.transport.domain.TransporterProfile;
@@ -311,6 +312,62 @@ class JdbcTransportRepository implements TransportRepository {
                SET status = 'EXPIRED'
              WHERE transporter_id = ? AND id = ? AND status = 'ACTIVE' AND expires_at <= ?
             """, transporterId, offerId, time(now));
+    }
+
+    @Override
+    public List<CapacityOffer> findAvailableOffers(Instant now, int limit) {
+        return jdbcTemplate.query(
+                "SELECT " + OFFER_COLUMNS
+                        + " FROM transport_capacity_offer"
+                        + " WHERE status = 'ACTIVE' AND expires_at > ? AND departure_window_end > ?"
+                        + " AND remaining_weight_kg > 0 AND remaining_volume_cubic_metres > 0"
+                        + " ORDER BY departure_window_start, id LIMIT ?",
+                this::mapOffer,
+                time(now),
+                time(now),
+                limit);
+    }
+
+    @Override
+    public Optional<OfferRouteFit> measureRouteFit(UUID offerId, List<RoutePoint> destinations) {
+        if (destinations == null || destinations.isEmpty()) {
+            return Optional.empty();
+        }
+        String values = java.util.stream.IntStream.range(0, destinations.size())
+                .mapToObj(ignored -> "(?, ?)")
+                .collect(Collectors.joining(", "));
+        String sql = """
+            WITH destination(longitude, latitude) AS (VALUES %s)
+            SELECT MAX(ST_Distance(
+                       offer.route_corridor,
+                       ST_SetSRID(ST_MakePoint(destination.longitude, destination.latitude), 4326)::geography
+                   )) AS maximum_distance_metres,
+                   SUM(ST_Distance(
+                       offer.route_corridor,
+                       ST_SetSRID(ST_MakePoint(destination.longitude, destination.latitude), 4326)::geography
+                   )) * 2 AS estimated_added_distance_metres
+              FROM transport_capacity_offer offer
+              CROSS JOIN destination
+             WHERE offer.id = ?
+            """.formatted(values);
+        List<Object> parameters = new java.util.ArrayList<>();
+        destinations.forEach(point -> {
+            parameters.add(point.longitude());
+            parameters.add(point.latitude());
+        });
+        parameters.add(offerId);
+        OfferRouteFit fit = jdbcTemplate.query(
+                sql,
+                resultSet -> {
+                    if (!resultSet.next() || resultSet.getObject("maximum_distance_metres") == null) {
+                        return null;
+                    }
+                    return new OfferRouteFit(
+                            resultSet.getDouble("maximum_distance_metres"),
+                            resultSet.getDouble("estimated_added_distance_metres"));
+                },
+                parameters.toArray());
+        return Optional.ofNullable(fit);
     }
 
     @Override
