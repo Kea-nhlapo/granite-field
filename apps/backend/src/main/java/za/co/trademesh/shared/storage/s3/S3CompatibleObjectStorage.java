@@ -1,6 +1,7 @@
 package za.co.trademesh.shared.storage.s3;
 
 import io.minio.BucketExistsArgs;
+import io.minio.GetObjectArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.Http.Method;
 import io.minio.MakeBucketArgs;
@@ -38,6 +39,18 @@ class S3CompatibleObjectStorage implements ObjectStorage {
                                     .contentType(contentType)
                                     .stream(new ByteArrayInputStream(content), (long) content.length, -1L)
                                     .build());
+        } catch (Exception failure) {
+            throw StorageException.storageUnavailable(failure);
+        }
+    }
+
+    @Override
+    public byte[] get(String objectKey) {
+        try (var content = client().getObject(GetObjectArgs.builder()
+                .bucket(properties.bucket())
+                .object(objectKey)
+                .build())) {
+            return content.readAllBytes();
         } catch (Exception failure) {
             throw StorageException.storageUnavailable(failure);
         }

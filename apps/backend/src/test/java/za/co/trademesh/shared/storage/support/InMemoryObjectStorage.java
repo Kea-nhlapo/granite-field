@@ -22,6 +22,15 @@ public class InMemoryObjectStorage implements ObjectStorage {
     }
 
     @Override
+    public byte[] get(String objectKey) {
+        byte[] content = content(objectKey);
+        if (content == null) {
+            throw StorageException.fileNotFound();
+        }
+        return content;
+    }
+
+    @Override
     public void delete(String objectKey) {
         objects.remove(objectKey);
     }

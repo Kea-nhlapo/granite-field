@@ -75,6 +75,11 @@ trademesh:
     bucket: ${OBJECT_STORAGE_BUCKET:trademesh}
     max-upload-bytes: ${OBJECT_STORAGE_MAX_UPLOAD_BYTES:10485760}
     download-ttl: ${OBJECT_STORAGE_DOWNLOAD_TTL:PT5M}
+  documents:
+    extraction:
+      provider: ${DOCUMENT_EXTRACTION_PROVIDER:unconfigured}
+    processing:
+      claim-timeout: ${DOCUMENT_PROCESSING_CLAIM_TIMEOUT:PT5M}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.
@@ -93,3 +98,6 @@ trademesh:
     endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}
     access-key: ${OBJECT_STORAGE_ACCESS_KEY:trademesh-minio}
     secret-key: ${OBJECT_STORAGE_SECRET_KEY:trademesh-minio}
+  documents:
+    extraction:
+      provider: ${DOCUMENT_EXTRACTION_PROVIDER:mock}

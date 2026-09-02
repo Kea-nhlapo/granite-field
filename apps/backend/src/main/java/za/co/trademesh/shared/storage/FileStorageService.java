@@ -103,11 +103,21 @@ public class FileStorageService {
     @Transactional(readOnly = true)
     public DownloadAccess createDownloadAccess(UUID businessId, UUID fileId) {
         StoredFile file = getMetadata(businessId, fileId);
+        requireAvailable(file);
+        URI downloadUrl = objectStorage.presignDownload(file.objectKey(), properties.downloadTtl());
+        return new DownloadAccess(downloadUrl, clock.instant().plus(properties.downloadTtl()));
+    }
+
+    public byte[] readAvailableContent(UUID businessId, UUID fileId) {
+        StoredFile file = getMetadata(businessId, fileId);
+        requireAvailable(file);
+        return objectStorage.get(file.objectKey());
+    }
+
+    private static void requireAvailable(StoredFile file) {
         if (file.storageStatus() != FileStorageStatus.AVAILABLE || file.scanStatus() != FileScanStatus.CLEAN) {
             throw StorageException.fileUnavailable();
         }
-        URI downloadUrl = objectStorage.presignDownload(file.objectKey(), properties.downloadTtl());
-        return new DownloadAccess(downloadUrl, clock.instant().plus(properties.downloadTtl()));
     }
 
     private void deleteQuietly(String objectKey) {
