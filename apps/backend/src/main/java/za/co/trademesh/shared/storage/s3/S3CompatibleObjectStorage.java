@@ -89,7 +89,7 @@ class S3CompatibleObjectStorage implements ObjectStorage {
      */
     boolean bucketReachable() throws Exception {
         return client().bucketExists(
-                BucketExistsArgs.builder().bucket(properties.bucket()).build());
+                        BucketExistsArgs.builder().bucket(properties.bucket()).build());
     }
 
     private void ensureBucket() throws Exception {
