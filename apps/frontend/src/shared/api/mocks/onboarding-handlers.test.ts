@@ -8,7 +8,12 @@ import {
     fileStorageUpload,
 } from "../app-api";
 import { setApiAccessToken } from "../client";
-import { handlers, mockScenarioHeader, resetOnboardingMocks } from "./handlers";
+import {
+    handlers,
+    mockScenarioHeader,
+    resetOnboardingMocks,
+    resetDocumentMocks,
+} from "./handlers";
 import {
     mockBusinessId,
     mockFileId,
@@ -20,6 +25,7 @@ const server = setupServer(...handlers);
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
     resetOnboardingMocks();
+    resetDocumentMocks();
     setApiAccessToken(undefined);
     server.resetHandlers();
 });

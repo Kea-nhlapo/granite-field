@@ -2,8 +2,6 @@ import { http, HttpResponse } from "msw";
 
 import type {
     BusinessProfileResponse,
-    DocumentResponse,
-    FileMetadataResponse,
     RegisteredOnboardingResponse,
 } from "../generated";
 import { runtimeConfig } from "../../lib/runtime-config";
@@ -36,12 +34,10 @@ const confirmedProfile: BusinessProfileResponse = {
 };
 
 let onboardingGets = 0;
-let documentGets = 0;
 let confirmed = false;
 
 export function resetOnboardingMocks() {
     onboardingGets = 0;
-    documentGets = 0;
     confirmed = false;
 }
 
@@ -157,140 +153,6 @@ export const onboardingHandlers = [
             return HttpResponse.json(confirmedProfile);
         },
     ),
-    http.post(
-        `${runtimeConfig.apiBaseUrl}/api/businesses/:businessId/files`,
-        async ({ request, params }) => {
-            const scenario = scenarioOf(request);
-            if (scenario === "validation") {
-                return problem(
-                    400,
-                    "The uploaded file is not supported",
-                    "FILE_UNSUPPORTED",
-                );
-            }
-            if (scenario === "forbidden") {
-                return problem(403, "Access denied", "ACCESS_DENIED");
-            }
-            if (String(params.businessId) !== mockBusinessId) {
-                return problem(
-                    404,
-                    "The business was not found",
-                    "BUSINESS_NOT_FOUND",
-                );
-            }
-
-            const form = await request.formData();
-            const file = form.get("file");
-            const uploaded = uploadedFile(file);
-            if (!uploaded) {
-                return problem(400, "The uploaded file is empty", "FILE_EMPTY");
-            }
-
-            const metadata: FileMetadataResponse = {
-                fileId: mockFileId,
-                businessId: mockBusinessId,
-                category: "COMPANY_DOCUMENT",
-                originalFilename: uploaded.name,
-                contentType: uploaded.type || "application/pdf",
-                sizeBytes: uploaded.size,
-                scanStatus: "CLEAN",
-                storageStatus: "AVAILABLE",
-                createdAt: "2026-09-02T12:06:00Z",
-            };
-            return HttpResponse.json(metadata, { status: 201 });
-        },
-    ),
-    http.post(
-        `${runtimeConfig.apiBaseUrl}/api/businesses/:businessId/documents`,
-        async ({ request, params }) => {
-            const scenario = scenarioOf(request);
-            if (scenario === "server-error") {
-                return problem(
-                    500,
-                    "Request could not be completed",
-                    "INTERNAL_ERROR",
-                );
-            }
-            if (String(params.businessId) !== mockBusinessId) {
-                return problem(
-                    404,
-                    "The business was not found",
-                    "BUSINESS_NOT_FOUND",
-                );
-            }
-            const body = (await request.json()) as {
-                storedFileId?: string;
-                requestId?: string;
-                type?: string;
-            };
-            if (
-                !body.storedFileId ||
-                !body.requestId ||
-                body.type !== "COMPANY_DOCUMENT"
-            ) {
-                return problem(
-                    400,
-                    "Request validation failed",
-                    "INVALID_REQUEST",
-                );
-            }
-            documentGets = 0;
-            return HttpResponse.json(queuedDocument(), { status: 202 });
-        },
-    ),
-    http.get(
-        `${runtimeConfig.apiBaseUrl}/api/businesses/:businessId/documents/:documentId`,
-        ({ params }) => {
-            if (
-                String(params.businessId) !== mockBusinessId ||
-                String(params.documentId) !== mockDocumentId
-            ) {
-                return problem(
-                    404,
-                    "The document was not found",
-                    "DOCUMENT_NOT_FOUND",
-                );
-            }
-            documentGets += 1;
-            if (documentGets < 2) {
-                return HttpResponse.json({
-                    ...queuedDocument(),
-                    state: "PROCESSING",
-                } satisfies DocumentResponse);
-            }
-            return HttpResponse.json(parsedDocument());
-        },
-    ),
-    http.post(
-        `${runtimeConfig.apiBaseUrl}/api/businesses/:businessId/documents/:documentId/confirmations`,
-        async ({ request, params }) => {
-            if (
-                String(params.businessId) !== mockBusinessId ||
-                String(params.documentId) !== mockDocumentId
-            ) {
-                return problem(
-                    404,
-                    "The document was not found",
-                    "DOCUMENT_NOT_FOUND",
-                );
-            }
-            const body = (await request.json()) as {
-                requestId?: string;
-                fields?: Array<{ path?: string; value?: string }>;
-            };
-            if (!body.requestId || !body.fields?.length) {
-                return problem(
-                    400,
-                    "Request validation failed",
-                    "INVALID_REQUEST",
-                );
-            }
-            return HttpResponse.json({
-                ...parsedDocument(),
-                state: "CONFIRMED",
-            } satisfies DocumentResponse);
-        },
-    ),
 ];
 
 function onboardingStartError(scenario: string) {
@@ -340,66 +202,4 @@ function onboardingStartError(scenario: string) {
         return problem(500, "Request could not be completed", "INTERNAL_ERROR");
     }
     return undefined;
-}
-
-function uploadedFile(value: FormDataEntryValue | null): {
-    name: string;
-    type: string;
-    size: number;
-} | null {
-    if (value == null || typeof value === "string") {
-        return null;
-    }
-    const size = "size" in value ? Number(value.size) : 0;
-    if (!Number.isFinite(size) || size <= 0) {
-        return null;
-    }
-    return {
-        name:
-            "name" in value && typeof value.name === "string"
-                ? value.name
-                : "company-document.pdf",
-        type:
-            "type" in value && typeof value.type === "string" ? value.type : "",
-        size,
-    };
-}
-
-function queuedDocument(): DocumentResponse {
-    return {
-        documentId: mockDocumentId,
-        businessId: mockBusinessId,
-        storedFileId: mockFileId,
-        type: "COMPANY_DOCUMENT",
-        state: "QUEUED",
-        createdAt: "2026-09-02T12:06:30Z",
-    };
-}
-
-function parsedDocument(): DocumentResponse {
-    return {
-        ...queuedDocument(),
-        state: "PARSED",
-        extraction: {
-            extractionId: "00000000-0000-4000-8000-000000000025",
-            provider: "mock-parser",
-            fields: [
-                {
-                    path: "legalName",
-                    value: pendingOnboarding.legalName,
-                    confidence: 0.91,
-                },
-                {
-                    path: "tradingName",
-                    value: pendingOnboarding.tradingName,
-                    confidence: 0.84,
-                },
-                {
-                    path: "registeredAddress",
-                    value: pendingOnboarding.registeredAddress,
-                    confidence: 0.88,
-                },
-            ],
-        },
-    };
 }
