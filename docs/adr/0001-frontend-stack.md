@@ -23,6 +23,8 @@ a fast local workflow while the Spring backend remains independently deployable.
 - Frontend code stays inside apps/frontend.
 - Backend code stays inside apps/backend.
 - Shared HTTP schemas live in packages/api-contracts.
+- The product UI lives only in apps/frontend. There is no separate marketing
+  landing or login SPA.
 - Routing, data fetching, and design components will be added only when their
   feature tickets require them.
 - If server rendering becomes a real requirement, the team will write a new ADR

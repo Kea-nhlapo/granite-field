@@ -2,9 +2,5 @@
 
 interface ImportMetaEnv {
     readonly VITE_API_BASE_URL?: string;
-    readonly VITE_API_MODE?: "live" | "mock";
-}
-
-interface ImportMeta {
-    readonly env: ImportMetaEnv;
+    readonly VITE_USE_MOCKS?: string;
 }

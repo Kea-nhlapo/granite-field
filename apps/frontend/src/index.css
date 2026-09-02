@@ -1,0 +1,57 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,300;1,9..144,400&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+:root {
+    --yellow: #ffcc00;
+    --yellow-hover: #f5c200;
+    --blue: #003e85;
+    --navy: #002b49;
+    --surface: #f8f9fa;
+    --border: #e5e7eb;
+    --success: #00875a;
+    --warning: #f57c00;
+    --error: #d32f2f;
+    --inactive: #cccccc;
+    --inactive-text: #8e8e93;
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "Work Sans", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+}
+
+html,
+body,
+#root {
+    height: 100%;
+    font-family: var(--font-body);
+    background: var(--surface);
+    color: var(--navy);
+}
+
+/* Mobile viewport: 390×844, no device chrome */
+.mobile-stage {
+    width: min(390px, 100vw);
+    height: min(100dvh, calc(min(390px, 100vw) * 844 / 390));
+    aspect-ratio: 390 / 844;
+    max-width: 100vw;
+    max-height: 100dvh;
+    background: var(--surface);
+}
+
+.phone-scroll::-webkit-scrollbar {
+    display: none;
+}
+.phone-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.font-display {
+    font-family: var(--font-display);
+}
+.font-mono-data {
+    font-family: var(--font-mono);
+}
