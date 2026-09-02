@@ -1,6 +1,7 @@
 package za.co.trademesh.modules.evidence.application;
 
 import java.util.List;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -22,6 +23,7 @@ class EvidenceDomainEventListener {
      * A failed evidence write rolls the business change back instead of leaving a gap.
      */
     @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
+    @Order(0)
     public void capture(PublishedEvent<?> published) {
         List<EvidenceProjector> matches = projectors.stream()
                 .filter(projector -> projector.supports(published.event()))
