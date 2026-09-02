@@ -3,7 +3,7 @@ trademesh:
     turnstile:
       provider: cloudflare
     otp:
-      provider: twilio
+      provider: ${OTP_PROVIDER:unconfigured}
   integrations:
     momo:
       provider: http
@@ -15,4 +15,4 @@ trademesh:
     provider: google
   notifications:
     mobile:
-      provider: twilio
+      provider: ${MOBILE_NOTIFICATION_PROVIDER:unconfigured}
