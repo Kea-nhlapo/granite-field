@@ -1263,6 +1263,18 @@ export type LoginRequest = {
     password: string;
 };
 
+export type ScoreResponse = {
+    userId?: string;
+    businessId?: string;
+    provisionalScore?: number;
+    verifiedScore?: number;
+    verifiedScheduleMode?: string;
+    calculationVersion?: string;
+    provisionalCalculatedAt?: string;
+    verifiedCalculatedAt?: string;
+    nextVerificationAt?: string;
+};
+
 export type SseEmitter = {
     timeout?: number;
 };
@@ -1535,6 +1547,22 @@ export type RouteResponse = {
     durationSeconds?: number;
     generatedAt?: string;
     estimatedArrivalAt?: string;
+};
+
+export type PremiumEstimateResponse = {
+    shipmentId?: string;
+    businessId?: string;
+    cargoValue?: number;
+    currency?: string;
+    verifiedTrustScore?: number;
+    platformRate?: number;
+    platformPremium?: number;
+    genericInsurerRate?: number;
+    genericInsurerPremium?: number;
+    estimatedSaving?: number;
+    status?: string;
+    calculationVersion?: string;
+    estimatedAt?: string;
 };
 
 export type ReadingHistoryResponse = {
@@ -5201,6 +5229,65 @@ export type AuthLoginResponses = {
 
 export type AuthLoginResponse = AuthLoginResponses[keyof AuthLoginResponses];
 
+export type TrustScoreData = {
+    body?: never;
+    path: {
+        userId: string;
+    };
+    query?: never;
+    url: "/api/users/{userId}/trust";
+};
+
+export type TrustScoreErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type TrustScoreError = TrustScoreErrors[keyof TrustScoreErrors];
+
+export type TrustScoreResponses = {
+    /**
+     * OK
+     */
+    200: ScoreResponse;
+};
+
+export type TrustScoreResponse = TrustScoreResponses[keyof TrustScoreResponses];
+
 export type TelemetryPositionEventsData = {
     body?: never;
     path: {
@@ -5879,6 +5966,67 @@ export type ShipmentRouteRouteResponses = {
 
 export type ShipmentRouteRouteResponse =
     ShipmentRouteRouteResponses[keyof ShipmentRouteRouteResponses];
+
+export type TrustPremiumEstimateData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/premium-estimate";
+};
+
+export type TrustPremiumEstimateErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type TrustPremiumEstimateError =
+    TrustPremiumEstimateErrors[keyof TrustPremiumEstimateErrors];
+
+export type TrustPremiumEstimateResponses = {
+    /**
+     * OK
+     */
+    200: PremiumEstimateResponse;
+};
+
+export type TrustPremiumEstimateResponse =
+    TrustPremiumEstimateResponses[keyof TrustPremiumEstimateResponses];
 
 export type EscrowGetData = {
     body?: never;

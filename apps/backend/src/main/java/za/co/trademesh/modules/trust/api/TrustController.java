@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
+import za.co.trademesh.modules.trust.application.PremiumEstimateService;
+import za.co.trademesh.modules.trust.application.TrustScoreService;
 import za.co.trademesh.modules.trust.application.TrustService;
 import za.co.trademesh.shared.security.AuthorizationService;
 
@@ -14,10 +16,18 @@ import za.co.trademesh.shared.security.AuthorizationService;
 public class TrustController {
 
     private final TrustService trust;
+    private final TrustScoreService scores;
+    private final PremiumEstimateService premiums;
     private final AuthorizationService authorization;
 
-    public TrustController(TrustService trust, AuthorizationService authorization) {
+    public TrustController(
+            TrustService trust,
+            TrustScoreService scores,
+            PremiumEstimateService premiums,
+            AuthorizationService authorization) {
         this.trust = trust;
+        this.scores = scores;
+        this.premiums = premiums;
         this.authorization = authorization;
     }
 
@@ -32,5 +42,21 @@ public class TrustController {
             @PathVariable UUID businessId, Authentication authentication) {
         authorization.requireInternalRiskAccess(authentication);
         return TrustContracts.InternalCalculationResponse.from(trust.recalculate(businessId));
+    }
+
+    @GetMapping("/api/users/{userId}/trust")
+    @PreAuthorize("isAuthenticated()")
+    TrustContracts.ScoreResponse score(@PathVariable UUID userId, Authentication authentication) {
+        authorization.requireSelfOrAdministrator(authentication, userId);
+        return TrustContracts.ScoreResponse.from(userId, scores.getForUser(userId));
+    }
+
+    @GetMapping("/api/delivery/{shipmentId}/premium-estimate")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'BUSINESS_MEMBER', 'ADMINISTRATOR')")
+    TrustContracts.PremiumEstimateResponse premiumEstimate(
+            @PathVariable UUID shipmentId, Authentication authentication) {
+        UUID businessId = premiums.requireBusinessId(shipmentId);
+        authorization.requireBusinessAccess(authentication, businessId);
+        return TrustContracts.PremiumEstimateResponse.from(premiums.estimate(shipmentId));
     }
 }

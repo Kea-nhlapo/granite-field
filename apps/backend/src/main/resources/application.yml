@@ -300,6 +300,16 @@ trademesh:
     backhaul-candidate-limit: ${BACKHAUL_CANDIDATE_LIMIT:20}
     backhaul-distance-weight: ${BACKHAUL_DISTANCE_WEIGHT:0.70}
     backhaul-trust-weight: ${BACKHAUL_TRUST_WEIGHT:0.30}
+  trust:
+    scores:
+      # The demo compresses a normally delayed verification cycle. The API
+      # returns this mode so the UI cannot present it as production timing.
+      verified-interval: ${TRUST_VERIFIED_INTERVAL:PT30S}
+      evidence-half-life: ${TRUST_EVIDENCE_HALF_LIFE:P180D}
+      maximum-verified-movement: ${TRUST_MAXIMUM_VERIFIED_MOVEMENT:5.00}
+      verification-batch-size: ${TRUST_VERIFICATION_BATCH_SIZE:100}
+      verification-schedule-mode: ${TRUST_VERIFICATION_SCHEDULE_MODE:COMPRESSED_DEMO}
+      calculation-version: ${TRUST_SCORE_CALCULATION_VERSION:trust-score/v1}
   risk:
     # Two off-route readings reduce false alerts from a single noisy GPS fix.
     route-deviation-metres: ${RISK_ROUTE_DEVIATION_METRES:1000}

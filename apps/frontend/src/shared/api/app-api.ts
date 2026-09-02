@@ -88,4 +88,6 @@ export {
     transportPublishOffer,
     transportRegister,
     trustPublicSummary,
+    trustPremiumEstimate,
+    trustScore,
 } from "./generated";

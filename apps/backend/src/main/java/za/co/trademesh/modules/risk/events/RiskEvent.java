@@ -20,6 +20,10 @@ public sealed interface RiskEvent extends DomainEvent
         public String type() {
             return "RISK_INDICATOR_OPENED";
         }
+
+        public boolean affectsTrustScore() {
+            return rule == RiskRule.ROUTE_DEVIATION;
+        }
     }
 
     record IndicatorStateChanged(
