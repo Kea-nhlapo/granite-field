@@ -1,9 +1,10 @@
 package za.co.trademesh.modules.routing.adapter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import za.co.trademesh.modules.routing.domain.CandidateRoute;
 import za.co.trademesh.modules.routing.domain.Coordinate;
 import za.co.trademesh.modules.routing.domain.RouteCandidateSet;
-import za.co.trademesh.modules.routing.domain.RouteProviderException;
 import za.co.trademesh.modules.routing.domain.RouteRequest;
 import za.co.trademesh.modules.routing.domain.RouteSegment;
 import za.co.trademesh.modules.routing.port.RouteProvider;
@@ -28,8 +29,19 @@ import java.util.UUID;
  * itself, straight-line geometry, great-circle distance, and NO toll estimate,
  * because a straight line cannot know about tolls. Empty means unknown here,
  * which is exactly what it is.
+ *
+ * <p>This must be the OUTERMOST decorator. It catches RuntimeException rather
+ * than only RouteProviderException, so an unwrapped failure from any delegate
+ * still degrades instead of escaping — wrapping order should not decide whether
+ * the fallback works.
+ *
+ * <p>The failure is logged at WARN. degraded = true tells a SCORER what
+ * happened; without the log nothing tells an OPERATOR, and a fleet running all
+ * afternoon on straight-line estimates would look identical to a healthy one.
  */
 public class FallbackRouteProvider implements RouteProvider {
+
+    private static final Logger log = LoggerFactory.getLogger(FallbackRouteProvider.class);
 
     public static final String PROVIDER_NAME = "great-circle-fallback";
     public static final String PROVIDER_VERSION = "1.0.0";
@@ -47,7 +59,8 @@ public class FallbackRouteProvider implements RouteProvider {
     public RouteCandidateSet findCandidates(RouteRequest request) {
         try {
             return delegate.findCandidates(request);
-        } catch (RouteProviderException e) {
+        } catch (RuntimeException e) {
+            log.warn("Route provider failed; returning a degraded straight-line estimate", e);
             return RouteCandidateSet.of(request, List.of(straightLineEstimate(request)));
         }
     }

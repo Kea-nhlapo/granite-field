@@ -28,6 +28,7 @@ public record CandidateRoute(
 
     public CandidateRoute {
         Objects.requireNonNull(id, "id is required");
+        Objects.requireNonNull(segments, "segments is required");
         segments = List.copyOf(segments);
         if (segments.isEmpty()) {
             throw new IllegalArgumentException("a candidate route needs at least one segment");
@@ -36,8 +37,19 @@ public record CandidateRoute(
             throw new IllegalArgumentException("distance must be positive, was " + distanceMetres);
         }
         Objects.requireNonNull(duration, "duration is required");
+        if (duration.isNegative() || duration.isZero()) {
+            throw new IllegalArgumentException("duration must be positive, was " + duration);
+        }
         Objects.requireNonNull(tollEstimate, "tollEstimate is required (use Optional.empty())");
         Objects.requireNonNull(providerName, "providerName is required");
         Objects.requireNonNull(providerVersion, "providerVersion is required");
+    }
+
+    public Coordinate start() {
+        return segments.getFirst().start();
+    }
+
+    public Coordinate end() {
+        return segments.getLast().end();
     }
 }

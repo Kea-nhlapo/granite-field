@@ -50,6 +50,23 @@ class FallbackRouteProviderTest {
         assertThat(fallback.duration()).isPositive();
     }
 
+    /**
+     * Composition order must not decide whether the fallback works. An unwrapped
+     * RuntimeException from any delegate has to degrade, not escape.
+     */
+    @Test
+    void degradesEvenWhenTheDelegateThrowsSomethingOtherThanRouteProviderException() {
+        RouteProvider broken = request -> {
+            throw new IllegalStateException("delegate blew up without translating");
+        };
+
+        RouteCandidateSet set =
+            new FallbackRouteProvider(broken).findCandidates(JOHANNESBURG_TO_PRETORIA);
+
+        assertThat(set.candidates()).singleElement()
+            .satisfies(candidate -> assertThat(candidate.degraded()).isTrue());
+    }
+
     @Test
     void passesThroughAndMarksNothingDegradedWhenTheDelegateSucceeds() {
         RouteProvider working = new DeterministicRouteProvider();

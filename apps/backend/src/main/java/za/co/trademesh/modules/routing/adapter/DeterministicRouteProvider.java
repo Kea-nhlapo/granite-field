@@ -43,31 +43,47 @@ public class DeterministicRouteProvider implements RouteProvider {
 
     @Override
     public RouteCandidateSet findCandidates(RouteRequest request) {
-        byte[] seed = seedOf(request);
-        int candidateCount = MINIMUM_CANDIDATES + Math.floorMod(seed[0], 2);
-        long directDistance = GreatCircle.metresAlong(request.orderedStops());
+        // Built once and threaded through. It was previously rebuilt for every
+        // candidate, re-formatting every coordinate each time, on a path #17
+        // calls repeatedly while scoring.
+        String canonical = canonicalForm(request);
+        byte[] seed = seedOf(canonical);
+
+        List<Coordinate> stops = request.orderedStops();
+        int legs = stops.size() - 1;
+        long directDistance = GreatCircle.metresAlong(stops);
         boolean avoidsTolls = request.avoidances().contains(Avoidance.TOLLS);
 
+        int candidateCount = MINIMUM_CANDIDATES + Math.floorMod(seed[0], 2);
         List<CandidateRoute> candidates = new ArrayList<>(candidateCount);
         for (int index = 0; index < candidateCount; index++) {
-            candidates.add(candidate(request, seed, index, directDistance, avoidsTolls));
+            candidates.add(
+                candidate(canonical, seed, index, stops, legs, directDistance, avoidsTolls));
         }
         return RouteCandidateSet.of(request, List.copyOf(candidates));
     }
 
     private CandidateRoute candidate(
-        RouteRequest request, byte[] seed, int index, long directDistance, boolean avoidsTolls) {
+        String canonical,
+        byte[] seed,
+        int index,
+        List<Coordinate> stops,
+        int legs,
+        long directDistance,
+        boolean avoidsTolls) {
 
         double detourFactor = 1.05 + (index * 0.07) + (Math.floorMod(seed[index + 1], 16) / 1000.0);
-        long distanceMetres = Math.max(1, Math.round(directDistance * detourFactor));
+        // At least one metre per leg, so the per-leg split below can never
+        // produce a zero-or-negative segment.
+        long distanceMetres = Math.max(legs, Math.round(directDistance * detourFactor));
         Duration duration = Duration.ofSeconds(
-            Math.max(1, Math.round(distanceMetres / AVERAGE_SPEED_METRES_PER_SECOND)));
+            Math.max(legs, Math.round(distanceMetres / AVERAGE_SPEED_METRES_PER_SECOND)));
 
         Optional<Money> toll = avoidsTolls ? Optional.empty() : Optional.of(tollFor(distanceMetres));
 
         return new CandidateRoute(
-            candidateId(request, index),
-            segments(request, index, distanceMetres, duration),
+            candidateId(canonical, index),
+            segments(stops, legs, index, distanceMetres, duration),
             distanceMetres,
             duration,
             toll,
@@ -83,28 +99,40 @@ public class DeterministicRouteProvider implements RouteProvider {
             TOLL_CURRENCY);
     }
 
+    /**
+     * Splits the route across its legs so the parts SUM TO THE WHOLE. Integer
+     * division alone loses the remainder, which left segment totals disagreeing
+     * with the candidate's own distance by a per-route amount — and #17 has every
+     * reason to sum segments.
+     */
     private List<RouteSegment> segments(
-        RouteRequest request, int index, long distanceMetres, Duration duration) {
+        List<Coordinate> stops, int legs, int index, long distanceMetres, Duration duration) {
 
-        List<Coordinate> stops = request.orderedStops();
-        int legs = stops.size() - 1;
         List<RouteSegment> segments = new ArrayList<>(legs);
+        long distanceRemaining = distanceMetres;
+        Duration durationRemaining = duration;
 
         for (int leg = 0; leg < legs; leg++) {
+            boolean lastLeg = leg == legs - 1;
+            long legDistance = lastLeg ? distanceRemaining : distanceMetres / legs;
+            Duration legDuration = lastLeg ? durationRemaining : duration.dividedBy(legs);
+
             Coordinate from = stops.get(leg);
             Coordinate to = stops.get(leg + 1);
-
             segments.add(new RouteSegment(
-                List.of(from, wobbledMidpoint(from, to, index), to),
-                Math.max(1, distanceMetres / legs),
-                duration.dividedBy(legs)));
+                List.of(from, wobbledMidpoint(from, to, index), to), legDistance, legDuration));
+
+            distanceRemaining -= legDistance;
+            durationRemaining = durationRemaining.minus(legDuration);
         }
         return segments;
     }
 
     /**
      * A midpoint nudged aside, differently per candidate, so candidates are
-     * distinguishable geometry rather than the same straight line repeated.
+     * distinguishable geometry rather than the same straight line repeated. The
+     * clamp only bites at a pole or the antimeridian, neither of which appears on
+     * a SADC corridor.
      */
     private Coordinate wobbledMidpoint(Coordinate from, Coordinate to, int index) {
         double offset = 0.01 * (index + 1);
@@ -117,15 +145,14 @@ public class DeterministicRouteProvider implements RouteProvider {
         return Math.max(-bound, Math.min(bound, value));
     }
 
-    private String candidateId(RouteRequest request, int index) {
+    private String candidateId(String canonical, int index) {
         return UUID.nameUUIDFromBytes(
-            (canonicalForm(request) + "#" + index).getBytes(StandardCharsets.UTF_8)).toString();
+            (canonical + "#" + index).getBytes(StandardCharsets.UTF_8)).toString();
     }
 
-    private static byte[] seedOf(RouteRequest request) {
+    private static byte[] seedOf(String canonical) {
         try {
-            return MessageDigest.getInstance("SHA-256")
-                .digest(canonicalForm(request).getBytes(StandardCharsets.UTF_8));
+            return MessageDigest.getInstance("SHA-256").digest(canonical.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException e) {
             throw new RouteProviderException("SHA-256 is unavailable in this JVM", e);
         }
@@ -140,6 +167,7 @@ public class DeterministicRouteProvider implements RouteProvider {
             .append(request.vehicleLimits().heightMillimetres()).append(",")
             .append(request.vehicleLimits().weightKilograms())
             .append("|");
+        // Sorted, so the seed cannot depend on a set's iteration order.
         request.avoidances().stream()
             .map(Enum::name)
             .sorted()

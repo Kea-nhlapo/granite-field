@@ -7,6 +7,15 @@ package za.co.trademesh.modules.routing.domain;
 public record Coordinate(double latitude, double longitude) {
 
     public Coordinate {
+        // Checked before the range comparisons: every comparison against NaN is
+        // false, so a NaN would slip through them and only surface much later as
+        // a zero distance, far from the coordinate that caused it.
+        if (!Double.isFinite(latitude)) {
+            throw new IllegalArgumentException("latitude must be a finite number, was " + latitude);
+        }
+        if (!Double.isFinite(longitude)) {
+            throw new IllegalArgumentException("longitude must be a finite number, was " + longitude);
+        }
         if (latitude < -90 || latitude > 90) {
             throw new IllegalArgumentException("latitude must be between -90 and 90, was " + latitude);
         }

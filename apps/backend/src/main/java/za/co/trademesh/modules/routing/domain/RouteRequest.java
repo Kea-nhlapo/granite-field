@@ -1,8 +1,7 @@
 package za.co.trademesh.modules.routing.domain;
 
-import java.util.LinkedHashSet;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -18,25 +17,27 @@ public record RouteRequest(
     Set<Avoidance> avoidances) {
 
     public RouteRequest {
-        if (origin == null) {
-            throw new IllegalArgumentException("origin is required");
-        }
-        if (destination == null) {
-            throw new IllegalArgumentException("destination is required");
-        }
-        Objects.requireNonNull(vehicleLimits, "vehicleLimits is required");
+        require(origin != null, "origin is required");
+        require(destination != null, "destination is required");
+        require(vehicleLimits != null, "vehicleLimits is required");
+        require(waypoints != null, "waypoints is required (use an empty list)");
+        require(avoidances != null, "avoidances is required (use an empty set)");
         waypoints = List.copyOf(waypoints);
-        // LinkedHashSet keeps a stable order, which the deterministic adapter
-        // relies on when it builds its canonical form of this request.
-        avoidances = Set.copyOf(new LinkedHashSet<>(avoidances));
+        avoidances = Set.copyOf(avoidances);
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) {
+            throw new IllegalArgumentException(message);
+        }
     }
 
     /** Origin, then each waypoint in order, then destination. */
     public List<Coordinate> orderedStops() {
-        return java.util.stream.Stream
-            .concat(java.util.stream.Stream.concat(
-                java.util.stream.Stream.of(origin), waypoints.stream()),
-                java.util.stream.Stream.of(destination))
-            .toList();
+        List<Coordinate> stops = new ArrayList<>(waypoints.size() + 2);
+        stops.add(origin);
+        stops.addAll(waypoints);
+        stops.add(destination);
+        return List.copyOf(stops);
     }
 }

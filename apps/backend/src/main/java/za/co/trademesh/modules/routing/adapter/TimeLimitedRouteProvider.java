@@ -8,7 +8,7 @@ import za.co.trademesh.modules.routing.port.RouteProvider;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -20,12 +20,17 @@ import java.util.concurrent.TimeoutException;
  * running computation; the delegate keeps executing on its own thread until it
  * finishes or notices an interrupt. What this guarantees is that the CALLER
  * stops waiting, which is what protects the request path. A delegate doing real
- * I/O should still set its own socket timeouts so the abandoned work eventually
+ * I/O should still set its own socket timeouts so abandoned work eventually
  * ends rather than accumulating.
  *
- * <p>Provider exceptions are wrapped in RouteProviderException so no adapter
- * detail — vendor names, URLs, anything in an upstream message — escapes to the
- * domain.
+ * <p>Failures are translated to {@link RouteProviderException} so callers have
+ * one type to handle. Note what this does NOT do: the original exception is kept
+ * as the cause, so an upstream message still travels in the stack trace. If a
+ * future HTTP adapter can put a credential in an exception message, that adapter
+ * is responsible for scrubbing it — this class does not.
+ *
+ * <p>The executor is supplied by the caller and its lifecycle belongs to
+ * whoever created it; see RoutingConfiguration.
  */
 public class TimeLimitedRouteProvider implements RouteProvider {
 
@@ -37,8 +42,11 @@ public class TimeLimitedRouteProvider implements RouteProvider {
         this.delegate = Objects.requireNonNull(delegate, "delegate is required");
         this.timeout = Objects.requireNonNull(timeout, "timeout is required");
         this.executor = Objects.requireNonNull(executor, "executor is required");
-        if (timeout.isNegative() || timeout.isZero()) {
-            throw new IllegalArgumentException("timeout must be positive, was " + timeout);
+        // Below a millisecond, toMillis() truncates to zero and EVERY call would
+        // time out instantly, which looks like a broken provider rather than a
+        // misconfigured timeout.
+        if (timeout.toMillis() < 1) {
+            throw new IllegalArgumentException("timeout must be at least one millisecond, was " + timeout);
         }
     }
 
@@ -50,8 +58,6 @@ public class TimeLimitedRouteProvider implements RouteProvider {
         try {
             return pending.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            // Interrupts the delegate if it is interruptible; if it is not, the
-            // work is abandoned and this call returns anyway.
             pending.cancel(true);
             throw new RouteProviderException(
                 "route provider timed out after " + timeout.toMillis() + "ms", e);
@@ -59,8 +65,14 @@ public class TimeLimitedRouteProvider implements RouteProvider {
             pending.cancel(true);
             Thread.currentThread().interrupt();
             throw new RouteProviderException("interrupted while waiting for the route provider", e);
-        } catch (CompletionException | java.util.concurrent.ExecutionException e) {
-            throw new RouteProviderException("route provider failed", e.getCause());
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            // Rethrow rather than wrap again: a second wrapper buries the useful
+            // message one level deeper for no gain.
+            if (cause instanceof RouteProviderException alreadyTranslated) {
+                throw alreadyTranslated;
+            }
+            throw new RouteProviderException("route provider failed", cause);
         }
     }
 }

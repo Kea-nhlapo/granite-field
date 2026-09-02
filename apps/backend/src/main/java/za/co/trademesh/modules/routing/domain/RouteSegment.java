@@ -8,6 +8,7 @@ import java.util.Objects;
 public record RouteSegment(List<Coordinate> geometry, long distanceMetres, Duration duration) {
 
     public RouteSegment {
+        Objects.requireNonNull(geometry, "geometry is required");
         geometry = List.copyOf(geometry);
         if (geometry.size() < 2) {
             throw new IllegalArgumentException("a segment needs at least two points");
@@ -16,5 +17,18 @@ public record RouteSegment(List<Coordinate> geometry, long distanceMetres, Durat
             throw new IllegalArgumentException("distance must be positive, was " + distanceMetres);
         }
         Objects.requireNonNull(duration, "duration is required");
+        // Sign matters as much as nullity: a negative duration reaching #17 makes
+        // a broken candidate sort as the fastest one.
+        if (duration.isNegative() || duration.isZero()) {
+            throw new IllegalArgumentException("duration must be positive, was " + duration);
+        }
+    }
+
+    public Coordinate start() {
+        return geometry.getFirst();
+    }
+
+    public Coordinate end() {
+        return geometry.getLast();
     }
 }

@@ -41,6 +41,32 @@ class DeterministicRouteProviderTest {
             .containsExactlyElementsOf(DeterministicRouteProviderGoldens.DISTANCES_METRES);
     }
 
+    /**
+     * #17 has every reason to sum segments. Integer division alone left the parts
+     * short of the whole by a per-route amount, so the totals disagreed with the
+     * route reporting them.
+     */
+    @Test
+    void segmentDistancesAndDurationsSumToTheRouteTotals() {
+        RouteRequest viaWaypoints = new RouteRequest(
+            JOHANNESBURG,
+            PRETORIA,
+            List.of(new Coordinate(-25.99, 28.13), new Coordinate(-25.86, 28.19)),
+            LIMITS,
+            Set.of());
+
+        assertThat(provider.findCandidates(viaWaypoints).candidates()).allSatisfy(candidate -> {
+            long summedDistance = candidate.segments().stream()
+                .mapToLong(segment -> segment.distanceMetres()).sum();
+            java.time.Duration summedDuration = candidate.segments().stream()
+                .map(segment -> segment.duration())
+                .reduce(java.time.Duration.ZERO, java.time.Duration::plus);
+
+            assertThat(summedDistance).isEqualTo(candidate.distanceMetres());
+            assertThat(summedDuration).isEqualTo(candidate.duration());
+        });
+    }
+
     @Test
     void producesDifferentCandidatesForDifferentRequests() {
         RouteCandidateSet toPretoria = provider.findCandidates(request(Set.of()));

@@ -21,9 +21,24 @@ public record RouteCandidateSet(String id, RouteRequest request, List<CandidateR
     public RouteCandidateSet {
         Objects.requireNonNull(id, "id is required");
         Objects.requireNonNull(request, "request is required");
+        Objects.requireNonNull(candidates, "candidates is required");
         candidates = List.copyOf(candidates);
         if (candidates.isEmpty()) {
             throw new IllegalArgumentException("a candidate set needs at least one candidate route");
+        }
+        // The whole point of this type is that a shipment can hold a traceable
+        // reference to an approved route. A candidate for a different journey
+        // would make that reference a lie, so the link is checked here rather
+        // than trusted.
+        for (CandidateRoute candidate : candidates) {
+            if (!candidate.start().equals(request.origin())) {
+                throw new IllegalArgumentException(
+                    "candidate " + candidate.id() + " does not start at the requested origin");
+            }
+            if (!candidate.end().equals(request.destination())) {
+                throw new IllegalArgumentException(
+                    "candidate " + candidate.id() + " does not end at the requested destination");
+            }
         }
     }
 

@@ -86,6 +86,14 @@ class TimeLimitedRouteProviderTest {
     }
 
     @Test
+    void rejectsATimeoutThatWouldTruncateToZeroMilliseconds() {
+        assertThatThrownBy(() -> new TimeLimitedRouteProvider(
+            new DeterministicRouteProvider(), Duration.ofNanos(500_000), executor))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("at least one millisecond");
+    }
+
+    @Test
     void doesNotLeaveTheCallerBlockedAfterATimeout() throws InterruptedException {
         RouteProvider blocked = request -> {
             try {
