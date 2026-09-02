@@ -77,6 +77,7 @@ public class SecurityConfiguration {
                                 "/api/auth/**",
                                 "/api/supplier-invitations/guest/**",
                                 "/api/telemetry/readings",
+                                "/api/tracking/*/position",
                                 "/v3/api-docs/**",
                                 "/actuator/health",
                                 "/actuator/health/**")

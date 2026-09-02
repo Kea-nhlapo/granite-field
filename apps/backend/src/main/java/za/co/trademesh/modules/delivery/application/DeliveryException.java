@@ -31,6 +31,18 @@ public class DeliveryException extends RuntimeException {
                 HttpStatus.SERVICE_UNAVAILABLE, "VOICE_SEARCH_UNAVAILABLE", "Voice search is temporarily unavailable.");
     }
 
+    public static DeliveryException invalidNearbySearch() {
+        return new DeliveryException(
+                HttpStatus.BAD_REQUEST, "INVALID_NEARBY_SUPPLIER_SEARCH", "The nearby supplier search is invalid.");
+    }
+
+    public static DeliveryException distanceProviderUnavailable() {
+        return new DeliveryException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "SUPPLIER_DISTANCE_UNAVAILABLE",
+                "Supplier travel distances are temporarily unavailable.");
+    }
+
     public static DeliveryException invalidProposal() {
         return new DeliveryException(
                 HttpStatus.BAD_REQUEST, "INVALID_DELIVERY_PROPOSAL", "The delivery proposal is invalid.");

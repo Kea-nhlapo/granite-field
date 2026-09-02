@@ -31,6 +31,7 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
     private static final Pattern DELIVERY_QR_MUTATION = Pattern.compile("^/api/delivery/[^/]+/(?:qr|scan)$");
     private static final Pattern MOMO_TRANSACTION =
             Pattern.compile("^/api/delivery/[^/]+/(?:escrow/retry|release|resolve)$");
+    private static final Pattern TRACKING_POSITION = Pattern.compile("^/api/tracking/[^/]+/position$");
 
     private final ApiRateLimitProperties limits;
     private final ApiWebProperties web;
@@ -127,7 +128,9 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
         if (HttpMethod.POST.matches(method) && UPLOAD.matcher(path).matches()) {
             return new Limit("uploads", limits.uploads());
         }
-        if (HttpMethod.POST.matches(method) && "/api/telemetry/readings".equals(path)) {
+        if (HttpMethod.POST.matches(method)
+                && ("/api/telemetry/readings".equals(path)
+                        || TRACKING_POSITION.matcher(path).matches())) {
             return new Limit("telemetry", limits.telemetry());
         }
         if (HttpMethod.POST.matches(method) && "/api/handovers/confirmations".equals(path)) {

@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import za.co.trademesh.modules.delivery.application.DeliveryException;
 
-@RestControllerAdvice(assignableTypes = DeliveryController.class)
+@RestControllerAdvice(assignableTypes = {DeliveryController.class, NearbySupplierController.class})
 public class DeliveryExceptionHandler {
 
     @ExceptionHandler(DeliveryException.class)

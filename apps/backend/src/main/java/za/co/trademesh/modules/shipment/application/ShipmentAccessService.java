@@ -20,7 +20,7 @@ class ShipmentAccessService implements ShipmentAccessCatalog {
     @Transactional(readOnly = true)
     public Optional<ShipmentAccess> findOwned(UUID businessId, UUID shipmentId) {
         return shipments
-                .findById(businessId, shipmentId)
+                .findByParticipantBusinessId(businessId, shipmentId)
                 .map(shipment -> new ShipmentAccess(
                         shipment.id(),
                         shipment.status() != ShipmentStatus.DELIVERED

@@ -114,6 +114,7 @@ class EvidenceLedgerIntegrationTest extends PostgresIntegrationTest {
                         shipmentId,
                         UUID.randomUUID(),
                         Instant.now(),
+                        Instant.now(),
                         -26.1,
                         28.0,
                         BigDecimal.ZERO,
