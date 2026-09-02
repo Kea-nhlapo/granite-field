@@ -6,6 +6,8 @@ import java.util.UUID;
 
 public interface DeliveryProposalRepository {
 
+    Optional<DeliveryProposal> findById(UUID proposalId);
+
     Optional<DeliveryProposal> findByShipment(UUID businessId, UUID shipmentId);
 
     Optional<DeliveryProposal> findByRequest(UUID businessId, UUID clientRequestId);

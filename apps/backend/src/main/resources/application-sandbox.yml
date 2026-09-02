@@ -11,6 +11,8 @@ trademesh:
     search:
       speech-provider: google
       distance-provider: google
+  routing:
+    provider: google
   notifications:
     mobile:
       provider: twilio

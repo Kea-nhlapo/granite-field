@@ -1,5 +1,8 @@
 package za.co.trademesh.modules.handover.application;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -7,15 +10,19 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.co.trademesh.modules.access.application.ActiveUserDirectory;
 import za.co.trademesh.modules.handover.domain.CaptureMode;
+import za.co.trademesh.modules.handover.domain.DeliveryDisputeResolution;
 import za.co.trademesh.modules.handover.domain.HandoverAttempt;
 import za.co.trademesh.modules.handover.domain.HandoverAttemptOutcome;
 import za.co.trademesh.modules.handover.domain.HandoverChallenge;
@@ -27,6 +34,7 @@ import za.co.trademesh.modules.handover.domain.HandoverState;
 import za.co.trademesh.modules.handover.domain.HandoverType;
 import za.co.trademesh.modules.handover.domain.QuantityOutcome;
 import za.co.trademesh.modules.handover.events.HandoverEvent;
+import za.co.trademesh.modules.procurement.application.DeliveryOrderQuantityCatalog;
 import za.co.trademesh.modules.shipment.application.ShipmentHandoverCatalog;
 import za.co.trademesh.modules.shipment.application.ShipmentHandoverCatalog.Completion;
 import za.co.trademesh.modules.shipment.application.ShipmentHandoverCatalog.DeliveryStop;
@@ -35,12 +43,15 @@ import za.co.trademesh.modules.shipment.application.ShipmentHandoverCatalog.Stag
 import za.co.trademesh.shared.events.DomainEvents;
 
 @Service
-public class HandoverService {
+public class HandoverService implements DeliveryReleaseGate {
 
     private static final double EARTH_RADIUS_METRES = 6_371_000;
+    private static final int MAX_QR_PAYLOAD_LENGTH = 1024;
+    private static final int MAX_PHOTO_URL_LENGTH = 2048;
 
     private final HandoverRepository handovers;
     private final ShipmentHandoverCatalog shipments;
+    private final DeliveryOrderQuantityCatalog quantities;
     private final ActiveUserDirectory users;
     private final HandoverTokenGenerator tokens;
     private final HandoverProperties properties;
@@ -50,6 +61,7 @@ public class HandoverService {
     public HandoverService(
             HandoverRepository handovers,
             ShipmentHandoverCatalog shipments,
+            DeliveryOrderQuantityCatalog quantities,
             ActiveUserDirectory users,
             HandoverTokenGenerator tokens,
             HandoverProperties properties,
@@ -57,6 +69,7 @@ public class HandoverService {
             Clock clock) {
         this.handovers = handovers;
         this.shipments = shipments;
+        this.quantities = quantities;
         this.users = users;
         this.tokens = tokens;
         this.properties = properties;
@@ -78,8 +91,9 @@ public class HandoverService {
         }
         HandoverShipment shipment =
                 shipments.findOwned(owner, shipmentReference).orElseThrow(HandoverException::notFound);
-        HandoverLocation location = expectedLocation(shipment, command.type(), command.deliveryOrderId());
+        ExpectedHandover expected = expectedHandover(owner, shipment, command.type(), command.deliveryOrderId());
         Instant now = databaseTime(clock.instant());
+        Instant expiresAt = now.plus(properties.challengeTtl());
         handovers.expireActive(shipmentReference, command.type(), command.deliveryOrderId(), now);
         if (handovers
                 .findActive(shipmentReference, command.type(), command.deliveryOrderId())
@@ -87,9 +101,11 @@ public class HandoverService {
             throw HandoverException.activeChallengeExists();
         }
 
-        String qrPayload = tokens.generate();
+        UUID challengeId = UUID.randomUUID();
+        String qrPayload = tokens.generate(new HandoverTokenGenerator.TokenClaims(
+                challengeId, shipmentReference, expected.quantity(), expected.unitOfMeasure(), expiresAt));
         HandoverChallenge challenge = new HandoverChallenge(
-                UUID.randomUUID(),
+                challengeId,
                 shipmentReference,
                 owner,
                 command.type(),
@@ -98,9 +114,11 @@ public class HandoverService {
                 hash(qrPayload),
                 actor,
                 counterparty,
-                location,
+                expected.location(),
+                expected.quantity(),
+                expected.unitOfMeasure(),
                 properties.locationToleranceMetres(),
-                now.plus(properties.challengeTtl()),
+                expiresAt,
                 null,
                 UUID.randomUUID(),
                 now,
@@ -133,10 +151,12 @@ public class HandoverService {
     public HandoverChallenge confirm(ConfirmHandover command, UUID actorUserId) {
         UUID actor = requiredId(actorUserId);
         ConfirmHandover normalized = normalize(command);
+        HandoverTokenGenerator.TokenClaims claims = tokens.verify(normalized.qrPayload());
         String nonceHash = hash(normalized.qrPayload());
         HandoverChallenge current =
                 handovers.findByNonceHashForUpdate(nonceHash).orElseThrow(HandoverException::invalidToken);
         Instant now = databaseTime(clock.instant());
+        validateClaims(current, claims);
 
         if (current.state().terminal()) {
             HandoverAttemptOutcome outcome = current.state() == HandoverState.EXPIRED
@@ -246,6 +266,8 @@ public class HandoverService {
                 normalized.latitude(),
                 normalized.longitude(),
                 distance,
+                null,
+                null,
                 normalized.quantityOutcome(),
                 normalized.quantityNote());
         if (!handovers.saveConfirmation(confirmation)) {
@@ -266,27 +288,279 @@ public class HandoverService {
         }
         completeShipment(confirmed, outcome, actor, shipment);
         events.publish(
-                new HandoverEvent.HandoverFinalized(confirmed.id(), confirmed.shipmentId(), confirmed.type(), outcome),
+                new HandoverEvent.HandoverFinalized(
+                        confirmed.id(),
+                        confirmed.shipmentId(),
+                        confirmed.businessId(),
+                        confirmed.type().name(),
+                        outcome.name()),
                 actor.toString());
         return handovers.findByNonceHashForUpdate(nonceHash).orElseThrow();
     }
 
-    private HandoverLocation expectedLocation(HandoverShipment shipment, HandoverType type, UUID deliveryOrderId) {
+    @Transactional(noRollbackFor = HandoverException.class)
+    public HandoverChallenge scanDelivery(UUID shipmentId, ScanDelivery command, UUID actorUserId) {
+        UUID actor = requiredId(actorUserId);
+        UUID shipmentReference = requiredId(shipmentId);
+        ScanDelivery normalized = normalize(command);
+        HandoverTokenGenerator.TokenClaims claims = tokens.verify(normalized.qrPayload());
+        if (!claims.shipmentId().equals(shipmentReference)) {
+            throw HandoverException.invalidToken();
+        }
+        String nonceHash = hash(normalized.qrPayload());
+        HandoverChallenge current =
+                handovers.findByNonceHashForUpdate(nonceHash).orElseThrow(HandoverException::invalidToken);
+        validateClaims(current, claims);
+        if (current.type() != HandoverType.DELIVERY || current.expectedQuantity() == null) {
+            throw HandoverException.invalidToken();
+        }
+        Instant now = databaseTime(clock.instant());
+        QuantityOutcome quantityOutcome = normalized.capturedQuantity().compareTo(current.expectedQuantity()) == 0
+                ? QuantityOutcome.MATCHED
+                : QuantityOutcome.DISPUTED;
+        String note = quantityOutcome == QuantityOutcome.MATCHED
+                ? "Captured quantity matched the expected delivery quantity."
+                : "Captured quantity differs from the expected delivery quantity.";
+        ConfirmHandover attempt = new ConfirmHandover(
+                normalized.commandId(),
+                normalized.qrPayload(),
+                CaptureMode.ONLINE,
+                now,
+                normalized.latitude(),
+                normalized.longitude(),
+                quantityOutcome,
+                note);
+        String fingerprint = fingerprint(normalized, actor);
+        Optional<HandoverConfirmation> prior = handovers.findConfirmationByCommandId(normalized.commandId());
+        if (prior.isPresent()) {
+            HandoverConfirmation existing = prior.get();
+            if (!existing.challengeId().equals(current.id())
+                    || !existing.actorUserId().equals(actor)
+                    || !existing.inputFingerprint().equals(fingerprint)) {
+                throw HandoverException.commandConflict();
+            }
+            return current;
+        }
+        if (current.state().terminal()) {
+            HandoverAttemptOutcome outcome = current.state() == HandoverState.EXPIRED
+                    ? HandoverAttemptOutcome.CHALLENGE_EXPIRED
+                    : HandoverAttemptOutcome.CHALLENGE_REPLAYED;
+            throw reject(
+                    current,
+                    attempt,
+                    actor,
+                    outcome,
+                    current.state() == HandoverState.EXPIRED
+                            ? HandoverException.expired()
+                            : HandoverException.replayed(),
+                    now);
+        }
+        if (now.isAfter(current.expiresAt())) {
+            handovers.changeState(current.id(), HandoverState.PENDING, HandoverState.EXPIRED, now);
+            throw reject(
+                    current,
+                    attempt,
+                    actor,
+                    HandoverAttemptOutcome.CHALLENGE_EXPIRED,
+                    HandoverException.expired(),
+                    now);
+        }
+        if (!current.counterpartyUserId().equals(actor)) {
+            throw reject(
+                    current,
+                    attempt,
+                    actor,
+                    HandoverAttemptOutcome.PARTICIPANT_MISMATCH,
+                    HandoverException.participantMismatch(),
+                    now);
+        }
+        HandoverShipment shipment = shipments
+                .findOwned(current.businessId(), current.shipmentId())
+                .filter(value -> validState(value, current))
+                .orElseThrow(() -> reject(
+                        current,
+                        attempt,
+                        actor,
+                        HandoverAttemptOutcome.SHIPMENT_STATE_CONFLICT,
+                        HandoverException.stateConflict(),
+                        now));
+        double distance = distanceMetres(
+                normalized.latitude(),
+                normalized.longitude(),
+                current.expectedLocation().latitude(),
+                current.expectedLocation().longitude());
+        if (distance > current.locationToleranceMetres()) {
+            throw reject(
+                    current,
+                    attempt,
+                    actor,
+                    HandoverAttemptOutcome.OUTSIDE_LOCATION_TOLERANCE,
+                    HandoverException.outsideLocation(),
+                    now);
+        }
+        HandoverConfirmation confirmation = new HandoverConfirmation(
+                UUID.randomUUID(),
+                current.id(),
+                normalized.commandId(),
+                fingerprint,
+                actor,
+                HandoverParty.COUNTERPARTY,
+                now,
+                now,
+                normalized.latitude(),
+                normalized.longitude(),
+                distance,
+                normalized.capturedQuantity(),
+                normalized.photoUrl(),
+                quantityOutcome,
+                note);
+        if (!handovers.saveConfirmation(confirmation)) {
+            throw HandoverException.commandConflict();
+        }
+        saveAttempt(current, attempt, actor, HandoverAttemptOutcome.ACCEPTED, "Delivery scan accepted.", now);
+        events.publish(
+                new HandoverEvent.ConfirmationAccepted(current.id(), current.shipmentId(), HandoverParty.COUNTERPARTY),
+                actor.toString());
+        HandoverState outcome =
+                quantityOutcome == QuantityOutcome.MATCHED ? HandoverState.COMPLETED : HandoverState.DISPUTED;
+        if (!handovers.changeState(current.id(), HandoverState.PENDING, outcome, now)) {
+            throw HandoverException.replayed();
+        }
+        HandoverChallenge finalized =
+                handovers.findByNonceHashForUpdate(nonceHash).orElseThrow(HandoverException::notFound);
+        completeShipment(finalized, outcome, actor, shipment);
+        events.publish(
+                new HandoverEvent.HandoverFinalized(
+                        finalized.id(),
+                        finalized.shipmentId(),
+                        finalized.businessId(),
+                        finalized.type().name(),
+                        outcome.name()),
+                actor.toString());
+        return finalized;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean releaseAllowed(UUID businessId, UUID shipmentId, List<UUID> orderIds) {
+        UUID owner = requiredId(businessId);
+        UUID shipmentReference = requiredId(shipmentId);
+        if (orderIds == null || orderIds.isEmpty() || orderIds.stream().anyMatch(java.util.Objects::isNull)) {
+            return false;
+        }
+        var latest = latestDeliveryChallenges(owner, shipmentReference, orderIds);
+        if (latest.size() != Set.copyOf(orderIds).size()
+                || latest.values().stream().anyMatch(challenge -> !finalized(challenge.state()))) {
+            return false;
+        }
+        boolean disputed = latest.values().stream().anyMatch(challenge -> challenge.state() == HandoverState.DISPUTED);
+        return !disputed || handovers.findResolution(owner, shipmentReference).isPresent();
+    }
+
+    @Override
+    @Transactional
+    public Resolution resolve(
+            UUID businessId, UUID shipmentId, UUID commandId, BigDecimal resolvedAmount, UUID actorUserId) {
+        UUID owner = requiredId(businessId);
+        UUID shipmentReference = requiredId(shipmentId);
+        UUID commandReference = requiredId(commandId);
+        UUID actor = requiredId(actorUserId);
+        BigDecimal amount = positiveAmount(resolvedAmount);
+        String inputFingerprint =
+                hash(String.join("|", owner.toString(), shipmentReference.toString(), amount.toPlainString()));
+        Optional<DeliveryDisputeResolution> prior = handovers.findResolutionByCommandId(commandReference);
+        if (prior.isPresent()) {
+            DeliveryDisputeResolution existing = prior.get();
+            if (!existing.businessId().equals(owner)
+                    || !existing.shipmentId().equals(shipmentReference)
+                    || !existing.inputFingerprint().equals(inputFingerprint)) {
+                throw HandoverException.commandConflict();
+            }
+            return new Resolution(existing.id(), existing.resolvedAmount());
+        }
+        if (handovers.findResolution(owner, shipmentReference).isPresent()) {
+            throw HandoverException.commandConflict();
+        }
+        boolean hasDispute = handovers.findByShipment(shipmentReference).stream()
+                .anyMatch(challenge -> challenge.businessId().equals(owner)
+                        && challenge.type() == HandoverType.DELIVERY
+                        && challenge.state() == HandoverState.DISPUTED);
+        if (!hasDispute) {
+            throw HandoverException.disputeNotFound();
+        }
+        Instant now = databaseTime(clock.instant());
+        DeliveryDisputeResolution resolution = new DeliveryDisputeResolution(
+                UUID.randomUUID(), shipmentReference, owner, commandReference, inputFingerprint, amount, actor, now);
+        if (!handovers.saveResolution(resolution)) {
+            throw HandoverException.commandConflict();
+        }
+        events.publish(
+                new HandoverEvent.DisputeResolved(resolution.id(), shipmentReference, owner, amount), actor.toString());
+        return new Resolution(resolution.id(), resolution.resolvedAmount());
+    }
+
+    @Transactional(readOnly = true)
+    public DeliveryStatus deliveryStatus(UUID businessId, UUID shipmentId) {
+        UUID owner = requiredId(businessId);
+        UUID shipmentReference = requiredId(shipmentId);
+        shipments.findOwned(owner, shipmentReference).orElseThrow(HandoverException::notFound);
+        List<HandoverChallenge> latest = latestDeliveryChallenges(owner, shipmentReference, null).values().stream()
+                .sorted(java.util.Comparator.comparing(HandoverChallenge::createdAt))
+                .toList();
+        if (latest.isEmpty()) {
+            throw HandoverException.notFound();
+        }
+        Optional<DeliveryDisputeResolution> resolution = handovers.findResolution(owner, shipmentReference);
+        String status;
+        if (latest.stream().anyMatch(challenge -> challenge.state() == HandoverState.DISPUTED)) {
+            status = resolution.isPresent() ? "RESOLVED" : "DISPUTED";
+        } else if (latest.stream().allMatch(challenge -> challenge.state() == HandoverState.COMPLETED)) {
+            status = "CLEAN";
+        } else if (latest.stream().anyMatch(challenge -> challenge.state() == HandoverState.PENDING)) {
+            status = "PENDING";
+        } else {
+            status = "EXPIRED";
+        }
+        Instant updatedAt = resolution
+                .map(DeliveryDisputeResolution::resolvedAt)
+                .orElseGet(() -> latest.stream()
+                        .map(challenge ->
+                                challenge.completedAt() == null ? challenge.createdAt() : challenge.completedAt())
+                        .max(Instant::compareTo)
+                        .orElseThrow());
+        return new DeliveryStatus(
+                shipmentReference,
+                owner,
+                status,
+                latest.stream().map(HandoverService::deliveryCheck).toList(),
+                resolution.map(DeliveryDisputeResolution::resolvedAmount).orElse(null),
+                updatedAt);
+    }
+
+    private ExpectedHandover expectedHandover(
+            UUID businessId, HandoverShipment shipment, HandoverType type, UUID deliveryOrderId) {
         if (type == HandoverType.COLLECTION) {
-            if (deliveryOrderId != null || shipment.stage() != Stage.AWAITING_COLLECTION) {
+            if (deliveryOrderId != null
+                    || !shipment.businessId().equals(businessId)
+                    || shipment.stage() != Stage.AWAITING_COLLECTION) {
                 throw HandoverException.stateConflict();
             }
-            return location(shipment.collectionLocation());
+            return new ExpectedHandover(location(shipment.collectionLocation()), null, null);
         }
         if (deliveryOrderId == null || (shipment.stage() != Stage.IN_TRANSIT && shipment.stage() != Stage.DELAYED)) {
             throw HandoverException.stateConflict();
         }
-        return shipment.deliveryStops().stream()
+        HandoverLocation deliveryLocation = shipment.deliveryStops().stream()
                 .filter(stop -> stop.orderId().equals(deliveryOrderId))
+                .filter(stop -> stop.buyerBusinessId().equals(businessId))
                 .findFirst()
                 .map(DeliveryStop::location)
                 .map(HandoverService::location)
                 .orElseThrow(HandoverException::invalidRequest);
+        var expected = quantities
+                .findExpectedQuantity(businessId, deliveryOrderId)
+                .orElseThrow(HandoverException::quantityUnavailable);
+        return new ExpectedHandover(deliveryLocation, expected.quantity(), expected.unitOfMeasure());
     }
 
     private void completeShipment(
@@ -294,14 +568,19 @@ public class HandoverService {
         if (outcome == HandoverState.DISPUTED && challenge.type() == HandoverType.COLLECTION) {
             return;
         }
-        if (challenge.type() == HandoverType.DELIVERY
-                && outcome == HandoverState.COMPLETED
-                && !handovers
-                        .findFinalizedDeliveryOrderIds(challenge.shipmentId())
-                        .containsAll(shipment.deliveryStops().stream()
-                                .map(DeliveryStop::orderId)
-                                .toList())) {
-            return;
+        if (challenge.type() == HandoverType.DELIVERY) {
+            if (!handovers
+                    .findFinalizedDeliveryOrderIds(challenge.shipmentId())
+                    .containsAll(shipment.deliveryStops().stream()
+                            .map(DeliveryStop::orderId)
+                            .toList())) {
+                return;
+            }
+            outcome = handovers.findByShipment(challenge.shipmentId()).stream()
+                            .anyMatch(value ->
+                                    value.type() == HandoverType.DELIVERY && value.state() == HandoverState.DISPUTED)
+                    ? HandoverState.DISPUTED
+                    : HandoverState.COMPLETED;
         }
         Completion completion =
                 switch (challenge.type()) {
@@ -384,7 +663,7 @@ public class HandoverService {
             throw HandoverException.invalidRequest();
         }
         String qrPayload = requiredText(command.qrPayload());
-        if (qrPayload.length() > 128) {
+        if (qrPayload.length() > MAX_QR_PAYLOAD_LENGTH) {
             throw HandoverException.invalidRequest();
         }
         String note =
@@ -402,6 +681,117 @@ public class HandoverService {
                 command.longitude(),
                 command.quantityOutcome(),
                 note);
+    }
+
+    private ScanDelivery normalize(ScanDelivery command) {
+        if (command == null || command.commandId() == null || !coordinate(command.latitude(), command.longitude())) {
+            throw HandoverException.invalidRequest();
+        }
+        String qrPayload = requiredText(command.qrPayload());
+        if (qrPayload.length() > MAX_QR_PAYLOAD_LENGTH) {
+            throw HandoverException.invalidRequest();
+        }
+        BigDecimal capturedQuantity = decimal(command.capturedQuantity(), false);
+        return new ScanDelivery(
+                command.commandId(),
+                qrPayload,
+                capturedQuantity,
+                photoUrl(command.photoUrl()),
+                command.latitude(),
+                command.longitude());
+    }
+
+    private static void validateClaims(HandoverChallenge challenge, HandoverTokenGenerator.TokenClaims claims) {
+        boolean quantityMatches = challenge.expectedQuantity() == null
+                ? claims.expectedQuantity() == null
+                : claims.expectedQuantity() != null
+                        && challenge.expectedQuantity().compareTo(claims.expectedQuantity()) == 0;
+        if (!challenge.id().equals(claims.challengeId())
+                || !challenge.shipmentId().equals(claims.shipmentId())
+                || !quantityMatches
+                || !java.util.Objects.equals(challenge.unitOfMeasure(), claims.unitOfMeasure())
+                || challenge.expiresAt().toEpochMilli() != claims.expiresAt().toEpochMilli()) {
+            throw HandoverException.invalidToken();
+        }
+    }
+
+    private Map<UUID, HandoverChallenge> latestDeliveryChallenges(
+            UUID businessId, UUID shipmentId, List<UUID> orderIds) {
+        Set<UUID> requested = orderIds == null ? null : Set.copyOf(orderIds);
+        Map<UUID, HandoverChallenge> latest = new HashMap<>();
+        handovers.findByShipment(shipmentId).stream()
+                .filter(challenge -> challenge.type() == HandoverType.DELIVERY)
+                .filter(challenge -> challenge.businessId().equals(businessId))
+                .filter(challenge -> requested == null || requested.contains(challenge.deliveryOrderId()))
+                .forEach(challenge -> latest.merge(
+                        challenge.deliveryOrderId(),
+                        challenge,
+                        (first, second) -> first.createdAt().isAfter(second.createdAt()) ? first : second));
+        return Map.copyOf(latest);
+    }
+
+    private static boolean finalized(HandoverState state) {
+        return state == HandoverState.COMPLETED || state == HandoverState.DISPUTED;
+    }
+
+    private static DeliveryCheck deliveryCheck(HandoverChallenge challenge) {
+        HandoverConfirmation captured = challenge.confirmations().stream()
+                .filter(confirmation -> confirmation.capturedQuantity() != null)
+                .reduce((first, second) -> second)
+                .orElse(null);
+        return new DeliveryCheck(
+                challenge.id(),
+                challenge.deliveryOrderId(),
+                challenge.state(),
+                challenge.expectedQuantity(),
+                captured == null ? null : captured.capturedQuantity(),
+                challenge.unitOfMeasure(),
+                captured == null ? null : captured.photoUrl(),
+                challenge.completedAt());
+    }
+
+    private static BigDecimal positiveAmount(BigDecimal amount) {
+        BigDecimal normalized = decimal(amount, true);
+        if (normalized.signum() <= 0) {
+            throw HandoverException.invalidRequest();
+        }
+        return normalized;
+    }
+
+    private static BigDecimal decimal(BigDecimal amount, boolean positive) {
+        if (amount == null) {
+            throw HandoverException.invalidRequest();
+        }
+        try {
+            BigDecimal normalized = amount.setScale(4, RoundingMode.UNNECESSARY);
+            if (normalized.precision() > 19 || (positive ? normalized.signum() <= 0 : normalized.signum() < 0)) {
+                throw HandoverException.invalidRequest();
+            }
+            return normalized;
+        } catch (ArithmeticException invalidScale) {
+            throw HandoverException.invalidRequest();
+        }
+    }
+
+    private static String photoUrl(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.strip();
+        if (normalized.length() > MAX_PHOTO_URL_LENGTH) {
+            throw HandoverException.invalidRequest();
+        }
+        try {
+            URI uri = URI.create(normalized);
+            if (uri.getHost() == null
+                    || uri.getUserInfo() != null
+                    || (!"https".equalsIgnoreCase(uri.getScheme()) && !"http".equalsIgnoreCase(uri.getScheme()))) {
+                throw HandoverException.invalidRequest();
+            }
+            return normalized;
+        } catch (IllegalArgumentException invalidUri) {
+            throw HandoverException.invalidRequest();
+        }
     }
 
     static double distanceMetres(double fromLatitude, double fromLongitude, double toLatitude, double toLongitude) {
@@ -444,6 +834,18 @@ public class HandoverService {
                 command.quantityNote()));
     }
 
+    private static String fingerprint(ScanDelivery command, UUID actor) {
+        return hash(String.format(
+                Locale.ROOT,
+                "%s|%s|%s|%s|%.7f|%.7f",
+                actor,
+                command.commandId(),
+                command.capturedQuantity().toPlainString(),
+                command.photoUrl(),
+                command.latitude(),
+                command.longitude()));
+    }
+
     private static String hash(String value) {
         try {
             return HexFormat.of()
@@ -484,4 +886,36 @@ public class HandoverService {
             double longitude,
             QuantityOutcome quantityOutcome,
             String quantityNote) {}
+
+    public record ScanDelivery(
+            UUID commandId,
+            String qrPayload,
+            BigDecimal capturedQuantity,
+            String photoUrl,
+            double latitude,
+            double longitude) {}
+
+    public record DeliveryStatus(
+            UUID shipmentId,
+            UUID businessId,
+            String verificationStatus,
+            List<DeliveryCheck> deliveries,
+            BigDecimal resolvedAmount,
+            Instant updatedAt) {
+        public DeliveryStatus {
+            deliveries = List.copyOf(deliveries);
+        }
+    }
+
+    public record DeliveryCheck(
+            UUID challengeId,
+            UUID deliveryOrderId,
+            HandoverState state,
+            BigDecimal expectedQuantity,
+            BigDecimal capturedQuantity,
+            String unitOfMeasure,
+            String photoUrl,
+            Instant completedAt) {}
+
+    private record ExpectedHandover(HandoverLocation location, BigDecimal quantity, String unitOfMeasure) {}
 }

@@ -6,6 +6,7 @@ import {
     formDataBodySerializer,
     type Options as Options2,
     type RequestResult,
+    type ServerSentEventsResult,
     type TDataShape,
 } from "./client";
 import { client } from "./client.gen";
@@ -73,6 +74,19 @@ import type {
     DeliveryProposeData,
     DeliveryProposeErrors,
     DeliveryProposeResponses,
+    DeliveryVerificationEventsData,
+    DeliveryVerificationEventsErrors,
+    DeliveryVerificationEventsResponse,
+    DeliveryVerificationEventsResponses,
+    DeliveryVerificationGetData,
+    DeliveryVerificationGetErrors,
+    DeliveryVerificationGetResponses,
+    DeliveryVerificationIssueData,
+    DeliveryVerificationIssueErrors,
+    DeliveryVerificationIssueResponses,
+    DeliveryVerificationScanData,
+    DeliveryVerificationScanErrors,
+    DeliveryVerificationScanResponses,
     DeliveryVoiceSearchData,
     DeliveryVoiceSearchErrors,
     DeliveryVoiceSearchResponses,
@@ -97,6 +111,22 @@ import type {
     DocumentRegisterData,
     DocumentRegisterErrors,
     DocumentRegisterResponses,
+    EscrowEventsData,
+    EscrowEventsErrors,
+    EscrowEventsResponse,
+    EscrowEventsResponses,
+    EscrowGetData,
+    EscrowGetErrors,
+    EscrowGetResponses,
+    EscrowReleaseData,
+    EscrowReleaseErrors,
+    EscrowReleaseResponses,
+    EscrowResolveData,
+    EscrowResolveErrors,
+    EscrowResolveResponses,
+    EscrowRetryData,
+    EscrowRetryErrors,
+    EscrowRetryResponses,
     FileStorageDownloadData,
     FileStorageDownloadErrors,
     FileStorageDownloadResponses,
@@ -124,6 +154,9 @@ import type {
     InsuranceRecordDecisionData,
     InsuranceRecordDecisionErrors,
     InsuranceRecordDecisionResponses,
+    NearbySupplierNearbyData,
+    NearbySupplierNearbyErrors,
+    NearbySupplierNearbyResponses,
     NotificationPreferenceGetData,
     NotificationPreferenceGetErrors,
     NotificationPreferenceGetResponses,
@@ -178,6 +211,9 @@ import type {
     ShipmentGetData,
     ShipmentGetErrors,
     ShipmentGetResponses,
+    ShipmentRouteRouteData,
+    ShipmentRouteRouteErrors,
+    ShipmentRouteRouteResponses,
     ShipmentTransitionData,
     ShipmentTransitionErrors,
     ShipmentTransitionResponses,
@@ -196,6 +232,9 @@ import type {
     SupplierViewGuestData,
     SupplierViewGuestErrors,
     SupplierViewGuestResponses,
+    TelemetryBackhaulMatchesData,
+    TelemetryBackhaulMatchesErrors,
+    TelemetryBackhaulMatchesResponses,
     TelemetryHistoryData,
     TelemetryHistoryErrors,
     TelemetryHistoryResponses,
@@ -205,6 +244,13 @@ import type {
     TelemetryLiveData,
     TelemetryLiveErrors,
     TelemetryLiveResponses,
+    TelemetryPositionData,
+    TelemetryPositionErrors,
+    TelemetryPositionEventsData,
+    TelemetryPositionEventsErrors,
+    TelemetryPositionEventsResponse,
+    TelemetryPositionEventsResponses,
+    TelemetryPositionResponses,
     TelemetryProvisionData,
     TelemetryProvisionErrors,
     TelemetryProvisionResponses,
@@ -289,6 +335,26 @@ export const notificationPreferenceSet = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/notification-preferences/{category}",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const telemetryPosition = <ThrowOnError extends boolean = false>(
+    options: Options<TelemetryPositionData, ThrowOnError>,
+): RequestResult<
+    TelemetryPositionResponses,
+    TelemetryPositionErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        TelemetryPositionResponses,
+        TelemetryPositionErrors,
+        ThrowOnError
+    >({
+        url: "/api/tracking/{shipmentId}/position",
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -454,6 +520,82 @@ export const handoverConfirm = <ThrowOnError extends boolean = false>(
         },
     });
 
+export const deliveryVerificationScan = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryVerificationScanData, ThrowOnError>,
+): RequestResult<
+    DeliveryVerificationScanResponses,
+    DeliveryVerificationScanErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        DeliveryVerificationScanResponses,
+        DeliveryVerificationScanErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/scan",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const escrowResolve = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowResolveData, ThrowOnError>,
+): RequestResult<EscrowResolveResponses, EscrowResolveErrors, ThrowOnError> =>
+    (options.client ?? client).post<
+        EscrowResolveResponses,
+        EscrowResolveErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/resolve",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const escrowRelease = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowReleaseData, ThrowOnError>,
+): RequestResult<EscrowReleaseResponses, EscrowReleaseErrors, ThrowOnError> =>
+    (options.client ?? client).post<
+        EscrowReleaseResponses,
+        EscrowReleaseErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/release",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const deliveryVerificationIssue = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryVerificationIssueData, ThrowOnError>,
+): RequestResult<
+    DeliveryVerificationIssueResponses,
+    DeliveryVerificationIssueErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        DeliveryVerificationIssueResponses,
+        DeliveryVerificationIssueErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/qr",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
 export const deliveryPropose = <ThrowOnError extends boolean = false>(
     options: Options<DeliveryProposeData, ThrowOnError>,
 ): RequestResult<
@@ -468,6 +610,23 @@ export const deliveryPropose = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/delivery/{shipmentId}/propose",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const escrowRetry = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowRetryData, ThrowOnError>,
+): RequestResult<EscrowRetryResponses, EscrowRetryErrors, ThrowOnError> =>
+    (options.client ?? client).post<
+        EscrowRetryResponses,
+        EscrowRetryErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/escrow/retry",
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -1284,6 +1443,57 @@ export const authLogin = <ThrowOnError extends boolean = false>(
         },
     });
 
+export const telemetryPositionEvents = <ThrowOnError extends boolean = false>(
+    options: Options<
+        TelemetryPositionEventsData,
+        ThrowOnError,
+        TelemetryPositionEventsResponse
+    >,
+): Promise<ServerSentEventsResult<TelemetryPositionEventsResponses>> =>
+    (options.client ?? client).sse.get<
+        TelemetryPositionEventsResponses,
+        TelemetryPositionEventsErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/tracking/{shipmentId}/events",
+        ...options,
+    });
+
+export const telemetryBackhaulMatches = <ThrowOnError extends boolean = false>(
+    options: Options<TelemetryBackhaulMatchesData, ThrowOnError>,
+): RequestResult<
+    TelemetryBackhaulMatchesResponses,
+    TelemetryBackhaulMatchesErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        TelemetryBackhaulMatchesResponses,
+        TelemetryBackhaulMatchesErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/tracking/{shipmentId}/backhaul-matches",
+        ...options,
+    });
+
+export const nearbySupplierNearby = <ThrowOnError extends boolean = false>(
+    options: Options<NearbySupplierNearbyData, ThrowOnError>,
+): RequestResult<
+    NearbySupplierNearbyResponses,
+    NearbySupplierNearbyErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        NearbySupplierNearbyResponses,
+        NearbySupplierNearbyErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/suppliers/nearby",
+        ...options,
+    });
+
 export const supplierViewGuest = <ThrowOnError extends boolean = false>(
     options: Options<SupplierViewGuestData, ThrowOnError>,
 ): RequestResult<
@@ -1354,6 +1564,85 @@ export const insuranceEvidence = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/insurance/cases/{caseId}/evidence",
+        ...options,
+    });
+
+export const deliveryVerificationGet = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryVerificationGetData, ThrowOnError>,
+): RequestResult<
+    DeliveryVerificationGetResponses,
+    DeliveryVerificationGetErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        DeliveryVerificationGetResponses,
+        DeliveryVerificationGetErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/verification",
+        ...options,
+    });
+
+export const deliveryVerificationEvents = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<
+        DeliveryVerificationEventsData,
+        ThrowOnError,
+        DeliveryVerificationEventsResponse
+    >,
+): Promise<ServerSentEventsResult<DeliveryVerificationEventsResponses>> =>
+    (options.client ?? client).sse.get<
+        DeliveryVerificationEventsResponses,
+        DeliveryVerificationEventsErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/verification/events",
+        ...options,
+    });
+
+export const shipmentRouteRoute = <ThrowOnError extends boolean = false>(
+    options: Options<ShipmentRouteRouteData, ThrowOnError>,
+): RequestResult<
+    ShipmentRouteRouteResponses,
+    ShipmentRouteRouteErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        ShipmentRouteRouteResponses,
+        ShipmentRouteRouteErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/route",
+        ...options,
+    });
+
+export const escrowGet = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowGetData, ThrowOnError>,
+): RequestResult<EscrowGetResponses, EscrowGetErrors, ThrowOnError> =>
+    (options.client ?? client).get<
+        EscrowGetResponses,
+        EscrowGetErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/escrow",
+        ...options,
+    });
+
+export const escrowEvents = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowEventsData, ThrowOnError, EscrowEventsResponse>,
+): Promise<ServerSentEventsResult<EscrowEventsResponses>> =>
+    (options.client ?? client).sse.get<
+        EscrowEventsResponses,
+        EscrowEventsErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/escrow/events",
         ...options,
     });
 

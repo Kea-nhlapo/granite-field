@@ -78,6 +78,7 @@ trademesh:
       otp-send: ${API_RATE_LIMIT_OTP_SEND:10}
       otp-verify: ${API_RATE_LIMIT_OTP_VERIFY:20}
       momo-initiate: ${API_RATE_LIMIT_MOMO_INITIATE:10}
+      momo-transactions: ${API_RATE_LIMIT_MOMO_TRANSACTIONS:10}
   access:
     turnstile:
       provider: ${TURNSTILE_PROVIDER:unconfigured}
@@ -110,6 +111,11 @@ trademesh:
         subscription-key: ${MOMO_DISBURSEMENTS_SUBSCRIPTION_KEY:}
         api-user: ${MOMO_DISBURSEMENTS_API_USER:}
         api-key: ${MOMO_DISBURSEMENTS_API_KEY:}
+  payments:
+    escrow:
+      poll-interval: ${ESCROW_POLL_INTERVAL:PT2S}
+      transaction-timeout: ${ESCROW_TRANSACTION_TIMEOUT:PT2M}
+      stream-timeout: ${ESCROW_STREAM_TIMEOUT:PT30M}
   events:
     source: ${TRADEMESH_EVENTS_SOURCE:trademesh-backend}
   outbox:
@@ -225,6 +231,8 @@ trademesh:
     algorithm-version: ${CAPACITY_MATCH_ALGORITHM_VERSION:capacity-match/v1}
   routing:
     provider: ${ROUTING_PROVIDER:mock}
+    directions-endpoint: ${GOOGLE_DIRECTIONS_ENDPOINT:https://maps.googleapis.com/maps/api/directions/json}
+    maps-api-key: ${GOOGLE_MAPS_API_KEY:}
     timeout: ${ROUTING_PROVIDER_TIMEOUT:PT3S}
     max-waypoints: ${ROUTING_MAX_WAYPOINTS:20}
     maximum-candidates: ${ROUTING_MAXIMUM_CANDIDATES:3}
@@ -281,6 +289,13 @@ trademesh:
     retention: ${TELEMETRY_RETENTION:P90D}
     cleanup-batch-size: ${TELEMETRY_CLEANUP_BATCH_SIZE:5000}
     cleanup-interval: ${TELEMETRY_CLEANUP_INTERVAL:PT1H}
+  tracking:
+    stream-timeout: ${TRACKING_STREAM_TIMEOUT:PT30M}
+    backhaul-radius-metres: ${BACKHAUL_RADIUS_METRES:30000}
+    backhaul-time-window: ${BACKHAUL_TIME_WINDOW:PT6H}
+    backhaul-candidate-limit: ${BACKHAUL_CANDIDATE_LIMIT:20}
+    backhaul-distance-weight: ${BACKHAUL_DISTANCE_WEIGHT:0.70}
+    backhaul-trust-weight: ${BACKHAUL_TRUST_WEIGHT:0.30}
   risk:
     # Two off-route readings reduce false alerts from a single noisy GPS fix.
     route-deviation-metres: ${RISK_ROUTE_DEVIATION_METRES:1000}
@@ -301,6 +316,8 @@ trademesh:
     allowed-clock-skew: ${HANDOVER_ALLOWED_CLOCK_SKEW:PT2M}
     location-tolerance-metres: ${HANDOVER_LOCATION_TOLERANCE_METRES:250}
     max-quantity-note-length: ${HANDOVER_MAX_QUANTITY_NOTE_LENGTH:500}
+    stream-timeout: ${HANDOVER_STREAM_TIMEOUT:PT30M}
+    signing-secret: ${HANDOVER_QR_SIGNING_SECRET:}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.
@@ -346,3 +363,5 @@ trademesh:
       data-encryption-key: ${NOTIFICATION_DATA_ENCRYPTION_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
     mobile:
       provider: ${MOBILE_NOTIFICATION_PROVIDER:local}
+  handover:
+    signing-secret: ${HANDOVER_QR_SIGNING_SECRET:local-only-handover-signing-secret-change-me}

@@ -103,6 +103,30 @@ class JdbcShipmentRepository implements ShipmentRepository {
     }
 
     @Override
+    public Optional<Shipment> findByParticipantBusinessId(UUID businessId, UUID shipmentId) {
+        return find("""
+                SELECT %s
+                  FROM shipment_record shipment
+                 WHERE shipment.id = ?
+                   AND (
+                       shipment.requested_by_business_id = ?
+                       OR EXISTS (
+                           SELECT 1
+                             FROM shipment_load_order load_order
+                            WHERE load_order.shipment_id = shipment.id
+                              AND load_order.buyer_business_id = ?
+                       )
+                       OR EXISTS (
+                           SELECT 1
+                             FROM transport_transporter transporter
+                            WHERE transporter.id = shipment.transporter_id
+                              AND transporter.business_id = ?
+                       )
+                   )
+                """.formatted(SHIPMENT_COLUMNS), shipmentId, businessId, businessId, businessId);
+    }
+
+    @Override
     public List<Shipment> findOperational(int limit) {
         return jdbcTemplate.query(
                 "SELECT " + SHIPMENT_COLUMNS

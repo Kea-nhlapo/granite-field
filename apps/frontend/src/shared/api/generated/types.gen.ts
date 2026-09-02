@@ -19,6 +19,28 @@ export type PreferenceResponse = {
     updatedAt?: string;
 };
 
+export type PositionRequest = {
+    clientEventId?: string;
+    recordedAt?: string;
+    lat: number;
+    lng: number;
+    speedKilometresPerHour?: number;
+    batteryPercent?: number;
+    networkStatus?: "CONNECTED" | "LIMITED" | "OFFLINE" | "UNKNOWN";
+    networkSignalDbm?: number;
+};
+
+export type PositionIngestionResponse = {
+    shipmentId?: string;
+    clientEventId?: string;
+    readingId?: string;
+    status?: "ACCEPTED" | "DUPLICATE";
+    recordedAt?: string;
+    latitude?: number;
+    longitude?: number;
+    speedKilometresPerHour?: number;
+};
+
 export type IngestReadingsRequest = {
     readings: Array<ReadingRequest>;
 };
@@ -218,6 +240,8 @@ export type ChallengeResponse = {
     type?: "COLLECTION" | "DELIVERY";
     deliveryOrderId?: string;
     state?: "PENDING" | "COMPLETED" | "DISPUTED" | "EXPIRED";
+    expectedQuantity?: number;
+    unitOfMeasure?: string;
     initiatorUserId?: string;
     counterpartyUserId?: string;
     expectedLocation?: LocationResponse;
@@ -236,6 +260,8 @@ export type ConfirmationResponse = {
     latitude?: number;
     longitude?: number;
     distanceMetres?: number;
+    capturedQuantity?: number;
+    photoUrl?: string;
     quantityOutcome?: "MATCHED" | "DISPUTED";
     quantityNote?: string;
 };
@@ -244,6 +270,67 @@ export type LocationResponse = {
     label?: string;
     latitude?: number;
     longitude?: number;
+};
+
+export type ScanRequest = {
+    requestId: string;
+    token: string;
+    capturedQty: number;
+    photoUrl?: string;
+    gpsLat?: number;
+    gpsLng?: number;
+};
+
+export type ResolveEscrowRequest = {
+    businessId: string;
+    requestId: string;
+    resolvedAmount: number;
+};
+
+export type EscrowResponse = {
+    escrowId?: string;
+    shipmentId?: string;
+    businessId?: string;
+    currency?: string;
+    agreedAmount?: number;
+    status?:
+        | "LOCK_REQUESTED"
+        | "LOCK_PENDING"
+        | "LOCKED"
+        | "LOCK_FAILED"
+        | "RELEASE_REQUESTED"
+        | "RELEASE_PENDING"
+        | "RELEASED"
+        | "RELEASE_FAILED";
+    updatedAt?: string;
+    transactions?: Array<EscrowTransactionResponse>;
+};
+
+export type EscrowTransactionResponse = {
+    transactionId?: string;
+    type?: "LOCK" | "RELEASE";
+    sequence?: number;
+    amount?: number;
+    status?: "REQUESTED" | "PENDING" | "SUCCESSFUL" | "FAILED" | "TIMED_OUT";
+    failureCode?: string;
+    updatedAt?: string;
+};
+
+export type ReleaseEscrowRequest = {
+    businessId: string;
+    requestId: string;
+    resolvedAmount: number;
+};
+
+export type IssueQrRequest = {
+    businessId: string;
+    deliveryOrderId: string;
+    counterpartyUserId: string;
+};
+
+export type IssuedChallengeResponse = {
+    challenge?: ChallengeResponse;
+    qrPayload?: string;
 };
 
 export type ProposeDeliveryRequest = {
@@ -261,6 +348,11 @@ export type DeliveryProposalResponse = {
     expiresAt?: string;
     acceptedAt?: string;
     newlyCreated?: boolean;
+};
+
+export type RetryEscrowRequest = {
+    businessId: string;
+    requestId: string;
 };
 
 export type SupplierResponse = {
@@ -508,11 +600,6 @@ export type IssueChallengeRequest = {
     type: "COLLECTION" | "DELIVERY";
     deliveryOrderId?: string;
     counterpartyUserId: string;
-};
-
-export type IssuedChallengeResponse = {
-    challenge?: ChallengeResponse;
-    qrPayload?: string;
 };
 
 export type ChangeAssignmentRequest = {
@@ -1176,6 +1263,34 @@ export type LoginRequest = {
     password: string;
 };
 
+export type SseEmitter = {
+    timeout?: number;
+};
+
+export type BackhaulMatchResponse = {
+    shipmentId?: string;
+    businessId?: string;
+    pickup?: PointResponse;
+    destination?: PointResponse;
+    windowStart?: string;
+    windowEnd?: string;
+    pickupDistanceMetres?: number;
+    pickupDurationSeconds?: number;
+    roadDistanceMeasured?: boolean;
+    averageRating?: number;
+    successfulDeliveryRate?: number;
+    trustScore?: number;
+    score?: number;
+};
+
+export type BackhaulMatchesResponse = {
+    matches?: Array<BackhaulMatchResponse>;
+};
+
+export type NearbySuppliersResponse = {
+    suppliers?: Array<SupplierResponse>;
+};
+
 export type GuestInvitationResponse = {
     invitationId?: string;
     supplierProfileId?: string;
@@ -1241,6 +1356,8 @@ export type Confirmation = {
     latitude?: number;
     longitude?: number;
     distanceMetres?: number;
+    capturedQuantity?: number;
+    photoUrl?: string;
     quantityOutcome?: string;
     quantityNote?: string;
 };
@@ -1295,6 +1412,8 @@ export type Handover = {
     type?: string;
     deliveryOrderId?: string;
     state?: string;
+    expectedQuantity?: number;
+    unitOfMeasure?: string;
     expectedLocationLabel?: string;
     expectedLatitude?: number;
     expectedLongitude?: number;
@@ -1381,6 +1500,41 @@ export type StatusChange = {
     toStatus?: string;
     occurredAt?: string;
     source?: string;
+};
+
+export type DeliveryCheckResponse = {
+    challengeId?: string;
+    deliveryOrderId?: string;
+    state?: "PENDING" | "COMPLETED" | "DISPUTED" | "EXPIRED";
+    expectedQuantity?: number;
+    capturedQuantity?: number;
+    unitOfMeasure?: string;
+    photoUrl?: string;
+    completedAt?: string;
+};
+
+export type StatusResponse = {
+    shipmentId?: string;
+    businessId?: string;
+    verificationStatus?: string;
+    deliveries?: Array<DeliveryCheckResponse>;
+    resolvedAmount?: number;
+    updatedAt?: string;
+};
+
+export type RouteResponse = {
+    shipmentId?: string;
+    providerName?: string;
+    providerVersion?: string;
+    fallbackUsed?: boolean;
+    fallbackReason?: string;
+    label?: string;
+    encodedPolyline?: string;
+    geometry?: Array<PointResponse>;
+    distanceMetres?: number;
+    durationSeconds?: number;
+    generatedAt?: string;
+    estimatedArrivalAt?: string;
 };
 
 export type ReadingHistoryResponse = {
@@ -1513,6 +1667,70 @@ export type NotificationPreferenceSetResponses = {
 
 export type NotificationPreferenceSetResponse =
     NotificationPreferenceSetResponses[keyof NotificationPreferenceSetResponses];
+
+export type TelemetryPositionData = {
+    body: PositionRequest;
+    headers: {
+        "X-Telemetry-Credential": string;
+    };
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/tracking/{shipmentId}/position";
+};
+
+export type TelemetryPositionErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type TelemetryPositionError =
+    TelemetryPositionErrors[keyof TelemetryPositionErrors];
+
+export type TelemetryPositionResponses = {
+    /**
+     * Accepted
+     */
+    202: PositionIngestionResponse;
+};
+
+export type TelemetryPositionResponse =
+    TelemetryPositionResponses[keyof TelemetryPositionResponses];
 
 export type TelemetryIngestData = {
     body: IngestReadingsRequest;
@@ -1999,6 +2217,248 @@ export type HandoverConfirmResponses = {
 export type HandoverConfirmResponse =
     HandoverConfirmResponses[keyof HandoverConfirmResponses];
 
+export type DeliveryVerificationScanData = {
+    body: ScanRequest;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/scan";
+};
+
+export type DeliveryVerificationScanErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type DeliveryVerificationScanError =
+    DeliveryVerificationScanErrors[keyof DeliveryVerificationScanErrors];
+
+export type DeliveryVerificationScanResponses = {
+    /**
+     * OK
+     */
+    200: ChallengeResponse;
+};
+
+export type DeliveryVerificationScanResponse =
+    DeliveryVerificationScanResponses[keyof DeliveryVerificationScanResponses];
+
+export type EscrowResolveData = {
+    body: ResolveEscrowRequest;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/resolve";
+};
+
+export type EscrowResolveErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowResolveError = EscrowResolveErrors[keyof EscrowResolveErrors];
+
+export type EscrowResolveResponses = {
+    /**
+     * OK
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowResolveResponse =
+    EscrowResolveResponses[keyof EscrowResolveResponses];
+
+export type EscrowReleaseData = {
+    body: ReleaseEscrowRequest;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/release";
+};
+
+export type EscrowReleaseErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowReleaseError = EscrowReleaseErrors[keyof EscrowReleaseErrors];
+
+export type EscrowReleaseResponses = {
+    /**
+     * OK
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowReleaseResponse =
+    EscrowReleaseResponses[keyof EscrowReleaseResponses];
+
+export type DeliveryVerificationIssueData = {
+    body: IssueQrRequest;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/qr";
+};
+
+export type DeliveryVerificationIssueErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type DeliveryVerificationIssueError =
+    DeliveryVerificationIssueErrors[keyof DeliveryVerificationIssueErrors];
+
+export type DeliveryVerificationIssueResponses = {
+    /**
+     * OK
+     */
+    200: IssuedChallengeResponse;
+};
+
+export type DeliveryVerificationIssueResponse =
+    DeliveryVerificationIssueResponses[keyof DeliveryVerificationIssueResponses];
+
 export type DeliveryProposeData = {
     body: ProposeDeliveryRequest;
     path: {
@@ -2059,6 +2519,66 @@ export type DeliveryProposeResponses = {
 
 export type DeliveryProposeResponse =
     DeliveryProposeResponses[keyof DeliveryProposeResponses];
+
+export type EscrowRetryData = {
+    body: RetryEscrowRequest;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/escrow/retry";
+};
+
+export type EscrowRetryErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowRetryError = EscrowRetryErrors[keyof EscrowRetryErrors];
+
+export type EscrowRetryResponses = {
+    /**
+     * OK
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowRetryResponse =
+    EscrowRetryResponses[keyof EscrowRetryResponses];
 
 export type DeliveryVoiceSearchData = {
     body?: {
@@ -4681,6 +5201,195 @@ export type AuthLoginResponses = {
 
 export type AuthLoginResponse = AuthLoginResponses[keyof AuthLoginResponses];
 
+export type TelemetryPositionEventsData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/tracking/{shipmentId}/events";
+};
+
+export type TelemetryPositionEventsErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type TelemetryPositionEventsError =
+    TelemetryPositionEventsErrors[keyof TelemetryPositionEventsErrors];
+
+export type TelemetryPositionEventsResponses = {
+    /**
+     * OK
+     */
+    200: SseEmitter;
+};
+
+export type TelemetryPositionEventsResponse =
+    TelemetryPositionEventsResponses[keyof TelemetryPositionEventsResponses];
+
+export type TelemetryBackhaulMatchesData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/tracking/{shipmentId}/backhaul-matches";
+};
+
+export type TelemetryBackhaulMatchesErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type TelemetryBackhaulMatchesError =
+    TelemetryBackhaulMatchesErrors[keyof TelemetryBackhaulMatchesErrors];
+
+export type TelemetryBackhaulMatchesResponses = {
+    /**
+     * OK
+     */
+    200: BackhaulMatchesResponse;
+};
+
+export type TelemetryBackhaulMatchesResponse =
+    TelemetryBackhaulMatchesResponses[keyof TelemetryBackhaulMatchesResponses];
+
+export type NearbySupplierNearbyData = {
+    body?: never;
+    path?: never;
+    query: {
+        lat: number;
+        lng: number;
+        limit?: number;
+    };
+    url: "/api/suppliers/nearby";
+};
+
+export type NearbySupplierNearbyErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type NearbySupplierNearbyError =
+    NearbySupplierNearbyErrors[keyof NearbySupplierNearbyErrors];
+
+export type NearbySupplierNearbyResponses = {
+    /**
+     * OK
+     */
+    200: NearbySuppliersResponse;
+};
+
+export type NearbySupplierNearbyResponse =
+    NearbySupplierNearbyResponses[keyof NearbySupplierNearbyResponses];
+
 export type SupplierViewGuestData = {
     body?: never;
     path: {
@@ -4981,6 +5690,318 @@ export type InsuranceEvidenceResponses = {
 
 export type InsuranceEvidenceResponse =
     InsuranceEvidenceResponses[keyof InsuranceEvidenceResponses];
+
+export type DeliveryVerificationGetData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/delivery/{shipmentId}/verification";
+};
+
+export type DeliveryVerificationGetErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type DeliveryVerificationGetError =
+    DeliveryVerificationGetErrors[keyof DeliveryVerificationGetErrors];
+
+export type DeliveryVerificationGetResponses = {
+    /**
+     * OK
+     */
+    200: StatusResponse;
+};
+
+export type DeliveryVerificationGetResponse =
+    DeliveryVerificationGetResponses[keyof DeliveryVerificationGetResponses];
+
+export type DeliveryVerificationEventsData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/delivery/{shipmentId}/verification/events";
+};
+
+export type DeliveryVerificationEventsErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type DeliveryVerificationEventsError =
+    DeliveryVerificationEventsErrors[keyof DeliveryVerificationEventsErrors];
+
+export type DeliveryVerificationEventsResponses = {
+    /**
+     * Current and subsequent delivery verification status events
+     */
+    200: StatusResponse;
+};
+
+export type DeliveryVerificationEventsResponse =
+    DeliveryVerificationEventsResponses[keyof DeliveryVerificationEventsResponses];
+
+export type ShipmentRouteRouteData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/delivery/{shipmentId}/route";
+};
+
+export type ShipmentRouteRouteErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type ShipmentRouteRouteError =
+    ShipmentRouteRouteErrors[keyof ShipmentRouteRouteErrors];
+
+export type ShipmentRouteRouteResponses = {
+    /**
+     * OK
+     */
+    200: RouteResponse;
+};
+
+export type ShipmentRouteRouteResponse =
+    ShipmentRouteRouteResponses[keyof ShipmentRouteRouteResponses];
+
+export type EscrowGetData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/delivery/{shipmentId}/escrow";
+};
+
+export type EscrowGetErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowGetError = EscrowGetErrors[keyof EscrowGetErrors];
+
+export type EscrowGetResponses = {
+    /**
+     * OK
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowGetResponse = EscrowGetResponses[keyof EscrowGetResponses];
+
+export type EscrowEventsData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/delivery/{shipmentId}/escrow/events";
+};
+
+export type EscrowEventsErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowEventsError = EscrowEventsErrors[keyof EscrowEventsErrors];
+
+export type EscrowEventsResponses = {
+    /**
+     * Current and subsequent escrow status events
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowEventsResponse =
+    EscrowEventsResponses[keyof EscrowEventsResponses];
 
 export type BusinessGetBusinessData = {
     body?: never;

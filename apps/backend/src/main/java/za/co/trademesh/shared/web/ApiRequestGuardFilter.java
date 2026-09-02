@@ -28,6 +28,10 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
             Pattern.compile("^/api/supplier-invitations/guest/[^/]+(?:/responses)?$");
     private static final Pattern UPLOAD = Pattern.compile("^/api/businesses/[^/]+/files$");
     private static final Pattern DELIVERY_CONFIRMATION = Pattern.compile("^/api/delivery/confirm/[^/]+$");
+    private static final Pattern DELIVERY_QR_MUTATION = Pattern.compile("^/api/delivery/[^/]+/(?:qr|scan)$");
+    private static final Pattern MOMO_TRANSACTION =
+            Pattern.compile("^/api/delivery/[^/]+/(?:escrow/retry|release|resolve)$");
+    private static final Pattern TRACKING_POSITION = Pattern.compile("^/api/tracking/[^/]+/position$");
 
     private final ApiRateLimitProperties limits;
     private final ApiWebProperties web;
@@ -114,6 +118,9 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
         if (HttpMethod.POST.matches(method) && "/api/auth/momo/initiate".equals(path)) {
             return new Limit("momo-initiate", limits.momoInitiate());
         }
+        if (HttpMethod.POST.matches(method) && MOMO_TRANSACTION.matcher(path).matches()) {
+            return new Limit("momo-transactions", limits.momoTransactions());
+        }
         if ((HttpMethod.POST.matches(method) && INVITATION_CREATE.matcher(path).matches())
                 || INVITATION_GUEST.matcher(path).matches()) {
             return new Limit("invitations", limits.invitations());
@@ -121,10 +128,16 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
         if (HttpMethod.POST.matches(method) && UPLOAD.matcher(path).matches()) {
             return new Limit("uploads", limits.uploads());
         }
-        if (HttpMethod.POST.matches(method) && "/api/telemetry/readings".equals(path)) {
+        if (HttpMethod.POST.matches(method)
+                && ("/api/telemetry/readings".equals(path)
+                        || TRACKING_POSITION.matcher(path).matches())) {
             return new Limit("telemetry", limits.telemetry());
         }
         if (HttpMethod.POST.matches(method) && "/api/handovers/confirmations".equals(path)) {
+            return new Limit("qr-validation", limits.qrValidation());
+        }
+        if (HttpMethod.POST.matches(method)
+                && DELIVERY_QR_MUTATION.matcher(path).matches()) {
             return new Limit("qr-validation", limits.qrValidation());
         }
         if (DELIVERY_CONFIRMATION.matcher(path).matches()) {

@@ -1,6 +1,8 @@
 package za.co.trademesh.modules.telemetry.api;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -55,6 +57,34 @@ public final class TelemetryContracts {
         }
     }
 
+    public record PositionRequest(
+            UUID clientEventId,
+            Instant recordedAt,
+
+            @NotNull @DecimalMin("-90.0") @DecimalMax("90.0")
+            Double lat,
+
+            @NotNull @DecimalMin("-180.0") @DecimalMax("180.0")
+            Double lng,
+
+            BigDecimal speedKilometresPerHour,
+            BigDecimal batteryPercent,
+            TelemetryNetworkStatus networkStatus,
+            Integer networkSignalDbm) {
+
+        TelemetryService.PositionInput toInput() {
+            return new TelemetryService.PositionInput(
+                    clientEventId,
+                    recordedAt,
+                    lat.doubleValue(),
+                    lng.doubleValue(),
+                    speedKilometresPerHour,
+                    batteryPercent,
+                    networkStatus,
+                    networkSignalDbm);
+        }
+    }
+
     public record IssuedDeviceResponse(
             UUID deviceId,
             UUID shipmentId,
@@ -90,6 +120,74 @@ public final class TelemetryContracts {
     public record ReadingReceiptResponse(UUID clientEventId, UUID readingId, TelemetryService.ReceiptStatus status) {
         static ReadingReceiptResponse from(TelemetryService.ReadingReceipt receipt) {
             return new ReadingReceiptResponse(receipt.clientEventId(), receipt.readingId(), receipt.status());
+        }
+    }
+
+    public record PositionIngestionResponse(
+            UUID shipmentId,
+            UUID clientEventId,
+            UUID readingId,
+            TelemetryService.ReceiptStatus status,
+            Instant recordedAt,
+            double latitude,
+            double longitude,
+            BigDecimal speedKilometresPerHour) {
+
+        static PositionIngestionResponse from(TelemetryService.PositionResult result) {
+            return new PositionIngestionResponse(
+                    result.shipmentId(),
+                    result.receipt().clientEventId(),
+                    result.receipt().readingId(),
+                    result.receipt().status(),
+                    result.recordedAt(),
+                    result.latitude(),
+                    result.longitude(),
+                    result.speedKilometresPerHour());
+        }
+    }
+
+    public record PositionUpdateResponse(
+            UUID shipmentId,
+            UUID deviceId,
+            UUID readingId,
+            Instant recordedAt,
+            Instant receivedAt,
+            double latitude,
+            double longitude,
+            BigDecimal speedKilometresPerHour,
+            BigDecimal batteryPercent,
+            TelemetryNetworkStatus networkStatus,
+            Integer networkSignalDbm) {
+
+        static PositionUpdateResponse from(TelemetryLivePosition position) {
+            return new PositionUpdateResponse(
+                    position.shipmentId(),
+                    position.deviceId(),
+                    position.readingId(),
+                    position.recordedAt(),
+                    position.receivedAt(),
+                    position.latitude(),
+                    position.longitude(),
+                    position.speedKilometresPerHour(),
+                    position.batteryPercent(),
+                    position.networkStatus(),
+                    position.networkSignalDbm());
+        }
+
+        static PositionUpdateResponse from(
+                za.co.trademesh.modules.telemetry.events.TelemetryEvent.ReadingAccepted event) {
+            return new PositionUpdateResponse(
+                    event.shipmentId(),
+                    event.deviceId(),
+                    event.readingId(),
+                    event.recordedAt(),
+                    event.receivedAt(),
+                    event.latitude(),
+                    event.longitude(),
+                    event.speedKilometresPerHour(),
+                    event.batteryPercent(),
+                    event.networkStatus(),
+                    event.networkSignalDbm());
         }
     }
 

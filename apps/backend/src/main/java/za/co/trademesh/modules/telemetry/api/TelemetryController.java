@@ -3,6 +3,7 @@ package za.co.trademesh.modules.telemetry.api;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import za.co.trademesh.modules.telemetry.application.BackhaulMatchingService;
 import za.co.trademesh.modules.telemetry.application.TelemetryService;
 import za.co.trademesh.shared.security.AuthorizationService;
 
@@ -26,10 +29,18 @@ public class TelemetryController {
 
     private final TelemetryService telemetry;
     private final AuthorizationService authorization;
+    private final TrackingPositionSseBroker positionStream;
+    private final BackhaulMatchingService backhaul;
 
-    public TelemetryController(TelemetryService telemetry, AuthorizationService authorization) {
+    public TelemetryController(
+            TelemetryService telemetry,
+            AuthorizationService authorization,
+            TrackingPositionSseBroker positionStream,
+            BackhaulMatchingService backhaul) {
         this.telemetry = telemetry;
         this.authorization = authorization;
+        this.positionStream = positionStream;
+        this.backhaul = backhaul;
     }
 
     @PostMapping("/businesses/{businessId}/shipments/{shipmentId}/telemetry-devices")
@@ -64,6 +75,33 @@ public class TelemetryController {
                         .map(TelemetryContracts.ReadingRequest::toInput)
                         .toList());
         return ResponseEntity.accepted().body(TelemetryContracts.IngestionResponse.from(result));
+    }
+
+    @PostMapping("/tracking/{shipmentId}/position")
+    ResponseEntity<TelemetryContracts.PositionIngestionResponse> position(
+            @PathVariable UUID shipmentId,
+            @RequestHeader(DEVICE_CREDENTIAL_HEADER) String credential,
+            @Valid @RequestBody TelemetryContracts.PositionRequest request) {
+        var result = telemetry.ingestPosition(credential, shipmentId, request.toInput());
+        return ResponseEntity.accepted().body(TelemetryContracts.PositionIngestionResponse.from(result));
+    }
+
+    @GetMapping(value = "/tracking/{shipmentId}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize(
+            "hasAnyRole('BUSINESS_OWNER', 'BUSINESS_MEMBER', 'SUPPLIER', 'TRANSPORTER', 'DRIVER', 'ADMINISTRATOR')")
+    SseEmitter positionEvents(
+            @PathVariable UUID shipmentId, @RequestParam UUID businessId, Authentication authentication) {
+        authorize(authentication, businessId);
+        return positionStream.subscribe(shipmentId, telemetry.findLivePosition(businessId, shipmentId));
+    }
+
+    @GetMapping("/tracking/{shipmentId}/backhaul-matches")
+    @PreAuthorize(
+            "hasAnyRole('BUSINESS_OWNER', 'BUSINESS_MEMBER', 'SUPPLIER', 'TRANSPORTER', 'DRIVER', 'ADMINISTRATOR')")
+    BackhaulContracts.BackhaulMatchesResponse backhaulMatches(
+            @PathVariable UUID shipmentId, @RequestParam UUID businessId, Authentication authentication) {
+        authorize(authentication, businessId);
+        return BackhaulContracts.BackhaulMatchesResponse.from(backhaul.find(businessId, shipmentId));
     }
 
     @GetMapping("/businesses/{businessId}/shipments/{shipmentId}/telemetry/live")

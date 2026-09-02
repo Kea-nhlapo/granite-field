@@ -59,6 +59,56 @@
         }
       }
     },
+    "/api/tracking/{shipmentId}/position": {
+      "post": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryPosition",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "X-Telemetry-Credential",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PositionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionIngestionResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
     "/api/telemetry/readings": {
       "post": {
         "tags": ["telemetry-controller"],
@@ -373,6 +423,172 @@
         }
       }
     },
+    "/api/delivery/{shipmentId}/scan": {
+      "post": {
+        "tags": ["delivery-verification-controller"],
+        "operationId": "deliveryVerificationScan",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ScanRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/ChallengeResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/resolve": {
+      "post": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowResolve",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ResolveEscrowRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/release": {
+      "post": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowRelease",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReleaseEscrowRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/qr": {
+      "post": {
+        "tags": ["delivery-verification-controller"],
+        "operationId": "deliveryVerificationIssue",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/IssueQrRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedChallengeResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
     "/api/delivery/{shipmentId}/propose": {
       "post": {
         "tags": ["delivery-controller"],
@@ -403,6 +619,47 @@
                 "schema": {
                   "$ref": "#/components/schemas/DeliveryProposalResponse"
                 }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/escrow/retry": {
+      "post": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowRetry",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RetryEscrowRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
               }
             }
           },
@@ -2199,6 +2456,133 @@
         "security": []
       }
     },
+    "/api/tracking/{shipmentId}/events": {
+      "get": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryPositionEvents",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": { "$ref": "#/components/schemas/SseEmitter" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/tracking/{shipmentId}/backhaul-matches": {
+      "get": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryBackhaulMatches",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackhaulMatchesResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/suppliers/nearby": {
+      "get": {
+        "tags": ["nearby-supplier-controller"],
+        "operationId": "nearbySupplierNearby",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NearbySuppliersResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
     "/api/supplier-invitations/guest/{token}": {
       "get": {
         "tags": ["supplier-controller"],
@@ -2351,6 +2735,201 @@
                 "schema": {
                   "$ref": "#/components/schemas/EvidencePackageResponse"
                 }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/verification": {
+      "get": {
+        "tags": ["delivery-verification-controller"],
+        "operationId": "deliveryVerificationGet",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/StatusResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/verification/events": {
+      "get": {
+        "tags": ["delivery-verification-controller"],
+        "operationId": "deliveryVerificationEvents",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current and subsequent delivery verification status events",
+            "content": {
+              "text/event-stream": {
+                "schema": { "$ref": "#/components/schemas/StatusResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/route": {
+      "get": {
+        "tags": ["shipment-route-controller"],
+        "operationId": "shipmentRouteRoute",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/RouteResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/escrow": {
+      "get": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowGet",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/escrow/events": {
+      "get": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowEvents",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current and subsequent escrow status events",
+            "content": {
+              "text/event-stream": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
               }
             }
           },
@@ -3299,6 +3878,46 @@
           "updatedAt": { "type": "string", "format": "date-time" }
         }
       },
+      "PositionRequest": {
+        "type": "object",
+        "properties": {
+          "clientEventId": { "type": "string", "format": "uuid" },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "maximum": 90.0,
+            "minimum": -90.0
+          },
+          "lng": {
+            "type": "number",
+            "format": "double",
+            "maximum": 180.0,
+            "minimum": -180.0
+          },
+          "speedKilometresPerHour": { "type": "number" },
+          "batteryPercent": { "type": "number" },
+          "networkStatus": {
+            "type": "string",
+            "enum": ["CONNECTED", "LIMITED", "OFFLINE", "UNKNOWN"]
+          },
+          "networkSignalDbm": { "type": "integer", "format": "int32" }
+        },
+        "required": ["lat", "lng"]
+      },
+      "PositionIngestionResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "clientEventId": { "type": "string", "format": "uuid" },
+          "readingId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["ACCEPTED", "DUPLICATE"] },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "speedKilometresPerHour": { "type": "number" }
+        }
+      },
       "IngestReadingsRequest": {
         "type": "object",
         "properties": {
@@ -3599,7 +4218,7 @@
         "type": "object",
         "properties": {
           "commandId": { "type": "string", "format": "uuid" },
-          "qrPayload": { "type": "string", "maxLength": 128, "minLength": 0 },
+          "qrPayload": { "type": "string", "maxLength": 1024, "minLength": 0 },
           "captureMode": { "type": "string", "enum": ["ONLINE", "OFFLINE"] },
           "observedAt": { "type": "string", "format": "date-time" },
           "latitude": {
@@ -3639,6 +4258,8 @@
             "type": "string",
             "enum": ["PENDING", "COMPLETED", "DISPUTED", "EXPIRED"]
           },
+          "expectedQuantity": { "type": "number" },
+          "unitOfMeasure": { "type": "string" },
           "initiatorUserId": { "type": "string", "format": "uuid" },
           "counterpartyUserId": { "type": "string", "format": "uuid" },
           "expectedLocation": {
@@ -3664,6 +4285,8 @@
           "latitude": { "type": "number", "format": "double" },
           "longitude": { "type": "number", "format": "double" },
           "distanceMetres": { "type": "number", "format": "double" },
+          "capturedQuantity": { "type": "number" },
+          "photoUrl": { "type": "string" },
           "quantityOutcome": {
             "type": "string",
             "enum": ["MATCHED", "DISPUTED"]
@@ -3677,6 +4300,113 @@
           "label": { "type": "string" },
           "latitude": { "type": "number", "format": "double" },
           "longitude": { "type": "number", "format": "double" }
+        }
+      },
+      "ScanRequest": {
+        "type": "object",
+        "properties": {
+          "requestId": { "type": "string", "format": "uuid" },
+          "token": { "type": "string", "maxLength": 1024, "minLength": 0 },
+          "capturedQty": { "type": "number", "minimum": 0.0 },
+          "photoUrl": { "type": "string", "maxLength": 2048, "minLength": 0 },
+          "gpsLat": {
+            "type": "number",
+            "format": "double",
+            "maximum": 90.0,
+            "minimum": -90.0
+          },
+          "gpsLng": {
+            "type": "number",
+            "format": "double",
+            "maximum": 180.0,
+            "minimum": -180.0
+          }
+        },
+        "required": ["capturedQty", "requestId", "token"]
+      },
+      "ResolveEscrowRequest": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "resolvedAmount": { "type": "number", "minimum": 1.0e-4 }
+        },
+        "required": ["businessId", "requestId", "resolvedAmount"]
+      },
+      "EscrowResponse": {
+        "type": "object",
+        "properties": {
+          "escrowId": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "currency": { "type": "string" },
+          "agreedAmount": { "type": "number" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "LOCK_REQUESTED",
+              "LOCK_PENDING",
+              "LOCKED",
+              "LOCK_FAILED",
+              "RELEASE_REQUESTED",
+              "RELEASE_PENDING",
+              "RELEASED",
+              "RELEASE_FAILED"
+            ]
+          },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EscrowTransactionResponse"
+            }
+          }
+        }
+      },
+      "EscrowTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "transactionId": { "type": "string", "format": "uuid" },
+          "type": { "type": "string", "enum": ["LOCK", "RELEASE"] },
+          "sequence": { "type": "integer", "format": "int32" },
+          "amount": { "type": "number" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED",
+              "PENDING",
+              "SUCCESSFUL",
+              "FAILED",
+              "TIMED_OUT"
+            ]
+          },
+          "failureCode": { "type": "string" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "ReleaseEscrowRequest": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "resolvedAmount": { "type": "number", "minimum": 1.0e-4 }
+        },
+        "required": ["businessId", "requestId", "resolvedAmount"]
+      },
+      "IssueQrRequest": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "deliveryOrderId": { "type": "string", "format": "uuid" },
+          "counterpartyUserId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["businessId", "counterpartyUserId", "deliveryOrderId"]
+      },
+      "IssuedChallengeResponse": {
+        "type": "object",
+        "properties": {
+          "challenge": { "$ref": "#/components/schemas/ChallengeResponse" },
+          "qrPayload": { "type": "string" }
         }
       },
       "ProposeDeliveryRequest": {
@@ -3718,6 +4448,14 @@
           "acceptedAt": { "type": "string", "format": "date-time" },
           "newlyCreated": { "type": "boolean" }
         }
+      },
+      "RetryEscrowRequest": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["businessId", "requestId"]
       },
       "SupplierResponse": {
         "type": "object",
@@ -4126,13 +4864,6 @@
           "counterpartyUserId": { "type": "string", "format": "uuid" }
         },
         "required": ["counterpartyUserId", "type"]
-      },
-      "IssuedChallengeResponse": {
-        "type": "object",
-        "properties": {
-          "challenge": { "$ref": "#/components/schemas/ChallengeResponse" },
-          "qrPayload": { "type": "string" }
-        }
       },
       "ChangeAssignmentRequest": {
         "type": "object",
@@ -5252,6 +5983,46 @@
         },
         "required": ["email", "password"]
       },
+      "SseEmitter": {
+        "type": "object",
+        "properties": { "timeout": { "type": "integer", "format": "int64" } }
+      },
+      "BackhaulMatchResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "pickup": { "$ref": "#/components/schemas/PointResponse" },
+          "destination": { "$ref": "#/components/schemas/PointResponse" },
+          "windowStart": { "type": "string", "format": "date-time" },
+          "windowEnd": { "type": "string", "format": "date-time" },
+          "pickupDistanceMetres": { "type": "integer", "format": "int64" },
+          "pickupDurationSeconds": { "type": "integer", "format": "int64" },
+          "roadDistanceMeasured": { "type": "boolean" },
+          "averageRating": { "type": "number" },
+          "successfulDeliveryRate": { "type": "number" },
+          "trustScore": { "type": "number" },
+          "score": { "type": "number" }
+        }
+      },
+      "BackhaulMatchesResponse": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BackhaulMatchResponse" }
+          }
+        }
+      },
+      "NearbySuppliersResponse": {
+        "type": "object",
+        "properties": {
+          "suppliers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SupplierResponse" }
+          }
+        }
+      },
       "GuestInvitationResponse": {
         "type": "object",
         "properties": {
@@ -5348,6 +6119,8 @@
           "latitude": { "type": "number", "format": "double" },
           "longitude": { "type": "number", "format": "double" },
           "distanceMetres": { "type": "number", "format": "double" },
+          "capturedQuantity": { "type": "number" },
+          "photoUrl": { "type": "string" },
           "quantityOutcome": { "type": "string" },
           "quantityNote": { "type": "string" }
         }
@@ -5436,6 +6209,8 @@
           "type": { "type": "string" },
           "deliveryOrderId": { "type": "string", "format": "uuid" },
           "state": { "type": "string" },
+          "expectedQuantity": { "type": "number" },
+          "unitOfMeasure": { "type": "string" },
           "expectedLocationLabel": { "type": "string" },
           "expectedLatitude": { "type": "number", "format": "double" },
           "expectedLongitude": { "type": "number", "format": "double" },
@@ -5561,6 +6336,56 @@
           "source": { "type": "string" }
         }
       },
+      "DeliveryCheckResponse": {
+        "type": "object",
+        "properties": {
+          "challengeId": { "type": "string", "format": "uuid" },
+          "deliveryOrderId": { "type": "string", "format": "uuid" },
+          "state": {
+            "type": "string",
+            "enum": ["PENDING", "COMPLETED", "DISPUTED", "EXPIRED"]
+          },
+          "expectedQuantity": { "type": "number" },
+          "capturedQuantity": { "type": "number" },
+          "unitOfMeasure": { "type": "string" },
+          "photoUrl": { "type": "string" },
+          "completedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "StatusResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "verificationStatus": { "type": "string" },
+          "deliveries": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/DeliveryCheckResponse" }
+          },
+          "resolvedAmount": { "type": "number" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RouteResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "providerName": { "type": "string" },
+          "providerVersion": { "type": "string" },
+          "fallbackUsed": { "type": "boolean" },
+          "fallbackReason": { "type": "string" },
+          "label": { "type": "string" },
+          "encodedPolyline": { "type": "string" },
+          "geometry": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PointResponse" }
+          },
+          "distanceMetres": { "type": "integer", "format": "int64" },
+          "durationSeconds": { "type": "integer", "format": "int64" },
+          "generatedAt": { "type": "string", "format": "date-time" },
+          "estimatedArrivalAt": { "type": "string", "format": "date-time" }
+        }
+      },
       "ReadingHistoryResponse": {
         "type": "object",
         "properties": {
@@ -5679,13 +6504,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 400,
               "instance": "/api/example",
               "code": "INVALID_REQUEST",
               "detail": "The request is invalid.",
-              "title": "The request is invalid"
+              "title": "The request is invalid",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -5699,13 +6524,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 401,
               "instance": "/api/example",
               "code": "AUTHENTICATION_REQUIRED",
               "detail": "Authentication is required.",
-              "title": "Authentication is required"
+              "title": "Authentication is required",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -5719,13 +6544,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 403,
               "instance": "/api/example",
               "code": "ACCESS_DENIED",
               "detail": "The caller is not allowed to perform this action.",
-              "title": "The caller is not allowed to perform this action"
+              "title": "The caller is not allowed to perform this action",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -5739,13 +6564,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 404,
               "instance": "/api/example",
               "code": "NOT_FOUND",
               "detail": "The requested resource was not found.",
-              "title": "The requested resource was not found"
+              "title": "The requested resource was not found",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -5759,13 +6584,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 409,
               "instance": "/api/example",
               "code": "STATE_CONFLICT",
               "detail": "The request conflicts with current state.",
-              "title": "The request conflicts with current state"
+              "title": "The request conflicts with current state",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -5779,13 +6604,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 429,
               "instance": "/api/example",
               "code": "RATE_LIMIT_EXCEEDED",
               "detail": "The request limit was exceeded.",
-              "title": "The request limit was exceeded"
+              "title": "The request limit was exceeded",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -5799,13 +6624,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 500,
               "instance": "/api/example",
               "code": "INTERNAL_ERROR",
               "detail": "The server could not complete the request.",
-              "title": "The server could not complete the request"
+              "title": "The server could not complete the request",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -5819,13 +6644,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 502,
               "instance": "/api/example",
               "code": "EXTERNAL_PROVIDER_FAILED",
               "detail": "An external provider rejected the request.",
-              "title": "An external provider rejected the request"
+              "title": "An external provider rejected the request",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -5839,13 +6664,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
               "type": "about:blank",
               "status": 503,
               "instance": "/api/example",
               "code": "EXTERNAL_PROVIDER_UNAVAILABLE",
               "detail": "An external provider is temporarily unavailable.",
-              "title": "An external provider is temporarily unavailable"
+              "title": "An external provider is temporarily unavailable",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }

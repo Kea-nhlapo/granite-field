@@ -1,5 +1,6 @@
 package za.co.trademesh.modules.handover.domain;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -15,5 +16,7 @@ public record HandoverConfirmation(
         double latitude,
         double longitude,
         double distanceMetres,
+        BigDecimal capturedQuantity,
+        String photoUrl,
         QuantityOutcome quantityOutcome,
         String quantityNote) {}
