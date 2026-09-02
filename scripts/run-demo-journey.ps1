@@ -14,6 +14,8 @@ try {
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
     }
+
+    Write-Host 'Two consecutive backend demo journeys completed successfully.'
 }
 finally {
     Pop-Location

@@ -214,7 +214,7 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
         UUID businessId = createBusiness(owner, "2026/810002/07");
         String phone = "+27821234567";
         jdbcTemplate.update(
-                "INSERT INTO access_phone_identity (phone_number, user_id, verification_method, verified_at) VALUES (?, ?, 'TWILIO_OTP', CURRENT_TIMESTAMP)",
+                "INSERT INTO access_phone_identity (phone_number, user_id, verification_method, verified_at) VALUES (?, ?, 'OTP', CURRENT_TIMESTAMP)",
                 phone,
                 owner.userId());
         UUID shipmentId = UUID.randomUUID();
