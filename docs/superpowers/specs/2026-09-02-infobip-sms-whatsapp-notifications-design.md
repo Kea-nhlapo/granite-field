@@ -8,7 +8,7 @@
 
 ## Context
 
-TradeMesh already has transactional email delivery, notification preferences, encrypted notification data, and a PostgreSQL-backed outbox. Issue 76 asks for real SMS and WhatsApp notifications for transport matching, handover verification, and escrow release. Twilio is not an acceptable production dependency for this deployment, so the two new channels will use Infobip.
+TradeMesh already has transactional email delivery, notification preferences, encrypted notification data, and a PostgreSQL-backed outbox. While this design was under review, upstream also added a minimal Twilio mobile adapter and a real escrow workflow. The mobile adapter accepts arbitrary destinations and message bodies and records no durable delivery state, consent, or callbacks, so it is migration scaffolding rather than the target architecture. Issue 76 asks for real SMS and WhatsApp notifications for transport matching, handover verification, and escrow release. Twilio is not an acceptable production notification dependency for this deployment, so the two channels will use Infobip.
 
 This design extends the existing notification module instead of putting provider calls into transport or handover services. Domain modules identify the recipient user and the business event. The notification module owns consent, contact details, templates, persistence, submission, retries, and delivery callbacks.
 
@@ -23,13 +23,13 @@ The implementation is not considered live merely because an HTTP request succeed
 - Use deterministic application idempotency and the existing transactional outbox.
 - Record provider identifiers, attempts, and authenticated delivery/read callbacks.
 - Integrate current capacity-match and handover events without coupling those modules to Infobip.
-- Leave an explicit integration seam for a future escrow-release event; do not invent an escrow state or claim that it currently exists.
+- Consume the real escrow-release event now present in the payment module.
 
 ## Non-goals
 
 - Replacing the existing email system.
 - Building marketing campaigns, inbound chat, two-way support conversations, or a template-management UI.
-- Creating an escrow module as part of notification delivery.
+- Changing escrow payment behavior as part of notification delivery.
 - Automatically running paid live-message tests in CI.
 - Guaranteeing provider-side exactly-once delivery. The system prevents duplicate application requests and handles ambiguous provider submissions conservatively.
 
@@ -54,7 +54,7 @@ domain event
   -> notification status and attempt history
 ```
 
-Feature modules call an application-facing notification port with:
+User-event integrations call an application-facing notification port with:
 
 - recipient user ID;
 - notification category;
@@ -63,6 +63,8 @@ Feature modules call an application-facing notification port with:
 - a small allow-listed set of non-sensitive template variables.
 
 They do not pass phone numbers, provider senders, API keys, URLs, or provider payloads.
+
+The existing delivery-confirmation flow is the one narrow exception because it addresses a recipient supplied for that delivery proposal rather than an existing TradeMesh user. Its arbitrary body is replaced with the same versioned-template boundary, and its requested channel and E.164 destination remain transaction input. This compatibility route does not become a general public send-message API.
 
 The notification module performs channel fan-out after checking the recipient's contact point, explicit consent, and per-category preferences. SMS and WhatsApp become separate persisted notifications with separate outbox entries and delivery histories.
 
@@ -154,7 +156,7 @@ Initial template keys are:
 - `handover-confirmation-accepted.v1`
 - `handover-finalized-clean.v1`
 - `handover-finalized-disputed.v1`
-- `escrow-released.v1` (contract reserved; no producer exists yet)
+- `escrow-released.v1`
 
 Messages link the user back to authenticated TradeMesh views and avoid names, exact locations, QR secrets, prices, bank details, and full shipment identifiers. Variables are defined per template and unknown variables are rejected. URLs come from a validated application base URL configuration, not event payloads.
 
@@ -174,7 +176,7 @@ On `HANDOVER_FINALIZED`, notify both participants with the clean or disputed res
 
 ### Escrow release
 
-The current codebase has no escrow module and publishes no escrow-release event. This work therefore defines the expected consumer contract but does not create a fake trigger. When a real `ESCROW_RELEASED` domain event is introduced, its listener will provide the beneficiary user ID, opaque escrow/event ID, and `escrow-released.v1` template key through the same notification command. Escrow-trigger acceptance remains blocked on that upstream domain capability, not on Infobip delivery.
+On `ESCROW_RELEASED`, resolve active members of the event's business through a narrow access-module application boundary and notify them with `escrow-released.v1`. The event ID and recipient user ID provide idempotency; amount, supplier phone, and payment-provider details are not included in the notification.
 
 ## Provider Configuration
 
@@ -187,8 +189,6 @@ INFOBIP_BASE_URL=
 INFOBIP_API_KEY=
 INFOBIP_SMS_SENDER=
 INFOBIP_WHATSAPP_SENDER=
-INFOBIP_DELIVERY_WEBHOOK_URL=
-INFOBIP_SEEN_WEBHOOK_URL=
 INFOBIP_WEBHOOK_HMAC_SECRET=
 INFOBIP_WHATSAPP_TEMPLATE_CAPACITY_MATCH_V1=
 INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_ACCEPTED_V1=
@@ -200,7 +200,9 @@ TRADEMESH_PUBLIC_APP_URL=
 
 `.env.example` documents blank placeholders only. Docker Compose passes values through without supplying real secrets or a demo recipient. AWS injects secrets from its secret store/task or instance environment. No production secret enters Git, a Docker image, a log line, or an API response.
 
-When `MESSAGING_PROVIDER=infobip`, startup validation fails fast if the base URL, API key, required sender, callback URL, HMAC secret, or required active template mapping is absent or malformed. Local and test profiles use the capture adapter and cannot accidentally call Infobip.
+When `MESSAGING_PROVIDER=infobip`, startup validation fails fast if the base URL, API key, required sender, HMAC secret, or required active template mapping is absent or malformed. Local and test profiles use the capture adapter and cannot accidentally call Infobip.
+
+Delivery and seen endpoints are configured on Infobip notification subscriptions rather than as unsigned per-request callback URLs. This is required because Infobip's built-in HMAC authentication belongs to subscription notification profiles. Deployment documentation gives the two public HTTPS endpoints to enter in the Infobip portal.
 
 The optional live smoke-test recipient is read only by a manually invoked test profile or script. It is not an application fallback and is never evaluated during ordinary startup or CI.
 
@@ -211,7 +213,6 @@ The adapter maps the internal request to the Infobip Messages API and sets:
 - the configured channel sender;
 - the decrypted destination only in memory for the duration of the request;
 - a deterministic custom message identifier/correlation value where the API permits it;
-- the configured delivery and seen webhook URLs; and
 - opaque callback data containing the internal notification UUID only.
 
 On a successful response, persist Infobip's provider message ID and accepted/queued state before acknowledging the outbox message.
@@ -301,7 +302,7 @@ Before enabling the live adapter, an operator must:
 3. register the production WhatsApp sender;
 4. approve and map the required WhatsApp templates;
 5. create a least-privilege API key;
-6. configure publicly reachable HTTPS delivery/seen callbacks and their HMAC subscription secret;
+6. configure publicly reachable HTTPS delivery/seen subscription callbacks and their HMAC secret;
 7. inject configuration and secrets into AWS;
 8. apply database migrations;
 9. run the manual two-channel smoke test; and
@@ -319,4 +320,4 @@ Operational metrics should cover pending age, submission latency, accepted/deliv
 - Authenticated delivery and seen callbacks update status idempotently and monotonically.
 - Automated unit, database integration, provider contract, and webhook tests pass.
 - A manual smoke test proves that both channels reach an environment-configured South African handset and their delivery reports are stored.
-- Escrow release is clearly reported as awaiting a real upstream event and is not represented by fabricated production behavior.
+- The real escrow-release event creates deterministic notifications for the correct business users without exposing payment details.
