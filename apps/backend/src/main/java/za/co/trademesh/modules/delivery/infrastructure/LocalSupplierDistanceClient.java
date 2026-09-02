@@ -9,11 +9,7 @@ import org.springframework.stereotype.Component;
 import za.co.trademesh.modules.delivery.application.SupplierDistanceClient;
 
 @Component
-@ConditionalOnProperty(
-        prefix = "trademesh.delivery.search",
-        name = "distance-provider",
-        havingValue = "local",
-        matchIfMissing = true)
+@ConditionalOnProperty(prefix = "trademesh.delivery.search", name = "distance-provider", havingValue = "local")
 class LocalSupplierDistanceClient implements SupplierDistanceClient {
 
     @Override

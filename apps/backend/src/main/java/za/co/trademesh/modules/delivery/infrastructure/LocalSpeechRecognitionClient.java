@@ -7,11 +7,7 @@ import org.springframework.stereotype.Component;
 import za.co.trademesh.modules.delivery.application.SpeechRecognitionClient;
 
 @Component
-@ConditionalOnProperty(
-        prefix = "trademesh.delivery.search",
-        name = "speech-provider",
-        havingValue = "local",
-        matchIfMissing = true)
+@ConditionalOnProperty(prefix = "trademesh.delivery.search", name = "speech-provider", havingValue = "local")
 class LocalSpeechRecognitionClient implements SpeechRecognitionClient {
 
     @Override
