@@ -59,6 +59,11 @@ trademesh:
       issuer: ${AUTH_JWT_ISSUER:https://api.trademesh.local}
       access-token-ttl: ${AUTH_ACCESS_TOKEN_TTL:PT15M}
       refresh-token-ttl: ${AUTH_REFRESH_TOKEN_TTL:P30D}
+  supplier-invitations:
+    time-to-live: ${SUPPLIER_INVITATION_TTL:P7D}
+    validation-attempts: ${SUPPLIER_INVITATION_VALIDATION_ATTEMPTS:30}
+    rate-limit-window: ${SUPPLIER_INVITATION_RATE_LIMIT_WINDOW:PT1M}
+    max-tracked-clients: ${SUPPLIER_INVITATION_MAX_TRACKED_CLIENTS:10000}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.

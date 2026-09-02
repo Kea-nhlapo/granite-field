@@ -11,33 +11,32 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.junit.jupiter.api.Test;
 import za.co.trademesh.support.PostgresIntegrationTest;
 
-class OutboxMigrationUpgradeTest extends PostgresIntegrationTest {
+class SupplierMigrationUpgradeTest extends PostgresIntegrationTest {
 
     @Test
-    void upgradesADatabaseThatAlreadyAppliedThePreviousMainMigration() throws Exception {
-        String schema = "outbox_upgrade_" + UUID.randomUUID().toString().replace("-", "");
+    void upgradesADatabaseThatAlreadyHasTheEventOutbox() throws Exception {
+        String schema = "supplier_upgrade_" + UUID.randomUUID().toString().replace("-", "");
         try {
-            Flyway beforeOutbox = flyway(schema, MigrationVersion.fromVersion("20260901233000"));
-            assertThat(beforeOutbox.migrate().migrationsExecuted).isEqualTo(3);
-            assertThat(tableExists(schema, "outbox_message")).isFalse();
+            Flyway beforeSupplier = flyway(schema, MigrationVersion.fromVersion("20260902001000"));
+            assertThat(beforeSupplier.migrate().migrationsExecuted).isEqualTo(4);
+            assertThat(tableExists(schema, "supplier_profile")).isFalse();
 
-            Flyway outboxMigration = flyway(schema, MigrationVersion.fromVersion("20260902001000"));
-            assertThat(outboxMigration.migrate().migrationsExecuted).isEqualTo(1);
-            assertThat(tableExists(schema, "outbox_message")).isTrue();
+            Flyway supplierMigration = flyway(schema, MigrationVersion.fromVersion("20260902013000"));
+            assertThat(supplierMigration.migrate().migrationsExecuted).isEqualTo(1);
+            assertThat(tableExists(schema, "supplier_profile")).isTrue();
+            assertThat(tableExists(schema, "supplier_invitation")).isTrue();
         } finally {
             dropSchema(schema);
         }
     }
 
     private static Flyway flyway(String schema, MigrationVersion target) {
-        var configuration = Flyway.configure()
+        return Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
                 .schemas(schema)
-                .defaultSchema(schema);
-        if (target != null) {
-            configuration.target(target);
-        }
-        return configuration.load();
+                .defaultSchema(schema)
+                .target(target)
+                .load();
     }
 
     private static boolean tableExists(String schema, String table) throws Exception {
@@ -52,7 +51,7 @@ class OutboxMigrationUpgradeTest extends PostgresIntegrationTest {
     }
 
     private static void dropSchema(String schema) throws Exception {
-        if (!schema.matches("outbox_upgrade_[0-9a-f]{32}")) {
+        if (!schema.matches("supplier_upgrade_[0-9a-f]{32}")) {
             throw new IllegalArgumentException("Refusing to drop an unexpected schema");
         }
         try (Connection connection = POSTGRES.createConnection("");
