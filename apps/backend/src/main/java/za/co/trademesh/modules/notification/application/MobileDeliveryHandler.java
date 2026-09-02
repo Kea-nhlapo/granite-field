@@ -9,14 +9,11 @@ import za.co.trademesh.shared.events.outbox.OutboxMessage;
 class MobileDeliveryHandler implements OutboxHandler {
 
     private final ObjectMapper objectMapper;
-    private final NotificationDataProtector dataProtector;
-    private final MobileDeliveryProvider provider;
+    private final MobileDeliveryCoordinator coordinator;
 
-    MobileDeliveryHandler(
-            ObjectMapper objectMapper, NotificationDataProtector dataProtector, MobileDeliveryProvider provider) {
+    MobileDeliveryHandler(ObjectMapper objectMapper, MobileDeliveryCoordinator coordinator) {
         this.objectMapper = objectMapper;
-        this.dataProtector = dataProtector;
-        this.provider = provider;
+        this.coordinator = coordinator;
     }
 
     @Override
@@ -25,12 +22,8 @@ class MobileDeliveryHandler implements OutboxHandler {
     }
 
     @Override
-    public void handle(OutboxMessage message) {
+    public void handle(OutboxMessage message) throws Exception {
         MobileDeliveryRequested requested = objectMapper.readValue(message.payload(), MobileDeliveryRequested.class);
-        provider.deliver(new MobileDeliveryProvider.MobileMessage(
-                requested.idempotencyKey(),
-                dataProtector.unprotect(requested.protectedRecipient()),
-                requested.channel(),
-                dataProtector.unprotect(requested.protectedMessage())));
+        coordinator.deliver(requested.notificationId(), message.id(), message.attempts());
     }
 }

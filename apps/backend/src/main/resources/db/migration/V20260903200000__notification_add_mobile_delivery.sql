@@ -1,3 +1,4 @@
+-- Version follows the independently merged trust-score migration.
 ALTER TABLE notification_preference
     ADD COLUMN sms_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     ADD COLUMN whatsapp_enabled BOOLEAN NOT NULL DEFAULT FALSE;
@@ -33,8 +34,8 @@ CREATE TABLE mobile_notification (
     category VARCHAR(32) NOT NULL,
     template_key VARCHAR(100) NOT NULL,
     template_version INTEGER NOT NULL,
-    protected_recipient VARCHAR(4000) NOT NULL,
-    recipient_last_four CHAR(4) NOT NULL,
+    protected_recipient VARCHAR(4000),
+    recipient_last_four CHAR(4),
     status VARCHAR(32) NOT NULL,
     provider_key VARCHAR(100),
     provider_message_id VARCHAR(200),
@@ -49,7 +50,7 @@ CREATE TABLE mobile_notification (
         request_fingerprint ~ '^[0-9a-f]{64}$'
     ),
     CONSTRAINT mobile_notification_recipient_suffix_shape CHECK (
-        recipient_last_four ~ '^[0-9]{4}$'
+        recipient_last_four IS NULL OR recipient_last_four ~ '^[0-9]{4}$'
     ),
     CONSTRAINT mobile_notification_channel_known CHECK (
         channel IN ('SMS', 'WHATSAPP')
@@ -78,6 +79,10 @@ CREATE TABLE mobile_notification (
     CONSTRAINT mobile_notification_provider_identity_consistent CHECK (
         (provider_message_id IS NULL)
         OR (provider_key IS NOT NULL AND submitted_at IS NOT NULL)
+    ),
+    CONSTRAINT mobile_notification_recipient_consistent CHECK (
+        (status = 'SUPPRESSED' AND protected_recipient IS NULL AND recipient_last_four IS NULL)
+        OR (status <> 'SUPPRESSED' AND protected_recipient IS NOT NULL AND recipient_last_four IS NOT NULL)
     ),
     CONSTRAINT mobile_notification_times_consistent CHECK (
         updated_at >= created_at

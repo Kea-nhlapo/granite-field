@@ -19,4 +19,12 @@ public record NotificationContactPoint(
             case WHATSAPP -> whatsappConsentedAt != null;
         };
     }
+
+    @Override
+    public String toString() {
+        return "NotificationContactPoint[userId=" + userId
+                + ", phoneNumber=<redacted>, phoneFingerprint=<redacted>, phoneLastFour=" + phoneLastFour
+                + ", smsConsentedAt=" + smsConsentedAt + ", whatsappConsentedAt=" + whatsappConsentedAt
+                + ", createdAt=" + createdAt + ", updatedAt=" + updatedAt + "]";
+    }
 }

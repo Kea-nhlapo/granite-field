@@ -41,7 +41,7 @@ Read this before putting anything but demonstration data through the deployment.
 | One-time passwords | `OTP_PROVIDER=local` | Fixed local code. No SMS is sent. |
 | Mobile money | `MOMO_PROVIDER=mock` | No real payment is initiated. |
 | Speech and distance | `..._PROVIDER=local` | Local stand-ins, not Google. |
-| Mobile notifications | `MOBILE_NOTIFICATION_PROVIDER=local` | Captured locally, not delivered. |
+| Mobile notifications | `MOBILE_NOTIFICATION_PROVIDER=infobip` | Real consent-aware SMS and WhatsApp through Infobip, with signed delivery and seen callbacks. |
 | Origin transport | HTTP | CloudFront terminates TLS. CloudFront-to-instance traffic is HTTP inside AWS. |
 
 Both provider settings are properties, not Spring profiles, so what is running is visible
@@ -113,6 +113,10 @@ openssl rand -hex 24      # POSTGRES_PASSWORD
 
 Set `OBJECT_STORAGE_BUCKET` to the uploads bucket, and paste the IAM user's access key
 into `OBJECT_STORAGE_ACCESS_KEY` and `OBJECT_STORAGE_SECRET_KEY`.
+
+Complete the Infobip settings and subscriptions before the first release. The exact
+sender, template, callback, rotation, and verification procedure is in
+[`docs/operations/infobip-notifications.md`](../operations/infobip-notifications.md).
 
 Confirm every storage setting has a value without printing any of them:
 
