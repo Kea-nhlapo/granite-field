@@ -161,12 +161,27 @@ jobs:
 
       - name: Compose an .env the way the instance does
         working-directory: infra/containers
+        env:
+          CI_OBJECT_STORAGE_BUCKET: ${{ secrets.CI_OBJECT_STORAGE_BUCKET }}
+          CI_OBJECT_STORAGE_ACCESS_KEY: ${{ secrets.CI_OBJECT_STORAGE_ACCESS_KEY }}
+          CI_OBJECT_STORAGE_SECRET_KEY: ${{ secrets.CI_OBJECT_STORAGE_SECRET_KEY }}
         run: |
           # Start from the file the host starts from, so a setting that is missing
           # there is missing here too. Every blank is filled the way the release
           # script fills it, with a throwaway value.
           cp .env.aws.example .env
           sed -i "s|^BACKEND_IMAGE=.*|BACKEND_IMAGE=trademesh-backend:ci|" .env
+          # Real S3, against a scratch bucket that holds nothing anybody wants. Placeholder
+          # credentials would let a wrong endpoint, region, bucket or key reach production:
+          # the storage client is lazy, so nothing notices until the first upload.
+          if [ -z "${CI_OBJECT_STORAGE_BUCKET}" ] || [ -z "${CI_OBJECT_STORAGE_ACCESS_KEY}" ]; then
+            echo "::error::Set the CI_OBJECT_STORAGE_* repository secrets."
+            echo "See infra/aws/bootstrap-ci-storage.sh - it creates the bucket and prints the keys."
+            exit 1
+          fi
+          sed -i "s|^OBJECT_STORAGE_BUCKET=.*|OBJECT_STORAGE_BUCKET=${CI_OBJECT_STORAGE_BUCKET}|" .env
+          sed -i "s|^OBJECT_STORAGE_ACCESS_KEY=.*|OBJECT_STORAGE_ACCESS_KEY=${CI_OBJECT_STORAGE_ACCESS_KEY}|" .env
+          sed -i "s|^OBJECT_STORAGE_SECRET_KEY=.*|OBJECT_STORAGE_SECRET_KEY=${CI_OBJECT_STORAGE_SECRET_KEY}|" .env
           # 32 raw bytes, base64: the notification key is decoded, not read as text.
           sed -i "s|^NOTIFICATION_DATA_ENCRYPTION_KEY=$|NOTIFICATION_DATA_ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env
           # Anything still blank gets a value long enough for the strictest check.
@@ -186,8 +201,8 @@ jobs:
           docker compose -f docker-compose.aws.yml --env-file .env config --quiet
           docker compose -f docker-compose.aws.yml --env-file .env up -d --wait --wait-timeout 900
 
-      - name: Confirm it answers
-        run: curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health
+      - name: Confirm it answers, and can reach its database and bucket
+        run: curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health/readiness
 
       - name: Tear down
         if: always()

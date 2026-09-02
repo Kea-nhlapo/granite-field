@@ -12,7 +12,9 @@ REGISTRY=698251583462.dkr.ecr.af-south-1.amazonaws.com
 IMAGE_REPO="${REGISTRY}/trademesh-backend"
 APP_DIR=/opt/trademesh/granite-field
 COMPOSE="docker compose -f docker-compose.aws.yml --env-file .env"
-HEALTH=http://127.0.0.1:8080/actuator/health
+# Readiness, not the aggregate: it includes the database and the object store, so a
+# release that cannot reach its bucket fails here and rolls back instead of shipping.
+HEALTH=http://127.0.0.1:8080/actuator/health/readiness
 
 # The host was provisioned with git, openssl and Docker only. Fetching an ECR
 # login token needs the AWS CLI, so install it if this host predates that need.
@@ -112,7 +114,9 @@ install_watchdog() {
   cat > /opt/trademesh/watchdog.sh <<'WATCHDOG'
 #!/usr/bin/env bash
 set -u
-HEALTH=http://127.0.0.1:8080/actuator/health
+# Liveness only. This restarts a process that has stopped responding; a database or
+# object-store outage is not something a container restart fixes.
+HEALTH=http://127.0.0.1:8080/actuator/health/liveness
 cd /opt/trademesh/granite-field/infra/containers || exit 0
 
 [ -f /opt/trademesh/deploying ] && exit 0
