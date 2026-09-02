@@ -191,6 +191,11 @@ trademesh:
     scan-batch-size: ${RISK_SCAN_BATCH_SIZE:100}
     reading-window-limit: ${RISK_READING_WINDOW_LIMIT:1000}
     rule-version: ${RISK_RULE_VERSION:operational-risk/v1}
+  handover:
+    challenge-ttl: ${HANDOVER_CHALLENGE_TTL:PT5M}
+    allowed-clock-skew: ${HANDOVER_ALLOWED_CLOCK_SKEW:PT2M}
+    location-tolerance-metres: ${HANDOVER_LOCATION_TOLERANCE_METRES:250}
+    max-quantity-note-length: ${HANDOVER_MAX_QUANTITY_NOTE_LENGTH:500}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.
