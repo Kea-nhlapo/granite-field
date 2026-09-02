@@ -165,18 +165,8 @@ public class OutboxWorker {
     }
 
     private void recordDone(OutboxMessage message) {
-        boolean marked = Boolean.TRUE.equals(
+        warnIfClaimAlreadyRevoked(message,
             transactions().execute(status -> repository.markDone(message.id(), message.claimedAt())));
-
-        if (!marked) {
-            // The reaper revoked the claim while the handler was still running,
-            // so another worker may already own this message. Worth saying: it
-            // means the handler outran the visibility timeout, and the work
-            // will run a second time.
-            log.warn("Outbox message {} ({}) finished but its claim was already revoked; "
-                + "the handler outran the visibility timeout and the work may repeat",
-                message.id(), message.type());
-        }
     }
 
     private void recordFailure(OutboxMessage message, Exception failure) {
@@ -193,12 +183,33 @@ public class OutboxWorker {
         log.warn("Outbox message {} ({}) failed on attempt {}; retrying at {}",
             message.id(), message.type(), message.attempts(), retryAt, failure);
 
-        transactions().executeWithoutResult(status ->
-            repository.markForRetry(message.id(), message.claimedAt(), retryAt, error));
+        warnIfClaimAlreadyRevoked(message, transactions().execute(status ->
+            repository.markForRetry(message.id(), message.claimedAt(), retryAt, error)));
     }
 
     private void recordDead(OutboxMessage message, String error) {
-        transactions().executeWithoutResult(status -> repository.markDead(message.id(), message.claimedAt(), error));
+        warnIfClaimAlreadyRevoked(message, transactions().execute(status ->
+            repository.markDead(message.id(), message.claimedAt(), error)));
+    }
+
+    /**
+     * Every outcome update is guarded by the claim token, so every one of
+     * them can lose the same race: the reaper revokes this worker's claim
+     * while the handler is still running, another worker re-claims the
+     * message, and this worker's eventual outcome update matches no row.
+     *
+     * <p>The three callers used to handle this individually; only the success
+     * path logged it, so a DEAD or retried message could lose this race with
+     * nothing recorded anywhere — a silent gap review found even the earlier
+     * ownership-token fix (which stops the corruption) had left in place.
+     */
+    private void warnIfClaimAlreadyRevoked(OutboxMessage message, Boolean updated) {
+        if (!Boolean.TRUE.equals(updated)) {
+            log.warn("Outbox message {} ({}) was already re-claimed by another worker "
+                + "when this worker tried to record its outcome; the handler outran the "
+                + "visibility timeout and the work may run twice",
+                message.id(), message.type());
+        }
     }
 
     /**
