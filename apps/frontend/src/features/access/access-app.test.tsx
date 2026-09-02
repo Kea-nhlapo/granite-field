@@ -151,7 +151,9 @@ describe("session shell", () => {
         await user.click(screen.getByRole("link", { name: "Internal risk" }));
 
         expect(
-            await screen.findByRole("heading", { name: "Internal risk" }),
+            await screen.findByRole("heading", {
+                name: "Review shipment risk",
+            }),
         ).toBeInTheDocument();
         expect(router.state.location.pathname).toBe("/app/internal-risk");
     });

@@ -1,8 +1,8 @@
+import { lazy, Suspense } from "react";
 import { Navigate, type RouteObject } from "react-router-dom";
 
 import { AppLoading } from "./AppLoading";
 import { AppShell } from "../features/access/AppShell";
-import InternalRiskPlaceholderPage from "../features/access/InternalRiskPlaceholderPage";
 import LoginPage from "../features/access/LoginPage";
 import { RequireRole } from "../features/access/RequireRole";
 import { RequireSession } from "../features/access/RequireSession";
@@ -16,6 +16,28 @@ import LogisticsPage from "../features/logistics/LogisticsPage";
 import RoutingPage from "../features/routing/RoutingPage";
 import TrackingPage from "../features/tracking/TrackingPage";
 import HandoverPage from "../features/handover/HandoverPage";
+import type { AppRole } from "../features/access/roles";
+
+const InternalRiskPage = lazy(
+    () => import("../features/internal-risk/InternalRiskPage"),
+);
+const InsurancePage = lazy(() => import("../features/insurance/InsurancePage"));
+
+function RestrictedLazy({
+    roles,
+    page,
+}: {
+    roles: ReadonlyArray<AppRole>;
+    page: "risk" | "insurance";
+}) {
+    return (
+        <RequireRole roles={roles}>
+            <Suspense fallback={<AppLoading />}>
+                {page === "risk" ? <InternalRiskPage /> : <InsurancePage />}
+            </Suspense>
+        </RequireRole>
+    );
+}
 
 function HomeRedirect() {
     const { session, status } = useSession();
@@ -48,13 +70,33 @@ export const appRoutes: RouteObject[] = [
             },
             {
                 element: (
-                    <RequireRole
+                    <RestrictedLazy
+                        page="risk"
                         roles={["INTERNAL_RISK_ANALYST", "ADMINISTRATOR"]}
-                    >
-                        <InternalRiskPlaceholderPage />
-                    </RequireRole>
+                    />
                 ),
                 path: "internal-risk",
+            },
+            {
+                element: (
+                    <RestrictedLazy
+                        page="risk"
+                        roles={["INTERNAL_RISK_ANALYST", "ADMINISTRATOR"]}
+                    />
+                ),
+                path: "internal-risk/:shipmentId",
+            },
+            {
+                element: (
+                    <RestrictedLazy page="insurance" roles={["INSURER"]} />
+                ),
+                path: "insurance",
+            },
+            {
+                element: (
+                    <RestrictedLazy page="insurance" roles={["INSURER"]} />
+                ),
+                path: "insurance/:caseId",
             },
             {
                 element: (
