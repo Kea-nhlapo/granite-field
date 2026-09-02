@@ -60,6 +60,24 @@ while IFS= read -r line; do
   fi
 done < .env.aws.example
 
+# A secret the example ships blank cannot arrive by being copied, and waiting for
+# somebody to log in and paste one is how a release stays down for an hour. These
+# belong to the host and nothing outside it needs to know them, so generate them
+# here. A key that already has a value is never touched: rotating a live signing
+# secret would invalidate every token issued under it.
+for key in HANDOVER_QR_SIGNING_SECRET; do
+  if grep -q "^${key}=$" .env; then
+    echo "generating a value for ${key}"
+    # Hex, so the value cannot contain a character that breaks sed or .env parsing.
+    sed -i "s|^${key}=$|${key}=$(openssl rand -hex 32)|" .env
+  fi
+done
+
+# Everything above only edits files. This is the last point at which the release
+# can be abandoned with the running stack untouched, so check here that the
+# compose file and .env agree before anything is stopped or migrated.
+$COMPOSE config --quiet
+
 PREVIOUS_IMAGE="$(grep '^BACKEND_IMAGE=' .env | cut -d= -f2-)"
 echo "previous image: ${PREVIOUS_IMAGE:-none}"
 

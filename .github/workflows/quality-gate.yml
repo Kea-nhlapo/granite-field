@@ -43,7 +43,10 @@ jobs:
       - name: Compile, check formatting, and run all tests
         run: ./mvnw --batch-mode --no-transfer-progress verify
 
-      - name: Build and smoke-test the container stack
+      # Booting a stack here would duplicate Cloud Readiness below, which boots the
+      # one that actually ships. Keep the cheap check that the developer stack is
+      # still a valid compose file.
+      - name: Validate the developer stack
         env:
           AUTH_JWT_SECRET: test-only-container-auth-secret-32-characters
           POSTGRES_PASSWORD: test-only-postgres-password
@@ -52,12 +55,7 @@ jobs:
         run: |
           export NOTIFICATION_DATA_ENCRYPTION_KEY
           NOTIFICATION_DATA_ENCRYPTION_KEY=$(printf '%s' 'test-only-notification-key-32b!!' | base64 -w0)
-          compose_file=../../infra/containers/docker-compose.yml
-          docker compose -f "$compose_file" config --quiet
-          docker compose -f "$compose_file" build backend
-          trap 'docker compose -f "$compose_file" down --volumes' EXIT
-          docker compose -f "$compose_file" up -d --wait --wait-timeout 180
-          curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health
+          docker compose -f ../../infra/containers/docker-compose.yml config --quiet
 
   frontend:
     name: Frontend
@@ -148,10 +146,58 @@ jobs:
           revision: HEAD:packages/api-contracts/openapi/trademesh-v1.json
           fail-on: WARN
 
+  cloud-readiness:
+    name: Cloud Readiness
+    runs-on: ubuntu-latest
+    # clamd loads its signature database before the backend is allowed to start,
+    # which is the slowest part of a cold boot and is exactly what the instance does.
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Build the image the release would deploy
+        run: docker build -t trademesh-backend:ci apps/backend
+
+      - name: Compose an .env the way the instance does
+        working-directory: infra/containers
+        run: |
+          # Start from the file the host starts from, so a setting that is missing
+          # there is missing here too. Every blank is filled the way the release
+          # script fills it, with a throwaway value.
+          cp .env.aws.example .env
+          sed -i "s|^BACKEND_IMAGE=.*|BACKEND_IMAGE=trademesh-backend:ci|" .env
+          # 32 raw bytes, base64: the notification key is decoded, not read as text.
+          sed -i "s|^NOTIFICATION_DATA_ENCRYPTION_KEY=$|NOTIFICATION_DATA_ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env
+          # Anything still blank gets a value long enough for the strictest check.
+          while IFS= read -r key; do
+            sed -i "s|^${key}=$|${key}=ci-only-$(openssl rand -hex 24)|" .env
+          done < <(grep -oP '^[A-Z0-9_]+(?==$)' .env)
+          if grep -qE '^[A-Z0-9_]+=$' .env; then
+            echo "a setting is still blank:"
+            grep -E '^[A-Z0-9_]+=$' .env
+            exit 1
+          fi
+
+      - name: Boot the deployment stack
+        working-directory: infra/containers
+        run: |
+          trap 'docker compose -f docker-compose.aws.yml --env-file .env logs --tail=80 backend' ERR
+          docker compose -f docker-compose.aws.yml --env-file .env config --quiet
+          docker compose -f docker-compose.aws.yml --env-file .env up -d --wait --wait-timeout 900
+
+      - name: Confirm it answers
+        run: curl --fail --silent --show-error http://127.0.0.1:8080/actuator/health
+
+      - name: Tear down
+        if: always()
+        working-directory: infra/containers
+        run: docker compose -f docker-compose.aws.yml --env-file .env down --volumes
+
   deploy:
     name: Release to af-south-1
     # Every gate above has to be green. GitHub will not start this job otherwise.
-    needs: [backend, frontend, secrets, api-contract]
+    needs: [backend, frontend, secrets, api-contract, cloud-readiness]
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
