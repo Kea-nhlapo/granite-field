@@ -6,11 +6,13 @@ import { problem, scenarioOf, standardError } from "./mock-http";
 import { documentHandlers } from "./document-handlers";
 import { guestHandlers } from "./guest-handlers";
 import { onboardingHandlers } from "./onboarding-handlers";
+import { procurementHandlers } from "./procurement-handlers";
 
 export { mockScenarioHeader } from "./mock-http";
 export { resetDocumentMocks } from "./document-handlers";
 export { resetGuestMocks } from "./guest-handlers";
 export { resetOnboardingMocks } from "./onboarding-handlers";
+export { resetProcurementMocks } from "./procurement-handlers";
 
 export const ownerTokens: TokenResponse = {
     userId: "00000000-0000-4000-8000-000000000010",
@@ -193,4 +195,5 @@ export const handlers = [
     ...onboardingHandlers,
     ...documentHandlers,
     ...guestHandlers,
+    ...procurementHandlers,
 ];
