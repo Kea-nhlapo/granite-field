@@ -199,6 +199,13 @@ export const handlers = [
                     "INVALID_REQUEST",
                 );
             }
+            if (body.refreshToken === "expired-refresh") {
+                return problem(
+                    401,
+                    "Authentication is required",
+                    "UNAUTHORIZED",
+                );
+            }
             if (
                 body.refreshToken === adminTokens.refreshToken ||
                 body.refreshToken === "mock-admin-refresh-token-rotated"
