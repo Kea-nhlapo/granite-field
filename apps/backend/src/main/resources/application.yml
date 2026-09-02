@@ -87,12 +87,14 @@ trademesh:
       expected-hostname: ${CLOUDFLARE_TURNSTILE_EXPECTED_HOSTNAME:}
     otp:
       provider: ${OTP_PROVIDER:unconfigured}
-      base-url: ${TWILIO_VERIFY_BASE_URL:https://verify.twilio.com/v2}
-      account-sid: ${TWILIO_ACCOUNT_SID:}
-      auth-token: ${TWILIO_AUTH_TOKEN:}
-      verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
       local-code: ${OTP_LOCAL_CODE:}
       send-cooldown: ${OTP_SEND_COOLDOWN:PT1M}
+      providers:
+        twilio:
+          base-url: ${TWILIO_VERIFY_BASE_URL:https://verify.twilio.com/v2}
+          account-sid: ${TWILIO_ACCOUNT_SID:}
+          auth-token: ${TWILIO_AUTH_TOKEN:}
+          verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
     momo-sign-in:
       poll-token-ttl: ${MOMO_SIGN_IN_POLL_TOKEN_TTL:PT10M}
   integrations:
@@ -171,11 +173,13 @@ trademesh:
       from-address: ${EMAIL_FROM_ADDRESS:no-reply@trademesh.local}
     mobile:
       provider: ${MOBILE_NOTIFICATION_PROVIDER:unconfigured}
-      base-url: ${TWILIO_API_BASE_URL:https://api.twilio.com}
-      account-sid: ${TWILIO_ACCOUNT_SID:}
-      auth-token: ${TWILIO_AUTH_TOKEN:}
-      sms-from: ${TWILIO_SMS_NUMBER:}
-      whats-app-from: ${TWILIO_WHATSAPP_NUMBER:}
+      providers:
+        twilio:
+          base-url: ${TWILIO_API_BASE_URL:https://api.twilio.com}
+          account-sid: ${TWILIO_ACCOUNT_SID:}
+          auth-token: ${TWILIO_AUTH_TOKEN:}
+          sms-from: ${TWILIO_SMS_NUMBER:}
+          whats-app-from: ${TWILIO_WHATSAPP_NUMBER:}
   storage:
     endpoint: ${OBJECT_STORAGE_ENDPOINT}
     access-key: ${OBJECT_STORAGE_ACCESS_KEY}

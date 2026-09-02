@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 import za.co.trademesh.modules.notification.application.MobileDeliveryProvider;
-import za.co.trademesh.modules.notification.application.MobileNotificationProperties;
 import za.co.trademesh.modules.notification.application.MobileNotificationRequests;
 
 @Component
@@ -17,16 +16,16 @@ import za.co.trademesh.modules.notification.application.MobileNotificationReques
 class TwilioMobileDeliveryProvider implements MobileDeliveryProvider {
 
     private final RestClient client;
-    private final MobileNotificationProperties properties;
+    private final TwilioMessagingProperties properties;
     private final String authorization;
 
-    TwilioMobileDeliveryProvider(RestClient.Builder builder, MobileNotificationProperties properties) {
+    TwilioMobileDeliveryProvider(RestClient.Builder builder, TwilioMessagingProperties properties) {
         if (properties.accountSid().isBlank()
                 || properties.authToken().isBlank()
                 || (properties.smsFrom().isBlank() && properties.whatsAppFrom().isBlank())) {
             throw new IllegalStateException("Twilio messaging credentials and at least one sender are required");
         }
-        this.client = builder.baseUrl(properties.baseUrl()).build();
+        this.client = builder.baseUrl(properties.baseUrl().toString()).build();
         this.properties = properties;
         this.authorization = "Basic "
                 + Base64.getEncoder()

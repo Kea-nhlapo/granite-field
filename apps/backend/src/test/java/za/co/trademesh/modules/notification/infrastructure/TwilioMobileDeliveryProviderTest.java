@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import za.co.trademesh.modules.notification.application.MobileDeliveryProvider;
-import za.co.trademesh.modules.notification.application.MobileNotificationProperties;
 import za.co.trademesh.modules.notification.application.MobileNotificationRequests;
 
 class TwilioMobileDeliveryProviderTest {
@@ -58,8 +57,8 @@ class TwilioMobileDeliveryProviderTest {
         server.verify();
     }
 
-    private static MobileNotificationProperties properties() {
-        return new MobileNotificationProperties(
-                "twilio", "https://twilio.test", "AC123", "secret", "+27110000000", "+14155238886");
+    private static TwilioMessagingProperties properties() {
+        return new TwilioMessagingProperties(
+                java.net.URI.create("https://twilio.test"), "AC123", "secret", "+27110000000", "+14155238886");
     }
 }

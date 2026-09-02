@@ -5,12 +5,10 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URI;
-import java.time.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
-import za.co.trademesh.modules.access.application.OtpProperties;
 
 class TwilioVerifyOtpProviderTest {
 
@@ -34,8 +32,7 @@ class TwilioVerifyOtpProviderTest {
         server.verify();
     }
 
-    private static OtpProperties properties() {
-        return new OtpProperties(
-                "twilio", URI.create("https://verify.test/v2"), "AC123", "secret", "VA123", "", Duration.ofMinutes(1));
+    private static TwilioVerifyProperties properties() {
+        return new TwilioVerifyProperties(URI.create("https://verify.test/v2"), "AC123", "secret", "VA123");
     }
 }
