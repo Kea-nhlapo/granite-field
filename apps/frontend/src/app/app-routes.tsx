@@ -9,6 +9,7 @@ import { RequireSession } from "../features/access/RequireSession";
 import { useSession } from "../features/access/SessionProvider";
 import WorkspacePage from "../features/access/WorkspacePage";
 import OnboardingPage from "../features/business/OnboardingPage";
+import GuestInvitePage from "../features/guest/GuestInvitePage";
 
 function HomeRedirect() {
     const { session, status } = useSession();
@@ -28,6 +29,10 @@ export const appRoutes: RouteObject[] = [
     {
         element: <LoginPage />,
         path: "/login",
+    },
+    {
+        element: <GuestInvitePage />,
+        path: "/supplier-invitations/guest/:token",
     },
     {
         children: [
