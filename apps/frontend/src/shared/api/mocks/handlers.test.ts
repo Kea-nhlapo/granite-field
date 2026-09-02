@@ -1,6 +1,7 @@
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "vitest";
 
+import { authLogin, authLogout, authRefresh } from "../app-api";
 import { runtimeConfig } from "../../lib/runtime-config";
 import { handlers, mockScenarioHeader } from "./handlers";
 
@@ -37,5 +38,54 @@ describe("API mock scenarios", () => {
         await expect(response.json()).resolves.toMatchObject({
             code: "SUPPLIER_INVITATION_UNAVAILABLE",
         });
+    });
+
+    test("the generated login SDK uses mock TokenResponse shapes", async () => {
+        const result = await authLogin({
+            body: { email: "owner@example.com", password: "correct-horse" },
+        });
+
+        expect(result.error).toBeUndefined();
+        expect(result.data).toMatchObject({
+            tokenType: "Bearer",
+            accessToken: "mock-access-token",
+            roles: ["BUSINESS_OWNER"],
+        });
+    });
+
+    test("login maps unauthorized and forbidden ApiProblem bodies", async () => {
+        const unauthorized = await authLogin({
+            body: { email: "owner@example.com", password: "correct-horse" },
+            headers: { [mockScenarioHeader]: "unauthorized" },
+        });
+        expect(unauthorized.data).toBeUndefined();
+        expect(unauthorized.error).toMatchObject({
+            status: 401,
+            code: "UNAUTHORIZED",
+        });
+
+        const forbidden = await authLogin({
+            body: { email: "owner@example.com", password: "correct-horse" },
+            headers: { [mockScenarioHeader]: "forbidden" },
+        });
+        expect(forbidden.error).toMatchObject({
+            status: 403,
+            code: "ACCESS_DENIED",
+        });
+    });
+
+    test("refresh rotates tokens and logout returns no content", async () => {
+        const refreshed = await authRefresh({
+            body: { refreshToken: "mock-refresh-token" },
+        });
+        expect(refreshed.error).toBeUndefined();
+        expect(refreshed.data?.accessToken).toBe("mock-access-token-rotated");
+        expect(refreshed.data?.refreshToken).toBe("mock-refresh-token-rotated");
+
+        const loggedOut = await authLogout({
+            body: { refreshToken: "mock-refresh-token-rotated" },
+        });
+        expect(loggedOut.error).toBeUndefined();
+        expect(loggedOut.response?.status).toBe(204);
     });
 });
