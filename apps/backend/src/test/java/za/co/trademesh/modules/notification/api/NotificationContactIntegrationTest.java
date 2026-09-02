@@ -41,12 +41,13 @@ class NotificationContactIntegrationTest extends PostgresIntegrationTest {
         jdbcTemplate.update("DELETE FROM mobile_notification");
         jdbcTemplate.update("DELETE FROM notification_contact_point");
         jdbcTemplate.update("DELETE FROM notification_preference");
-        jdbcTemplate.update("DELETE FROM access_refresh_session");
-        jdbcTemplate.update("DELETE FROM access_business_membership");
-        jdbcTemplate.update("DELETE FROM access_user_role");
-        jdbcTemplate.update("DELETE FROM access_phone_identity");
-        jdbcTemplate.update("DELETE FROM access_momo_profile");
-        jdbcTemplate.update("DELETE FROM access_user_account");
+        String testUsers = "SELECT id FROM access_user_account WHERE email LIKE 'contact-%@example.test'";
+        jdbcTemplate.update("DELETE FROM access_refresh_session WHERE user_id IN (" + testUsers + ")");
+        jdbcTemplate.update("DELETE FROM access_business_membership WHERE user_id IN (" + testUsers + ")");
+        jdbcTemplate.update("DELETE FROM access_user_role WHERE user_id IN (" + testUsers + ")");
+        jdbcTemplate.update("DELETE FROM access_phone_identity WHERE user_id IN (" + testUsers + ")");
+        jdbcTemplate.update("DELETE FROM access_momo_profile WHERE user_id IN (" + testUsers + ")");
+        jdbcTemplate.update("DELETE FROM access_user_account WHERE id IN (" + testUsers + ")");
     }
 
     @Test
