@@ -29,5 +29,7 @@ public interface CapacityMatchingRepository {
 
     boolean markReservationTerminal(UUID reservationId, CapacityReservationStatus status, Instant releasedAt);
 
+    boolean markReservationConsumed(UUID reservationId, Instant now);
+
     List<UUID> findExpiredActiveReservationIds(Instant now, int limit);
 }

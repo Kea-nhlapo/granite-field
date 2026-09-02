@@ -196,6 +196,16 @@ class JdbcCapacityMatchingRepository implements CapacityMatchingRepository {
     }
 
     @Override
+    public boolean markReservationConsumed(UUID reservationId, Instant now) {
+        return jdbcTemplate.update(
+                        "UPDATE transport_capacity_reservation SET status = 'CONSUMED'"
+                                + " WHERE id = ? AND status = 'ACTIVE' AND expires_at > ?",
+                        reservationId,
+                        time(now))
+                == 1;
+    }
+
+    @Override
     public List<UUID> findExpiredActiveReservationIds(Instant now, int limit) {
         return jdbcTemplate.query(
                 """
