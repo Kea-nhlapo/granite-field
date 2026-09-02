@@ -6,7 +6,9 @@ import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HexFormat;
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Component;
@@ -77,6 +79,20 @@ public class SensitiveNotificationDataProtector implements NotificationDataProte
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (GeneralSecurityException failure) {
             throw new IllegalStateException("Could not unprotect notification data", failure);
+        }
+    }
+
+    @Override
+    public String fingerprint(String plainText) {
+        if (plainText == null) {
+            throw new IllegalArgumentException("Cannot fingerprint null notification data");
+        }
+        try {
+            Mac hmac = Mac.getInstance("HmacSHA256");
+            hmac.init(new SecretKeySpec(key.getEncoded(), "HmacSHA256"));
+            return HexFormat.of().formatHex(hmac.doFinal(plainText.getBytes(StandardCharsets.UTF_8)));
+        } catch (GeneralSecurityException failure) {
+            throw new IllegalStateException("Could not fingerprint notification data", failure);
         }
     }
 }
