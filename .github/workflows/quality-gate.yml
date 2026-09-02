@@ -214,7 +214,7 @@ jobs:
       ECR_REPOSITORY: trademesh-backend
       INSTANCE_ID: i-0f2df9d19fea4b986
       SITE_BUCKET: trademesh-site-698251583462
-      DISTRIBUTION_ID: E1VKQQWO5B99P
+      DISTRIBUTION_ID: E1VXUDQWO5B99P
     steps:
       - name: Check out the commit that passed the gate
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -284,6 +284,14 @@ jobs:
             exit 1
           fi
 
+      - name: Confirm the deployment answers
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' \
+            "https://dbhptzazg1vi1.cloudfront.net/api/telemetry/readings")
+          echo "api returned $code"
+          # 401/403 mean Spring answered. 5xx or 000 mean it did not.
+          case "$code" in 2*|4*) echo "backend is answering" ;; *) exit 1 ;; esac
+
       - name: Build the frontend
         working-directory: apps/frontend
         run: |
@@ -297,10 +305,3 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id "$DISTRIBUTION_ID" --paths "/*" >/dev/null
 
-      - name: Confirm the deployment answers
-        run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' \
-            "https://dbhptzazg1v1.cloudfront.net/api/telemetry/readings")
-          echo "api returned $code"
-          # 401/403 mean Spring answered. 5xx or 000 mean it did not.
-          case "$code" in 2*|4*) echo "backend is answering" ;; *) exit 1 ;; esac
