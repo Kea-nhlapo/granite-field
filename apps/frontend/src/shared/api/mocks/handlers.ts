@@ -10,13 +10,21 @@ import { runtimeConfig } from "../../lib/runtime-config";
 
 export const mockScenarioHeader = "X-Mock-Scenario";
 
-const ownerTokens: TokenResponse = {
+export const ownerTokens: TokenResponse = {
     userId: "00000000-0000-4000-8000-000000000010",
     tokenType: "Bearer",
     accessToken: "mock-access-token",
     expiresInSeconds: 900,
     refreshToken: "mock-refresh-token",
     roles: ["BUSINESS_OWNER"],
+};
+
+export const analystTokens: TokenResponse = {
+    ...ownerTokens,
+    userId: "00000000-0000-4000-8000-000000000011",
+    accessToken: "mock-analyst-access-token",
+    refreshToken: "mock-analyst-refresh-token",
+    roles: ["INTERNAL_RISK_ANALYST"],
 };
 
 export const handlers = [
@@ -118,6 +126,9 @@ export const handlers = [
                     "INVALID_REQUEST",
                 );
             }
+            if (body.email === "analyst@example.com") {
+                return HttpResponse.json(analystTokens);
+            }
             return HttpResponse.json(ownerTokens);
         },
     ),
@@ -143,6 +154,16 @@ export const handlers = [
                     "Request validation failed",
                     "INVALID_REQUEST",
                 );
+            }
+            if (
+                body.refreshToken === analystTokens.refreshToken ||
+                body.refreshToken === "mock-analyst-refresh-token-rotated"
+            ) {
+                return HttpResponse.json({
+                    ...analystTokens,
+                    accessToken: "mock-analyst-access-token-rotated",
+                    refreshToken: "mock-analyst-refresh-token-rotated",
+                } satisfies TokenResponse);
             }
             return HttpResponse.json({
                 ...ownerTokens,

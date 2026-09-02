@@ -12,4 +12,8 @@ export function setApiAccessToken(token: string | null | undefined) {
     accessToken = token?.trim() || undefined;
 }
 
+export function getApiAccessToken() {
+    return accessToken;
+}
+
 export { client as apiClient };
