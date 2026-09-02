@@ -27,11 +27,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 import za.co.trademesh.modules.access.application.AuthService;
 import za.co.trademesh.modules.access.domain.RegistrationType;
 import za.co.trademesh.modules.business.application.RegisteredBusinessOnboardingService;
-import za.co.trademesh.modules.handover.events.HandoverEvent;
 import za.co.trademesh.modules.notification.application.LocalEmailCapture;
 import za.co.trademesh.modules.notification.application.LocalMobileCapture;
 import za.co.trademesh.modules.notification.application.NotificationRequests;
 import za.co.trademesh.modules.notification.application.NotificationTemplates;
+import za.co.trademesh.modules.notification.domain.MobileChannel;
 import za.co.trademesh.modules.payment.events.PaymentEvent;
 import za.co.trademesh.modules.telemetry.events.TelemetryEvent;
 import za.co.trademesh.shared.events.DomainEvents;
@@ -77,9 +77,14 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
     void cleanState() {
         emailCapture.clear();
         mobileCapture.clear();
+        jdbcTemplate.update("DELETE FROM mobile_status_observation");
+        jdbcTemplate.update("DELETE FROM mobile_delivery_attempt");
+        jdbcTemplate.update("DELETE FROM mobile_notification_template_data");
+        jdbcTemplate.update("DELETE FROM mobile_notification");
         jdbcTemplate.update("DELETE FROM email_delivery_attempt");
         jdbcTemplate.update("DELETE FROM email_notification_template_data");
         jdbcTemplate.update("DELETE FROM email_notification");
+        jdbcTemplate.update("DELETE FROM notification_contact_point");
         jdbcTemplate.update("DELETE FROM notification_preference");
         jdbcTemplate.update("DELETE FROM outbox_message");
         jdbcTemplate.update("DELETE FROM supplier_invitation");
@@ -209,7 +214,7 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void queuesEncryptedIdempotentWhatsAppUpdatesForOperationalEvents() {
+    void queuesEncryptedConsentedMobileUpdatesForOperationalEvents() throws Exception {
         Account owner = register("mobile-events@example.com");
         UUID businessId = createBusiness(owner, "2026/810002/07");
         String phone = "+27821234567";
@@ -217,18 +222,25 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
                 "INSERT INTO access_phone_identity (phone_number, user_id, verification_method, verified_at) VALUES (?, ?, 'OTP', CURRENT_TIMESTAMP)",
                 phone,
                 owner.userId());
+        mockMvc.perform(put("/api/notification-contacts/phone")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"phoneNumber":"+27821234567","smsConsent":true,"whatsappConsent":true}
+                            """))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/notification-preferences/SHIPMENT_UPDATE")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"smsEnabled\":true,\"whatsappEnabled\":true}"))
+                .andExpect(status().isOk());
         UUID shipmentId = UUID.randomUUID();
         UUID candidateShipmentId = UUID.randomUUID();
-        UUID challengeId = UUID.randomUUID();
         UUID escrowId = UUID.randomUUID();
 
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
-            var match = new TelemetryEvent.BackhaulMatchesFound(
-                    shipmentId, businessId, candidateShipmentId, 2, 3_400, new BigDecimal("0.87"));
-            domainEvents.publish(match);
-            domainEvents.publish(match);
-            domainEvents.publish(
-                    new HandoverEvent.HandoverFinalized(challengeId, shipmentId, businessId, "DELIVERY", "DISPUTED"));
+            domainEvents.publish(new TelemetryEvent.BackhaulMatchesFound(
+                    shipmentId, businessId, candidateShipmentId, 2, 3_400, new BigDecimal("0.87")));
             domainEvents.publish(
                     new PaymentEvent.Released(escrowId, shipmentId, businessId, new BigDecimal("8500.00"), "ZAR"));
         });
@@ -236,22 +248,23 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
         var payloads = jdbcTemplate.queryForList(
                 "SELECT payload::text FROM outbox_message WHERE type = 'MOBILE_NOTIFICATION_DELIVERY_REQUESTED' ORDER BY created_at",
                 String.class);
-        assertThat(payloads).hasSize(3).allSatisfy(payload -> assertThat(payload)
-                .doesNotContain(phone, "quantity did not match", "8500.00"));
+        assertThat(payloads).hasSize(4).allSatisfy(payload -> assertThat(payload)
+                .contains("notificationId")
+                .doesNotContain(phone, "Transport matches are ready", "8500.00"));
 
-        assertThat(outboxWorker.pollOnce()).isEqualTo(3);
-        assertThat(mobileCapture.capturedMessages()).hasSize(3).allSatisfy(message -> {
+        assertThat(outboxWorker.pollOnce()).isEqualTo(4);
+        assertThat(mobileCapture.capturedMessages()).hasSize(4).allSatisfy(message -> {
             assertThat(message.recipientPhone()).isEqualTo(phone);
-            assertThat(message.channel())
-                    .isEqualTo(
-                            za.co.trademesh.modules.notification.application.MobileNotificationRequests.MobileChannel
-                                    .WHATSAPP);
         });
         assertThat(mobileCapture.capturedMessages())
+                .extracting(LocalMobileCapture.CapturedMessage::channel)
+                .containsExactlyInAnyOrder(
+                        MobileChannel.SMS, MobileChannel.WHATSAPP, MobileChannel.SMS, MobileChannel.WHATSAPP);
+        assertThat(mobileCapture.capturedMessages())
                 .extracting(LocalMobileCapture.CapturedMessage::body)
-                .anySatisfy(body -> assertThat(body).contains("backhaul", "3.4 km", "87/100"))
-                .anySatisfy(body -> assertThat(body).contains("did not match", "blocked"))
-                .anySatisfy(body -> assertThat(body).contains("ZAR 8500.00", "released"));
+                .containsOnly(
+                        "Transport matches are ready. Sign in to TradeMesh to review them.",
+                        "An escrow payment was released. Sign in to TradeMesh to review the transaction.");
     }
 
     private Account register(String email) {

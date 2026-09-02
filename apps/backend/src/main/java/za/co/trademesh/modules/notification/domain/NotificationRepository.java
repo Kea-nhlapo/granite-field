@@ -29,7 +29,17 @@ public interface NotificationRepository {
 
     boolean emailEnabled(UUID userId, NotificationCategory category);
 
+    boolean mobileEnabled(UUID userId, NotificationCategory category, MobileChannel channel);
+
     NotificationPreference savePreference(NotificationPreference preference);
 
     List<NotificationPreference> findPreferences(UUID userId);
+
+    Optional<NotificationContactPoint> findContact(UUID userId);
+
+    NotificationContactPoint saveContact(NotificationContactPoint contact);
+
+    void deleteContact(UUID userId);
+
+    void disableMobilePreferences(UUID userId, Instant updatedAt);
 }

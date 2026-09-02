@@ -145,6 +145,12 @@ import type {
     HandoverIssueData,
     HandoverIssueErrors,
     HandoverIssueResponses,
+    InfobipWebhookDeliveryData,
+    InfobipWebhookDeliveryErrors,
+    InfobipWebhookDeliveryResponses,
+    InfobipWebhookSeenData,
+    InfobipWebhookSeenErrors,
+    InfobipWebhookSeenResponses,
     InsuranceCreateCaseData,
     InsuranceCreateCaseErrors,
     InsuranceCreateCaseResponses,
@@ -157,6 +163,15 @@ import type {
     NearbySupplierNearbyData,
     NearbySupplierNearbyErrors,
     NearbySupplierNearbyResponses,
+    NotificationContactDeleteData,
+    NotificationContactDeleteErrors,
+    NotificationContactDeleteResponses,
+    NotificationContactGetData,
+    NotificationContactGetErrors,
+    NotificationContactGetResponses,
+    NotificationContactSaveData,
+    NotificationContactSaveErrors,
+    NotificationContactSaveResponses,
     NotificationPreferenceGetData,
     NotificationPreferenceGetErrors,
     NotificationPreferenceGetResponses,
@@ -341,6 +356,101 @@ export const notificationPreferenceSet = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/notification-preferences/{category}",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const notificationContactDelete = <ThrowOnError extends boolean = false>(
+    options?: Options<NotificationContactDeleteData, ThrowOnError>,
+): RequestResult<
+    NotificationContactDeleteResponses,
+    NotificationContactDeleteErrors,
+    ThrowOnError
+> =>
+    (options?.client ?? client).delete<
+        NotificationContactDeleteResponses,
+        NotificationContactDeleteErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/notification-contacts/phone",
+        ...options,
+    });
+
+export const notificationContactGet = <ThrowOnError extends boolean = false>(
+    options?: Options<NotificationContactGetData, ThrowOnError>,
+): RequestResult<
+    NotificationContactGetResponses,
+    NotificationContactGetErrors,
+    ThrowOnError
+> =>
+    (options?.client ?? client).get<
+        NotificationContactGetResponses,
+        NotificationContactGetErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/notification-contacts/phone",
+        ...options,
+    });
+
+export const notificationContactSave = <ThrowOnError extends boolean = false>(
+    options: Options<NotificationContactSaveData, ThrowOnError>,
+): RequestResult<
+    NotificationContactSaveResponses,
+    NotificationContactSaveErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).put<
+        NotificationContactSaveResponses,
+        NotificationContactSaveErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/notification-contacts/phone",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const infobipWebhookSeen = <ThrowOnError extends boolean = false>(
+    options: Options<InfobipWebhookSeenData, ThrowOnError>,
+): RequestResult<
+    InfobipWebhookSeenResponses,
+    InfobipWebhookSeenErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        InfobipWebhookSeenResponses,
+        InfobipWebhookSeenErrors,
+        ThrowOnError
+    >({
+        url: "/api/notification-provider/infobip/seen",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const infobipWebhookDelivery = <ThrowOnError extends boolean = false>(
+    options: Options<InfobipWebhookDeliveryData, ThrowOnError>,
+): RequestResult<
+    InfobipWebhookDeliveryResponses,
+    InfobipWebhookDeliveryErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        InfobipWebhookDeliveryResponses,
+        InfobipWebhookDeliveryErrors,
+        ThrowOnError
+    >({
+        url: "/api/notification-provider/infobip/delivery",
         ...options,
         headers: {
             "Content-Type": "application/json",

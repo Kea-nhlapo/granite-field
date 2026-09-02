@@ -42,6 +42,9 @@ import za.co.trademesh.modules.insurance.application.InsuranceService;
 import za.co.trademesh.modules.insurance.domain.InsurancePurpose;
 import za.co.trademesh.modules.notification.application.LocalEmailCapture;
 import za.co.trademesh.modules.notification.application.LocalMobileCapture;
+import za.co.trademesh.modules.notification.application.NotificationContactService;
+import za.co.trademesh.modules.notification.application.NotificationPreferenceService;
+import za.co.trademesh.modules.notification.domain.NotificationCategory;
 import za.co.trademesh.modules.payment.application.EscrowException;
 import za.co.trademesh.modules.payment.application.EscrowService;
 import za.co.trademesh.modules.payment.application.MomoClient;
@@ -179,6 +182,12 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
     private LocalMobileCapture mobileCapture;
 
     @Autowired
+    private NotificationContactService notificationContacts;
+
+    @Autowired
+    private NotificationPreferenceService notificationPreferences;
+
+    @Autowired
     private JdbcTemplate jdbc;
 
     @BeforeEach
@@ -194,6 +203,8 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
     @RepeatedTest(2)
     void completesTheFullDemoJourneyTwiceWithoutManualIntervention() {
         Account buyer = phoneAuthenticatedBuyer("+27821234567");
+        notificationContacts.save(buyer.userId(), "+27821234567", true, true);
+        notificationPreferences.set(buyer.userId(), NotificationCategory.SHIPMENT_UPDATE, null, true, true);
         Account supplier = register("demo-supplier@trademesh.test", RegistrationType.SUPPLIER);
         Account fleet = register("demo-fleet@trademesh.test", RegistrationType.TRANSPORTER);
         Account receiver = register("demo-receiver@trademesh.test", RegistrationType.BUSINESS_OWNER);
@@ -466,7 +477,7 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
         drainOutbox();
         assertThat(mobileCapture.capturedMessages())
                 .extracting(LocalMobileCapture.CapturedMessage::body)
-                .anySatisfy(body -> assertThat(body).contains("did not match", "blocked"))
+                .anySatisfy(body -> assertThat(body).contains("handover needs attention"))
                 .anySatisfy(body -> assertThat(body).contains("released"));
 
         var insuranceCase = insurance.createCase(

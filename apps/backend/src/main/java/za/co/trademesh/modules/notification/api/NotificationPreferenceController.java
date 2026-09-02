@@ -35,7 +35,11 @@ public class NotificationPreferenceController {
             @org.springframework.web.bind.annotation.PathVariable NotificationCategory category,
             @Valid @RequestBody NotificationPreferenceContracts.UpdatePreferenceRequest request,
             Authentication authentication) {
-        return NotificationPreferenceContracts.PreferenceResponse.from(
-                preferences.set(authorization.authenticatedUserId(authentication), category, request.emailEnabled()));
+        return NotificationPreferenceContracts.PreferenceResponse.from(preferences.set(
+                authorization.authenticatedUserId(authentication),
+                category,
+                request.emailEnabled(),
+                request.smsEnabled(),
+                request.whatsappEnabled()));
     }
 }

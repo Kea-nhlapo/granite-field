@@ -8,6 +8,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
+import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -15,7 +17,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 import za.co.trademesh.modules.notification.application.MobileDeliveryProvider;
-import za.co.trademesh.modules.notification.application.MobileNotificationRequests;
+import za.co.trademesh.modules.notification.domain.MobileChannel;
+import za.co.trademesh.modules.notification.domain.MobileNotificationStatus;
 
 class TwilioMobileDeliveryProviderTest {
 
@@ -32,10 +35,10 @@ class TwilioMobileDeliveryProviderTest {
                 .andExpect(content().string(containsString("Body=Shipment+started")))
                 .andRespond(withSuccess("{\"sid\":\"SM-sms\"}", MediaType.APPLICATION_JSON));
 
-        String messageId = provider.deliver(new MobileDeliveryProvider.MobileMessage(
-                "sms:1", "+27821234567", MobileNotificationRequests.MobileChannel.SMS, "Shipment started"));
+        var result = provider.deliver(message("sms:1", MobileChannel.SMS, "Shipment started"));
 
-        assertThat(messageId).isEqualTo("SM-sms");
+        assertThat(result.providerMessageId()).isEqualTo("SM-sms");
+        assertThat(result.status()).isEqualTo(MobileNotificationStatus.ACCEPTED);
         server.verify();
     }
 
@@ -50,11 +53,17 @@ class TwilioMobileDeliveryProviderTest {
                 .andExpect(content().string(containsString("From=whatsapp%3A%2B14155238886")))
                 .andRespond(withSuccess("{\"sid\":\"SM-whatsapp\"}", MediaType.APPLICATION_JSON));
 
-        String messageId = provider.deliver(new MobileDeliveryProvider.MobileMessage(
-                "whatsapp:1", "+27821234567", MobileNotificationRequests.MobileChannel.WHATSAPP, "Delivery verified"));
+        var result = provider.deliver(message("whatsapp:1", MobileChannel.WHATSAPP, "Delivery verified"));
 
-        assertThat(messageId).isEqualTo("SM-whatsapp");
+        assertThat(result.providerMessageId()).isEqualTo("SM-whatsapp");
+        assertThat(result.status()).isEqualTo(MobileNotificationStatus.ACCEPTED);
         server.verify();
+    }
+
+    private static MobileDeliveryProvider.MobileMessage message(
+            String idempotencyKey, MobileChannel channel, String text) {
+        return new MobileDeliveryProvider.MobileMessage(
+                UUID.randomUUID(), idempotencyKey, "+27821234567", channel, "test-template", 1, text, List.of(), "en");
     }
 
     private static TwilioMessagingProperties properties() {
