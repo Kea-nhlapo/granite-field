@@ -14,7 +14,13 @@ REGION=af-south-1
 GITHUB_REPO=Kea-nhlapo/granite-field
 INSTANCE_ID=i-0f2df9d19fea4b986
 SITE_BUCKET=trademesh-site-698251583462
-DISTRIBUTION_ID=E1VKQQWO5B99P
+# Read these from the console rather than from memory. Both of these were wrong
+# once, and a mistyped distribution id fails as NoSuchDistribution at the very
+# end of an otherwise successful release. The invalidation permission below is
+# deliberately scoped to any distribution in this account, of which there is one:
+# pinning the id there would mean a recreated distribution breaks releases with
+# an error that points at CloudFront instead of at a stale policy.
+DISTRIBUTION_ID=E1VXUDQWO5B99P
 ECR_REPO=trademesh-backend
 ROLE_NAME=trademesh-github-deploy
 INSTANCE_ROLE=trademesh-ec2
@@ -97,7 +103,7 @@ cat > /tmp/perms.json <<JSON
   "Action":["s3:PutObject","s3:DeleteObject","s3:ListBucket","s3:GetObject"],
   "Resource":["arn:aws:s3:::${SITE_BUCKET}","arn:aws:s3:::${SITE_BUCKET}/*"]},
  {"Sid":"RefreshCdn","Effect":"Allow","Action":"cloudfront:CreateInvalidation",
-  "Resource":"arn:aws:cloudfront::${ACCOUNT_ID}:distribution/${DISTRIBUTION_ID}"}]}
+  "Resource":"arn:aws:cloudfront::${ACCOUNT_ID}:distribution/*"}]}
 JSON
 
 aws iam put-role-policy --role-name "$ROLE_NAME" \

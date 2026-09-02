@@ -176,6 +176,19 @@ read the same `.env`. The release script still copies newly added keys across fr
 `.env.aws.example`, but that is now a convenience rather than the thing standing
 between the team and an outage.
 
+### The CloudFront distribution
+
+`E1VXUDQWO5B99P`, serving `dbhptzazg1vi1.cloudfront.net`. The distribution id
+appears in `infra/aws/bootstrap-cd.sh` and in the workflow's `DISTRIBUTION_ID`.
+Both were once transcribed wrong, which surfaces as `NoSuchDistribution` on the
+very last step of a release that otherwise succeeded: the backend is out, the
+site files are uploaded, and only the cache flush failed. Read the id from the
+console rather than from memory if it ever needs to change.
+
+Because the backend is verified before the CDN is touched, that failure mode now
+fails the workflow without leaving any doubt about whether the release is
+serving.
+
 ### Keeping it up
 
 * `restart: unless-stopped` on all three services, and `docker` is enabled at
