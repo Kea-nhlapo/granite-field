@@ -11,7 +11,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
-import za.co.trademesh.modules.access.application.OtpProperties;
 import za.co.trademesh.modules.access.application.OtpProvider;
 import za.co.trademesh.modules.access.application.OtpProviderException;
 
@@ -20,10 +19,10 @@ import za.co.trademesh.modules.access.application.OtpProviderException;
 class TwilioVerifyOtpProvider implements OtpProvider {
 
     private final RestClient client;
-    private final OtpProperties properties;
+    private final TwilioVerifyProperties properties;
     private final String authorization;
 
-    TwilioVerifyOtpProvider(RestClient.Builder builder, OtpProperties properties) {
+    TwilioVerifyOtpProvider(RestClient.Builder builder, TwilioVerifyProperties properties) {
         requireLiveConfiguration(properties);
         this.client = builder.baseUrl(properties.baseUrl().toString()).build();
         this.properties = properties;
@@ -82,7 +81,7 @@ class TwilioVerifyOtpProvider implements OtpProvider {
         return "Basic " + Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
     }
 
-    private static void requireLiveConfiguration(OtpProperties properties) {
+    private static void requireLiveConfiguration(TwilioVerifyProperties properties) {
         if (blank(properties.accountSid()) || blank(properties.authToken()) || blank(properties.verifyServiceSid())) {
             throw new IllegalStateException("Twilio account, token, and Verify service SID are required");
         }
