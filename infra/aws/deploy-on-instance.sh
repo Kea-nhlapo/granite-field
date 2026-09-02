@@ -14,6 +14,14 @@ APP_DIR=/opt/trademesh/granite-field
 COMPOSE="docker compose -f docker-compose.aws.yml --env-file .env"
 HEALTH=http://127.0.0.1:8080/actuator/health
 
+# The host was provisioned with git, openssl and Docker only. Fetching an ECR
+# login token needs the AWS CLI, so install it if this host predates that need.
+if ! command -v aws >/dev/null 2>&1; then
+  echo "installing the AWS CLI"
+  DEBIAN_FRONTEND=noninteractive apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq awscli
+fi
+
 cd "$APP_DIR"
 
 # The compose file and .env template ship with the code, so the checkout has to
