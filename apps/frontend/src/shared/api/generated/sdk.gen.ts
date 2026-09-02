@@ -6,6 +6,7 @@ import {
     formDataBodySerializer,
     type Options as Options2,
     type RequestResult,
+    type ServerSentEventsResult,
     type TDataShape,
 } from "./client";
 import { client } from "./client.gen";
@@ -97,6 +98,19 @@ import type {
     DocumentRegisterData,
     DocumentRegisterErrors,
     DocumentRegisterResponses,
+    EscrowEventsData,
+    EscrowEventsErrors,
+    EscrowEventsResponse,
+    EscrowEventsResponses,
+    EscrowGetData,
+    EscrowGetErrors,
+    EscrowGetResponses,
+    EscrowReleaseData,
+    EscrowReleaseErrors,
+    EscrowReleaseResponses,
+    EscrowRetryData,
+    EscrowRetryErrors,
+    EscrowRetryResponses,
     FileStorageDownloadData,
     FileStorageDownloadErrors,
     FileStorageDownloadResponses,
@@ -454,6 +468,23 @@ export const handoverConfirm = <ThrowOnError extends boolean = false>(
         },
     });
 
+export const escrowRelease = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowReleaseData, ThrowOnError>,
+): RequestResult<EscrowReleaseResponses, EscrowReleaseErrors, ThrowOnError> =>
+    (options.client ?? client).post<
+        EscrowReleaseResponses,
+        EscrowReleaseErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/release",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
 export const deliveryPropose = <ThrowOnError extends boolean = false>(
     options: Options<DeliveryProposeData, ThrowOnError>,
 ): RequestResult<
@@ -468,6 +499,23 @@ export const deliveryPropose = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/delivery/{shipmentId}/propose",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const escrowRetry = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowRetryData, ThrowOnError>,
+): RequestResult<EscrowRetryResponses, EscrowRetryErrors, ThrowOnError> =>
+    (options.client ?? client).post<
+        EscrowRetryResponses,
+        EscrowRetryErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/escrow/retry",
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -1354,6 +1402,32 @@ export const insuranceEvidence = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/insurance/cases/{caseId}/evidence",
+        ...options,
+    });
+
+export const escrowGet = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowGetData, ThrowOnError>,
+): RequestResult<EscrowGetResponses, EscrowGetErrors, ThrowOnError> =>
+    (options.client ?? client).get<
+        EscrowGetResponses,
+        EscrowGetErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/escrow",
+        ...options,
+    });
+
+export const escrowEvents = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowEventsData, ThrowOnError, EscrowEventsResponse>,
+): Promise<ServerSentEventsResult<EscrowEventsResponses>> =>
+    (options.client ?? client).sse.get<
+        EscrowEventsResponses,
+        EscrowEventsErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/escrow/events",
         ...options,
     });
 

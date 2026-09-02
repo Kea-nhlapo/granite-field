@@ -246,6 +246,41 @@ export type LocationResponse = {
     longitude?: number;
 };
 
+export type ReleaseEscrowRequest = {
+    businessId: string;
+    requestId: string;
+    resolvedAmount: number;
+};
+
+export type EscrowResponse = {
+    escrowId?: string;
+    shipmentId?: string;
+    businessId?: string;
+    currency?: string;
+    agreedAmount?: number;
+    status?:
+        | "LOCK_REQUESTED"
+        | "LOCK_PENDING"
+        | "LOCKED"
+        | "LOCK_FAILED"
+        | "RELEASE_REQUESTED"
+        | "RELEASE_PENDING"
+        | "RELEASED"
+        | "RELEASE_FAILED";
+    updatedAt?: string;
+    transactions?: Array<EscrowTransactionResponse>;
+};
+
+export type EscrowTransactionResponse = {
+    transactionId?: string;
+    type?: "LOCK" | "RELEASE";
+    sequence?: number;
+    amount?: number;
+    status?: "REQUESTED" | "PENDING" | "SUCCESSFUL" | "FAILED" | "TIMED_OUT";
+    failureCode?: string;
+    updatedAt?: string;
+};
+
 export type ProposeDeliveryRequest = {
     businessId: string;
     requestId: string;
@@ -261,6 +296,11 @@ export type DeliveryProposalResponse = {
     expiresAt?: string;
     acceptedAt?: string;
     newlyCreated?: boolean;
+};
+
+export type RetryEscrowRequest = {
+    businessId: string;
+    requestId: string;
 };
 
 export type SupplierResponse = {
@@ -1999,6 +2039,66 @@ export type HandoverConfirmResponses = {
 export type HandoverConfirmResponse =
     HandoverConfirmResponses[keyof HandoverConfirmResponses];
 
+export type EscrowReleaseData = {
+    body: ReleaseEscrowRequest;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/release";
+};
+
+export type EscrowReleaseErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowReleaseError = EscrowReleaseErrors[keyof EscrowReleaseErrors];
+
+export type EscrowReleaseResponses = {
+    /**
+     * OK
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowReleaseResponse =
+    EscrowReleaseResponses[keyof EscrowReleaseResponses];
+
 export type DeliveryProposeData = {
     body: ProposeDeliveryRequest;
     path: {
@@ -2059,6 +2159,66 @@ export type DeliveryProposeResponses = {
 
 export type DeliveryProposeResponse =
     DeliveryProposeResponses[keyof DeliveryProposeResponses];
+
+export type EscrowRetryData = {
+    body: RetryEscrowRequest;
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/delivery/{shipmentId}/escrow/retry";
+};
+
+export type EscrowRetryErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowRetryError = EscrowRetryErrors[keyof EscrowRetryErrors];
+
+export type EscrowRetryResponses = {
+    /**
+     * OK
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowRetryResponse =
+    EscrowRetryResponses[keyof EscrowRetryResponses];
 
 export type DeliveryVoiceSearchData = {
     body?: {
@@ -4981,6 +5141,129 @@ export type InsuranceEvidenceResponses = {
 
 export type InsuranceEvidenceResponse =
     InsuranceEvidenceResponses[keyof InsuranceEvidenceResponses];
+
+export type EscrowGetData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/delivery/{shipmentId}/escrow";
+};
+
+export type EscrowGetErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowGetError = EscrowGetErrors[keyof EscrowGetErrors];
+
+export type EscrowGetResponses = {
+    /**
+     * OK
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowGetResponse = EscrowGetResponses[keyof EscrowGetResponses];
+
+export type EscrowEventsData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/delivery/{shipmentId}/escrow/events";
+};
+
+export type EscrowEventsErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type EscrowEventsError = EscrowEventsErrors[keyof EscrowEventsErrors];
+
+export type EscrowEventsResponses = {
+    /**
+     * Current and subsequent escrow status events
+     */
+    200: EscrowResponse;
+};
+
+export type EscrowEventsResponse =
+    EscrowEventsResponses[keyof EscrowEventsResponses];
 
 export type BusinessGetBusinessData = {
     body?: never;

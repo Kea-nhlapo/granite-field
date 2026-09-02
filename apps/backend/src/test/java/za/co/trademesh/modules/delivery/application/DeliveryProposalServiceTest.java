@@ -80,6 +80,11 @@ class DeliveryProposalServiceTest {
         private final Map<String, UUID> tokenIds = new HashMap<>();
 
         @Override
+        public Optional<DeliveryProposal> findById(UUID proposalId) {
+            return Optional.ofNullable(saved.get(proposalId));
+        }
+
+        @Override
         public Optional<DeliveryProposal> findByShipment(UUID businessId, UUID shipmentId) {
             return saved.values().stream()
                     .filter(value -> value.businessId().equals(businessId)
