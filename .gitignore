@@ -53,4 +53,8 @@ Desktop.ini
 coverage/
 reports/
 .eslintcache
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 
