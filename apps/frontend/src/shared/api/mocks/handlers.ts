@@ -3,10 +3,12 @@ import { http, HttpResponse } from "msw";
 import type { PublicSummaryResponse, TokenResponse } from "../generated";
 import { runtimeConfig } from "../../lib/runtime-config";
 import { problem, scenarioOf, standardError } from "./mock-http";
+import { documentHandlers } from "./document-handlers";
 import { guestHandlers } from "./guest-handlers";
 import { onboardingHandlers } from "./onboarding-handlers";
 
 export { mockScenarioHeader } from "./mock-http";
+export { resetDocumentMocks } from "./document-handlers";
 export { resetGuestMocks } from "./guest-handlers";
 export { resetOnboardingMocks } from "./onboarding-handlers";
 
@@ -189,5 +191,6 @@ export const handlers = [
         return new HttpResponse(null, { status: 204 });
     }),
     ...onboardingHandlers,
+    ...documentHandlers,
     ...guestHandlers,
 ];
