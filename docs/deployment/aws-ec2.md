@@ -112,20 +112,48 @@ sudo sed -n 's/^\(OBJECT_STORAGE_[A-Z_]*\)=\(..*\)/\1 SET/p' .env
 
 Five lines is correct: endpoint, region, bucket, access key, secret key.
 
-## 5. Start the stack
+## 5. Releases are automatic
+
+Once `infra/aws/bootstrap-cd.sh` has been run and the `AWS_DEPLOY_ROLE`
+repository variable is set, every commit that reaches `main` and passes Quality
+Gate is released without anyone touching the instance:
+
+1. GitHub Actions assumes an AWS role through OIDC. No access key is stored in
+   the repository.
+2. The backend image is built in CI and pushed to ECR, tagged with the commit
+   SHA. The instance never compiles anything.
+3. `infra/aws/deploy-on-instance.sh` runs over Systems Manager: it dumps the
+   database, records the running image, pulls the new tag and restarts.
+4. It polls `/actuator/health` for six minutes. If the new image does not become
+   healthy it redeploys the previous tag and the workflow fails red.
+5. The frontend is built, synced to the site bucket and CloudFront is invalidated.
+
+**Rolling back the image does not roll back the database.** Flyway migrations run
+at startup and are forward-only, so a release that migrates the schema and then
+fails leaves the old image facing a newer schema. That is why the script takes a
+dump first, into `/opt/trademesh/backups/pre-<sha>.sql` on the instance. A
+migration that drops or rewrites a column needs a deliberate plan, not the
+automatic rollback.
+
+To release a specific commit by hand, run the Deploy workflow from the Actions
+tab. To go back to a known-good build, set `BACKEND_IMAGE` in `.env` to that tag
+and run the commands below.
+
+## 6. Starting the stack by hand
 
 Every command uses `-f docker-compose.aws.yml`. Omitting it silently runs the **local
 development stack**, which uses MinIO and the mock scanner.
 
 ```bash
 docker compose -f docker-compose.aws.yml --env-file .env config --quiet
-docker compose -f docker-compose.aws.yml --env-file .env up -d --build
+docker compose -f docker-compose.aws.yml --env-file .env pull
+docker compose -f docker-compose.aws.yml --env-file .env up -d
 docker compose -f docker-compose.aws.yml --env-file .env ps
 ```
 
-The first build compiles the backend and pulls the PostGIS and clamd images. The backend
-waits for clamd to report healthy, which takes a few minutes on a cold start while the
-signature database loads. All three services should reach `(healthy)`.
+The backend image comes from ECR; only PostGIS and clamd are pulled from Docker Hub.
+The backend waits for clamd to report healthy, which takes a few minutes on a cold start
+while the signature database loads. All three services should reach `(healthy)`.
 
 Verify from the instance:
 
@@ -136,7 +164,7 @@ curl --fail http://127.0.0.1:8080/actuator/health
 Then through CloudFront. An unauthenticated `/api/**` request returning 401 from Spring
 confirms the whole path works; a CloudFront or S3 error page means it does not.
 
-## 6. Frontend
+## 7. Frontend by hand
 
 ```bash
 cd apps/frontend && npm ci && npm run build
@@ -144,12 +172,12 @@ aws s3 sync dist/ s3://trademesh-site-<account-id>/ --delete
 aws cloudfront create-invalidation --distribution-id <id> --paths "/*"
 ```
 
-## 7. Operate
+## 8. Operate
 
 ```bash
 docker compose -f docker-compose.aws.yml --env-file .env logs --tail=200 backend
 docker compose -f docker-compose.aws.yml --env-file .env restart backend
-git pull --ff-only && docker compose -f docker-compose.aws.yml --env-file .env up -d --build
+git pull --ff-only && docker compose -f docker-compose.aws.yml --env-file .env up -d
 docker compose -f docker-compose.aws.yml --env-file .env down
 ```
 
