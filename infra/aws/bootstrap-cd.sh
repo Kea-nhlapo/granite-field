@@ -49,11 +49,16 @@ aws iam create-open-id-connect-provider \
 say "Deploy role trust policy"
 # Restricted to this repository's main branch. A fork, a pull request, or any
 # other branch cannot assume this role.
+#
+# sts:TagSession is required as well as sts:AssumeRoleWithWebIdentity:
+# aws-actions/configure-aws-credentials attaches session tags by default, and
+# without TagSession allowed the whole call is denied with a message that only
+# mentions AssumeRoleWithWebIdentity.
 cat > /tmp/trust.json <<JSON
 {"Version":"2012-10-17","Statement":[{
   "Effect":"Allow",
   "Principal":{"Federated":"arn:aws:iam::${ACCOUNT_ID}:oidc-provider/token.actions.githubusercontent.com"},
-  "Action":"sts:AssumeRoleWithWebIdentity",
+  "Action":["sts:AssumeRoleWithWebIdentity","sts:TagSession"],
   "Condition":{
     "StringEquals":{"token.actions.githubusercontent.com:aud":"sts.amazonaws.com"},
     "StringLike":{"token.actions.githubusercontent.com:sub":"repo:${GITHUB_REPO}:ref:refs/heads/main"}}}]}
