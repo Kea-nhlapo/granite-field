@@ -71,8 +71,13 @@ Supplied by instance user-data, and safe to re-run:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y git openssl docker.io docker-compose-v2 awscli
+sudo apt-get install -y git openssl docker.io docker-compose-v2 curl unzip
 sudo systemctl enable --now docker
+
+# Ubuntu 24.04 carries no awscli package; the release script installs v2 from
+# AWS directly if it is missing. To do it by hand:
+curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip
+unzip -q -o /tmp/awscliv2.zip -d /tmp && sudo /tmp/aws/install --update
 ```
 
 ## 3. Check out the repository
