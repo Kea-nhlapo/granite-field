@@ -13,6 +13,7 @@ import {
     handlers,
     ownerTokens,
     resetOnboardingMocks,
+    resetDocumentMocks,
 } from "../../shared/api/mocks/handlers";
 import { problem } from "../../shared/api/mocks/mock-http";
 import { mockOnboardingId } from "../../shared/api/mocks/onboarding-handlers";
@@ -25,6 +26,7 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
     clearSession();
     resetOnboardingMocks();
+    resetDocumentMocks();
     server.resetHandlers();
 });
 afterAll(() => server.close());

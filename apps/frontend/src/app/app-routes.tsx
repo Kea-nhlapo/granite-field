@@ -9,6 +9,8 @@ import { RequireSession } from "../features/access/RequireSession";
 import { useSession } from "../features/access/SessionProvider";
 import WorkspacePage from "../features/access/WorkspacePage";
 import OnboardingPage from "../features/business/OnboardingPage";
+import GuestInvitePage from "../features/guest/GuestInvitePage";
+import DocumentReviewPage from "../features/documents/DocumentReviewPage";
 
 function HomeRedirect() {
     const { session, status } = useSession();
@@ -28,6 +30,10 @@ export const appRoutes: RouteObject[] = [
     {
         element: <LoginPage />,
         path: "/login",
+    },
+    {
+        element: <GuestInvitePage />,
+        path: "/supplier-invitations/guest/:token",
     },
     {
         children: [
@@ -60,6 +66,22 @@ export const appRoutes: RouteObject[] = [
                     </RequireRole>
                 ),
                 path: "onboarding/:onboardingId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <DocumentReviewPage />
+                    </RequireRole>
+                ),
+                path: "documents/:businessId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <DocumentReviewPage />
+                    </RequireRole>
+                ),
+                path: "documents/:businessId/:documentId",
             },
         ],
         element: (

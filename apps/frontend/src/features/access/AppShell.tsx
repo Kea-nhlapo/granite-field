@@ -4,6 +4,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAccessStyles } from "./access.styles";
 import { hasAnyRole } from "./roles";
 import { useSession } from "./SessionProvider";
+import { mockBusinessId } from "../../shared/api/mocks/onboarding-handlers";
 
 export function AppShell() {
     const styles = useAccessStyles();
@@ -14,6 +15,9 @@ export function AppShell() {
         hasAnyRole(session.roles, ["INTERNAL_RISK_ANALYST", "ADMINISTRATOR"]);
     const showOnboarding =
         session !== null && hasAnyRole(session.roles, ["BUSINESS_OWNER"]);
+    const showDocuments =
+        session !== null &&
+        hasAnyRole(session.roles, ["BUSINESS_OWNER", "BUSINESS_MEMBER"]);
 
     return (
         <div className={styles.shell} data-testid="app-shell">
@@ -56,6 +60,18 @@ export function AppShell() {
                             to="/app/onboarding"
                         >
                             Onboarding
+                        </NavLink>
+                    ) : null}
+                    {showDocuments ? (
+                        <NavLink
+                            className={({ isActive }) =>
+                                isActive
+                                    ? `${styles.navLink} ${styles.navLinkActive}`
+                                    : styles.navLink
+                            }
+                            to={`/app/documents/${mockBusinessId}`}
+                        >
+                            Documents
                         </NavLink>
                     ) : null}
                     <Button

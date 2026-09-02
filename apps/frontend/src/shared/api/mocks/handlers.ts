@@ -1,15 +1,15 @@
 import { http, HttpResponse } from "msw";
 
-import type {
-    GuestInvitationResponse,
-    PublicSummaryResponse,
-    TokenResponse,
-} from "../generated";
+import type { PublicSummaryResponse, TokenResponse } from "../generated";
 import { runtimeConfig } from "../../lib/runtime-config";
 import { problem, scenarioOf, standardError } from "./mock-http";
+import { documentHandlers } from "./document-handlers";
+import { guestHandlers } from "./guest-handlers";
 import { onboardingHandlers } from "./onboarding-handlers";
 
 export { mockScenarioHeader } from "./mock-http";
+export { resetDocumentMocks } from "./document-handlers";
+export { resetGuestMocks } from "./guest-handlers";
 export { resetOnboardingMocks } from "./onboarding-handlers";
 
 export const ownerTokens: TokenResponse = {
@@ -27,6 +27,14 @@ export const analystTokens: TokenResponse = {
     accessToken: "mock-analyst-access-token",
     refreshToken: "mock-analyst-refresh-token",
     roles: ["INTERNAL_RISK_ANALYST"],
+};
+
+export const supplierTokens: TokenResponse = {
+    ...ownerTokens,
+    userId: "00000000-0000-4000-8000-000000000012",
+    accessToken: "mock-supplier-access-token",
+    refreshToken: "mock-supplier-refresh-token",
+    roles: ["SUPPLIER"],
 };
 
 export const handlers = [
@@ -76,32 +84,6 @@ export const handlers = [
             return HttpResponse.json(response);
         },
     ),
-    http.get(
-        `${runtimeConfig.apiBaseUrl}/api/supplier-invitations/guest/:token`,
-        ({ request }) => {
-            const scenario = scenarioOf(request);
-            if (scenario === "expired-link") {
-                return problem(
-                    404,
-                    "Supplier invitation request failed",
-                    "SUPPLIER_INVITATION_UNAVAILABLE",
-                );
-            }
-            const error = standardError(scenario);
-            if (error) {
-                return error;
-            }
-            const response: GuestInvitationResponse = {
-                buyerBusinessId: "00000000-0000-4000-8000-000000000001",
-                expiresAt: "2026-09-09T12:00:00Z",
-                invitationId: "00000000-0000-4000-8000-000000000002",
-                purpose: "QUOTE_RESPONSE",
-                requestId: "00000000-0000-4000-8000-000000000003",
-                supplierProfileId: "00000000-0000-4000-8000-000000000004",
-            };
-            return HttpResponse.json(response);
-        },
-    ),
     http.post(
         `${runtimeConfig.apiBaseUrl}/api/auth/login`,
         async ({ request }) => {
@@ -132,6 +114,32 @@ export const handlers = [
                 return HttpResponse.json(analystTokens);
             }
             return HttpResponse.json(ownerTokens);
+        },
+    ),
+    http.post(
+        `${runtimeConfig.apiBaseUrl}/api/auth/register`,
+        async ({ request }) => {
+            const scenario = scenarioOf(request);
+            const error = standardError(scenario);
+            if (error) {
+                return error;
+            }
+            const body = (await request.json()) as {
+                accountType?: string;
+                email?: string;
+                password?: string;
+            };
+            if (!body.email || !body.password || !body.accountType) {
+                return problem(
+                    400,
+                    "Request validation failed",
+                    "INVALID_REQUEST",
+                );
+            }
+            if (body.accountType === "SUPPLIER") {
+                return HttpResponse.json(supplierTokens, { status: 201 });
+            }
+            return HttpResponse.json(ownerTokens, { status: 201 });
         },
     ),
     http.post(
@@ -183,4 +191,6 @@ export const handlers = [
         return new HttpResponse(null, { status: 204 });
     }),
     ...onboardingHandlers,
+    ...documentHandlers,
+    ...guestHandlers,
 ];

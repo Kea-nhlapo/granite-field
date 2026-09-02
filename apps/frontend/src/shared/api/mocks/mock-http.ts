@@ -21,6 +21,29 @@ export function standardError(scenario: string) {
     return undefined;
 }
 
+export function uploadedFile(value: FormDataEntryValue | null): {
+    name: string;
+    type: string;
+    size: number;
+} | null {
+    if (value == null || typeof value === "string") {
+        return null;
+    }
+    const size = "size" in value ? Number(value.size) : 0;
+    if (!Number.isFinite(size) || size <= 0) {
+        return null;
+    }
+    return {
+        name:
+            "name" in value && typeof value.name === "string"
+                ? value.name
+                : "document.pdf",
+        type:
+            "type" in value && typeof value.type === "string" ? value.type : "",
+        size,
+    };
+}
+
 export function problem(status: number, title: string, code: string) {
     const response: ApiProblem = {
         code,
