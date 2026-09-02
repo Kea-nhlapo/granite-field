@@ -50,6 +50,12 @@ say "Deploy role trust policy"
 # Restricted to this repository's main branch. A fork, a pull request, or any
 # other branch cannot assume this role.
 #
+# The subject is NOT the documented repo:OWNER/REPO form. This repository has
+# customised OIDC subject claims enabled, so GitHub sends owner and repository
+# IDs inside it: repo:Kea-nhlapo@<ownerid>/granite-field@<repoid>:ref:... The
+# IDs are wildcarded so a misread digit cannot break the trust; owner, repo and
+# branch are all still pinned.
+#
 # sts:TagSession is required as well as sts:AssumeRoleWithWebIdentity:
 # aws-actions/configure-aws-credentials attaches session tags by default, and
 # without TagSession allowed the whole call is denied with a message that only
@@ -61,7 +67,7 @@ cat > /tmp/trust.json <<JSON
   "Action":["sts:AssumeRoleWithWebIdentity","sts:TagSession"],
   "Condition":{
     "StringEquals":{"token.actions.githubusercontent.com:aud":"sts.amazonaws.com"},
-    "StringLike":{"token.actions.githubusercontent.com:sub":"repo:${GITHUB_REPO}:ref:refs/heads/main"}}}]}
+    "StringLike":{"token.actions.githubusercontent.com:sub":"repo:Kea-nhlapo@*/granite-field@*:ref:refs/heads/main"}}}]}
 JSON
 
 aws iam create-role --role-name "$ROLE_NAME" \
