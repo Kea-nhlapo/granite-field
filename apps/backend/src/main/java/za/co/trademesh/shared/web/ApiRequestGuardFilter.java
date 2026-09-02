@@ -28,6 +28,7 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
             Pattern.compile("^/api/supplier-invitations/guest/[^/]+(?:/responses)?$");
     private static final Pattern UPLOAD = Pattern.compile("^/api/businesses/[^/]+/files$");
     private static final Pattern DELIVERY_CONFIRMATION = Pattern.compile("^/api/delivery/confirm/[^/]+$");
+    private static final Pattern MOMO_TRANSACTION = Pattern.compile("^/api/delivery/[^/]+/(?:escrow/retry|release)$");
 
     private final ApiRateLimitProperties limits;
     private final ApiWebProperties web;
@@ -113,6 +114,9 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
         }
         if (HttpMethod.POST.matches(method) && "/api/auth/momo/initiate".equals(path)) {
             return new Limit("momo-initiate", limits.momoInitiate());
+        }
+        if (HttpMethod.POST.matches(method) && MOMO_TRANSACTION.matcher(path).matches()) {
+            return new Limit("momo-transactions", limits.momoTransactions());
         }
         if ((HttpMethod.POST.matches(method) && INVITATION_CREATE.matcher(path).matches())
                 || INVITATION_GUEST.matcher(path).matches()) {

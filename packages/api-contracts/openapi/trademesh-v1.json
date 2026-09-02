@@ -373,6 +373,47 @@
         }
       }
     },
+    "/api/delivery/{shipmentId}/release": {
+      "post": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowRelease",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ReleaseEscrowRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
     "/api/delivery/{shipmentId}/propose": {
       "post": {
         "tags": ["delivery-controller"],
@@ -403,6 +444,47 @@
                 "schema": {
                   "$ref": "#/components/schemas/DeliveryProposalResponse"
                 }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/escrow/retry": {
+      "post": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowRetry",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RetryEscrowRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
               }
             }
           },
@@ -2366,6 +2448,84 @@
         }
       }
     },
+    "/api/delivery/{shipmentId}/escrow": {
+      "get": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowGet",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/escrow/events": {
+      "get": {
+        "tags": ["escrow-controller"],
+        "operationId": "escrowEvents",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current and subsequent escrow status events",
+            "content": {
+              "text/event-stream": {
+                "schema": { "$ref": "#/components/schemas/EscrowResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
     "/api/businesses/{businessId}": {
       "get": {
         "tags": ["business-controller"],
@@ -3679,6 +3839,69 @@
           "longitude": { "type": "number", "format": "double" }
         }
       },
+      "ReleaseEscrowRequest": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "resolvedAmount": { "type": "number", "minimum": 0.0001 }
+        },
+        "required": ["businessId", "requestId", "resolvedAmount"]
+      },
+      "EscrowResponse": {
+        "type": "object",
+        "properties": {
+          "escrowId": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "currency": { "type": "string" },
+          "agreedAmount": { "type": "number" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "LOCK_REQUESTED",
+              "LOCK_PENDING",
+              "LOCKED",
+              "LOCK_FAILED",
+              "RELEASE_REQUESTED",
+              "RELEASE_PENDING",
+              "RELEASED",
+              "RELEASE_FAILED"
+            ]
+          },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "transactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EscrowTransactionResponse"
+            }
+          }
+        }
+      },
+      "EscrowTransactionResponse": {
+        "type": "object",
+        "properties": {
+          "transactionId": { "type": "string", "format": "uuid" },
+          "type": {
+            "type": "string",
+            "enum": ["LOCK", "RELEASE"]
+          },
+          "sequence": { "type": "integer", "format": "int32" },
+          "amount": { "type": "number" },
+          "status": {
+            "type": "string",
+            "enum": [
+              "REQUESTED",
+              "PENDING",
+              "SUCCESSFUL",
+              "FAILED",
+              "TIMED_OUT"
+            ]
+          },
+          "failureCode": { "type": "string" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
       "ProposeDeliveryRequest": {
         "type": "object",
         "properties": {
@@ -3718,6 +3941,14 @@
           "acceptedAt": { "type": "string", "format": "date-time" },
           "newlyCreated": { "type": "boolean" }
         }
+      },
+      "RetryEscrowRequest": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" }
+        },
+        "required": ["businessId", "requestId"]
       },
       "SupplierResponse": {
         "type": "object",

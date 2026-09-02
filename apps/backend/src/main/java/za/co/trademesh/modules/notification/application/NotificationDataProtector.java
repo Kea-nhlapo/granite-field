@@ -1,8 +1,5 @@
 package za.co.trademesh.modules.notification.application;
 
-public interface NotificationDataProtector {
+import za.co.trademesh.shared.security.SensitiveDataProtector;
 
-    String protect(String plainText);
-
-    String unprotect(String protectedText);
-}
+public interface NotificationDataProtector extends SensitiveDataProtector {}
