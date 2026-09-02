@@ -11,6 +11,7 @@ import WorkspacePage from "../features/access/WorkspacePage";
 import OnboardingPage from "../features/business/OnboardingPage";
 import GuestInvitePage from "../features/guest/GuestInvitePage";
 import DocumentReviewPage from "../features/documents/DocumentReviewPage";
+import ProcurementPage from "../features/procurement/ProcurementPage";
 
 function HomeRedirect() {
     const { session, status } = useSession();
@@ -82,6 +83,30 @@ export const appRoutes: RouteObject[] = [
                     </RequireRole>
                 ),
                 path: "documents/:businessId/:documentId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <ProcurementPage />
+                    </RequireRole>
+                ),
+                path: "procurement/:businessId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <ProcurementPage />
+                    </RequireRole>
+                ),
+                path: "procurement/:businessId/quotes/:quoteId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <ProcurementPage />
+                    </RequireRole>
+                ),
+                path: "procurement/:businessId/orders/:orderId",
             },
         ],
         element: (

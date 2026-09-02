@@ -18,6 +18,7 @@ export function AppShell() {
     const showDocuments =
         session !== null &&
         hasAnyRole(session.roles, ["BUSINESS_OWNER", "BUSINESS_MEMBER"]);
+    const showProcurement = showDocuments;
 
     return (
         <div className={styles.shell} data-testid="app-shell">
@@ -72,6 +73,18 @@ export function AppShell() {
                             to={`/app/documents/${mockBusinessId}`}
                         >
                             Documents
+                        </NavLink>
+                    ) : null}
+                    {showProcurement ? (
+                        <NavLink
+                            className={({ isActive }) =>
+                                isActive
+                                    ? `${styles.navLink} ${styles.navLinkActive}`
+                                    : styles.navLink
+                            }
+                            to={`/app/procurement/${mockBusinessId}`}
+                        >
+                            Procurement
                         </NavLink>
                     ) : null}
                     <Button
