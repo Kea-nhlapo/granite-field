@@ -135,26 +135,32 @@ public class OutboxWorker {
             return;
         }
 
-        try {
-            // The work belongs to whoever caused the message, not to this
-            // thread. Restored from the row because the publishing request's
-            // thread-local state is long gone by the time the worker runs.
-            CorrelationContext.runWithin(
-                message.correlationId(),
-                message.actor().orElse(null),
-                () -> handleChecked(handler, message));
+        // The work belongs to whoever caused the message, not to this thread.
+        // Restored from the row because the publishing request's thread-local
+        // state is long gone by the time the worker runs.
+        //
+        // callWithin returns the handler's failure instead of throwing it, so
+        // there is nothing to wrap into an unchecked type and unwrap again on
+        // the way out — handler.handle's checked Exception never has to cross
+        // the lambda boundary in the first place.
+        Exception failure = CorrelationContext.callWithin(
+            message.correlationId(),
+            message.actor().orElse(null),
+            () -> attempt(handler, message));
 
+        if (failure == null) {
             recordDone(message);
-        } catch (Exception failure) {
+        } else {
             recordFailure(message, failure);
         }
     }
 
-    private void handleChecked(OutboxHandler handler, OutboxMessage message) {
+    private Exception attempt(OutboxHandler handler, OutboxMessage message) {
         try {
             handler.handle(message);
+            return null;
         } catch (Exception e) {
-            throw new HandlerFailedException(e);
+            return e;
         }
     }
 
@@ -174,19 +180,18 @@ public class OutboxWorker {
     }
 
     private void recordFailure(OutboxMessage message, Exception failure) {
-        Throwable cause = failure instanceof HandlerFailedException ? failure.getCause() : failure;
-        String error = cause.getClass().getName() + ": " + cause.getMessage();
+        String error = failure.getClass().getName() + ": " + failure.getMessage();
 
         if (message.attempts() >= properties.maxAttempts()) {
             log.error("Outbox message {} ({}) failed on attempt {} of {} and is now DEAD",
-                message.id(), message.type(), message.attempts(), properties.maxAttempts(), cause);
+                message.id(), message.type(), message.attempts(), properties.maxAttempts(), failure);
             recordDead(message, error);
             return;
         }
 
         Instant retryAt = Instant.now(clock).plus(backoffFor(message.attempts()));
         log.warn("Outbox message {} ({}) failed on attempt {}; retrying at {}",
-            message.id(), message.type(), message.attempts(), retryAt, cause);
+            message.id(), message.type(), message.attempts(), retryAt, failure);
 
         transactions().executeWithoutResult(status ->
             repository.markForRetry(message.id(), message.claimedAt(), retryAt, error));
@@ -218,12 +223,5 @@ public class OutboxWorker {
         long half = capped / 2;
         long jittered = half + ThreadLocalRandom.current().nextLong(half + 1);
         return Duration.ofSeconds(Math.max(jittered, 1));
-    }
-
-    /** Wraps a handler's checked exception so it can cross a lambda boundary. */
-    static final class HandlerFailedException extends RuntimeException {
-        HandlerFailedException(Throwable cause) {
-            super(cause);
-        }
     }
 }

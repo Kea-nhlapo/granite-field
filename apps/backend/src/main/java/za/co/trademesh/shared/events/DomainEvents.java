@@ -1,8 +1,6 @@
 package za.co.trademesh.shared.events;
 
 import java.time.Clock;
-import java.time.Instant;
-import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -38,14 +36,7 @@ public class DomainEvents {
      * that transaction commits, so a rolled-back command publishes nothing.
      */
     public <E extends DomainEvent> EventEnvelope publish(E event) {
-        EventEnvelope envelope = new EventEnvelope(
-            UUID.randomUUID(),
-            event.type(),
-            Instant.now(clock),
-            CorrelationContext.actor(),
-            source,
-            CorrelationContext.correlationId(),
-            event.schemaVersion());
+        EventEnvelope envelope = EventEnvelope.stampNow(clock, event.type(), source, event.schemaVersion());
 
         publisher.publishEvent(new PublishedEvent<>(envelope, event));
         return envelope;

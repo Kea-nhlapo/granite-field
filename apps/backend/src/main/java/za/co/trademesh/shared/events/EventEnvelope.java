@@ -1,5 +1,6 @@
 package za.co.trademesh.shared.events;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
@@ -51,5 +52,28 @@ public record EventEnvelope(
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(field + " must not be blank");
         }
+    }
+
+    /**
+     * Stamps an envelope for something happening right now, reading actor and
+     * correlation id from the ambient {@link CorrelationContext}.
+     *
+     * <p>{@link DomainEvents#publish} and {@link
+     * za.co.trademesh.shared.events.outbox.OutboxSubmitter#submitAt} both need
+     * exactly this: a fresh event id, the current instant, and the calling
+     * scope's correlation metadata. Centralising it here means a field can
+     * never drift between the two — a scoped field added to one and forgotten
+     * on the other, discovered only when correlation goes missing from half of
+     * production's traces.
+     */
+    public static EventEnvelope stampNow(Clock clock, String type, String source, int schemaVersion) {
+        return new EventEnvelope(
+            UUID.randomUUID(),
+            type,
+            Instant.now(clock),
+            CorrelationContext.actor(),
+            source,
+            CorrelationContext.correlationId(),
+            schemaVersion);
     }
 }

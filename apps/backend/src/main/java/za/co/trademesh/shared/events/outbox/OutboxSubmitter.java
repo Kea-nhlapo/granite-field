@@ -2,12 +2,10 @@ package za.co.trademesh.shared.events.outbox;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-import za.co.trademesh.shared.events.CorrelationContext;
 import za.co.trademesh.shared.events.EventEnvelope;
 import za.co.trademesh.shared.events.EventProperties;
 
@@ -70,14 +68,7 @@ public class OutboxSubmitter {
         int schemaVersion,
         Instant availableAt) {
 
-        EventEnvelope envelope = new EventEnvelope(
-            UUID.randomUUID(),
-            type,
-            Instant.now(clock),
-            CorrelationContext.actor(),
-            source,
-            CorrelationContext.correlationId(),
-            schemaVersion);
+        EventEnvelope envelope = EventEnvelope.stampNow(clock, type, source, schemaVersion);
 
         return repository.enqueue(
             envelope.eventId(),

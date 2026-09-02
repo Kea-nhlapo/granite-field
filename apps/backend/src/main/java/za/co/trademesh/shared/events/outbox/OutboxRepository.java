@@ -23,9 +23,11 @@ import za.co.trademesh.shared.events.EventEnvelope;
 public class OutboxRepository {
 
     private final ObjectProvider<JdbcClient> jdbcProvider;
+    private volatile JdbcClient jdbc;
 
     /**
-     * The client is resolved per call rather than injected directly.
+     * The client is resolved lazily, on first use, rather than injected
+     * directly.
      *
      * <p>{@code JdbcClient} comes from autoconfiguration, so a context started
      * without a datasource — which DatasourceCredentialDefaultsTest does
@@ -44,7 +46,15 @@ public class OutboxRepository {
     }
 
     private JdbcClient jdbc() {
-        return jdbcProvider.getObject();
+        JdbcClient existing = jdbc;
+        if (existing != null) {
+            return existing;
+        }
+        // A benign race only resolves the same singleton bean twice; no lock
+        // is warranted for that.
+        JdbcClient resolved = jdbcProvider.getObject();
+        jdbc = resolved;
+        return resolved;
     }
 
     /**
