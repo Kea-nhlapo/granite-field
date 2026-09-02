@@ -13,6 +13,7 @@ import GuestInvitePage from "../features/guest/GuestInvitePage";
 import DocumentReviewPage from "../features/documents/DocumentReviewPage";
 import ProcurementPage from "../features/procurement/ProcurementPage";
 import LogisticsPage from "../features/logistics/LogisticsPage";
+import RoutingPage from "../features/routing/RoutingPage";
 
 function HomeRedirect() {
     const { session, status } = useSession();
@@ -132,6 +133,22 @@ export const appRoutes: RouteObject[] = [
                     </RequireRole>
                 ),
                 path: "logistics/:businessId/capacity-matches/:searchId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <RoutingPage />
+                    </RequireRole>
+                ),
+                path: "routing/:businessId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <RoutingPage />
+                    </RequireRole>
+                ),
+                path: "routing/:businessId/calculations/:calculationId/assessments/:assessmentId",
             },
         ],
         element: (

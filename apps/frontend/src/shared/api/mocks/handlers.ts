@@ -8,6 +8,7 @@ import { guestHandlers } from "./guest-handlers";
 import { logisticsHandlers } from "./logistics-handlers";
 import { onboardingHandlers } from "./onboarding-handlers";
 import { procurementHandlers } from "./procurement-handlers";
+import { routingHandlers } from "./routing-handlers";
 
 export { mockScenarioHeader } from "./mock-http";
 export { resetDocumentMocks } from "./document-handlers";
@@ -15,6 +16,7 @@ export { resetGuestMocks } from "./guest-handlers";
 export { resetLogisticsMocks } from "./logistics-handlers";
 export { resetOnboardingMocks } from "./onboarding-handlers";
 export { resetProcurementMocks } from "./procurement-handlers";
+export { resetRoutingMocks } from "./routing-handlers";
 
 export const ownerTokens: TokenResponse = {
     userId: "00000000-0000-4000-8000-000000000010",
@@ -199,4 +201,5 @@ export const handlers = [
     ...guestHandlers,
     ...procurementHandlers,
     ...logisticsHandlers,
+    ...routingHandlers,
 ];
