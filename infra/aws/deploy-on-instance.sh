@@ -42,7 +42,10 @@ fi
 
 release() {
   sed -i "s|^BACKEND_IMAGE=.*|BACKEND_IMAGE=$1|" .env
-  $COMPOSE pull backend
+  # Not fatal: the very first rollback target is the image that was built on the
+  # host before ECR existed, so it lives only in the local daemon and cannot be
+  # pulled. "up -d" uses the local copy when the pull finds nothing.
+  $COMPOSE pull backend || echo "pull found nothing remote; using local image"
   $COMPOSE up -d
 }
 
