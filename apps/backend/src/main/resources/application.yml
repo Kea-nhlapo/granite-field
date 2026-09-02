@@ -104,6 +104,20 @@ trademesh:
     window-weight: ${AGGREGATION_WINDOW_WEIGHT:0.25}
     cargo-weight: ${AGGREGATION_CARGO_WEIGHT:0.40}
     algorithm-version: ${AGGREGATION_ALGORITHM_VERSION:demand-group/v1}
+  capacity-matching:
+    # Hard constraints decide compatibility. These weights only rank offers
+    # that passed every hard check.
+    candidate-limit: ${CAPACITY_MATCH_CANDIDATE_LIMIT:100}
+    distance-weight: ${CAPACITY_MATCH_DISTANCE_WEIGHT:0.30}
+    capacity-fit-weight: ${CAPACITY_MATCH_CAPACITY_FIT_WEIGHT:0.20}
+    cost-weight: ${CAPACITY_MATCH_COST_WEIGHT:0.20}
+    timing-weight: ${CAPACITY_MATCH_TIMING_WEIGHT:0.30}
+    maximum-added-distance-metres: ${CAPACITY_MATCH_MAXIMUM_ADDED_DISTANCE_METRES:100000}
+    estimated-cost-per-kilometre-zar: ${CAPACITY_MATCH_COST_PER_KM_ZAR:12.50}
+    reservation-ttl: ${CAPACITY_MATCH_RESERVATION_TTL:PT30M}
+    expiry-batch-size: ${CAPACITY_MATCH_EXPIRY_BATCH_SIZE:100}
+    expiry-interval: ${CAPACITY_MATCH_EXPIRY_INTERVAL:PT1M}
+    algorithm-version: ${CAPACITY_MATCH_ALGORITHM_VERSION:capacity-match/v1}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.

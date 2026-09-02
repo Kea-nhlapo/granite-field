@@ -44,6 +44,10 @@ public interface TransportRepository {
 
     void expireOffer(UUID transporterId, UUID offerId, Instant now);
 
+    List<CapacityOffer> findAvailableOffers(Instant now, int limit);
+
+    Optional<OfferRouteFit> measureRouteFit(UUID offerId, List<RoutePoint> destinations);
+
     boolean tryReserveCapacity(UUID offerId, BigDecimal weightKg, BigDecimal volumeCubicMetres, Instant now);
 
     boolean releaseCapacity(UUID offerId, BigDecimal weightKg, BigDecimal volumeCubicMetres);
