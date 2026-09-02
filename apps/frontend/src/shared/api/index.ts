@@ -1,2 +1,2 @@
 export * from "./app-api";
-export { apiClient, setApiAccessToken } from "./client";
+export { apiClient, getApiAccessToken, setApiAccessToken } from "./client";
