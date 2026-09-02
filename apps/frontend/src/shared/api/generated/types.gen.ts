@@ -1088,6 +1088,51 @@ export type RefreshRequest = {
     refreshToken: string;
 };
 
+export type OtpVerifyRequest = {
+    phoneNumber: string;
+    code: string;
+};
+
+export type OtpSendRequest = {
+    phoneNumber: string;
+    turnstileToken: string;
+};
+
+export type OtpAcceptedResponse = {
+    status?: string;
+};
+
+export type MomoValidationRequest = {
+    phoneNumber: string;
+    turnstileToken: string;
+};
+
+export type MomoAccountHolderResponse = {
+    active?: boolean;
+};
+
+export type MomoProfileResponse = {
+    givenName?: string;
+    familyName?: string;
+    locale?: string;
+};
+
+export type MomoSignInResponse = {
+    profile?: MomoProfileResponse;
+    tokens?: TokenResponse;
+};
+
+export type MomoInitiateRequest = {
+    phoneNumber: string;
+    turnstileToken: string;
+};
+
+export type MomoInitiatedResponse = {
+    pollToken?: string;
+    status?: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
+    expiresAt?: string;
+};
+
 export type LogoutRequest = {
     refreshToken: string;
 };
@@ -1356,6 +1401,10 @@ export type DownloadAccessResponse = {
     expiresAt?: string;
 };
 
+export type MomoStatusResponse = {
+    status?: "PENDING" | "APPROVED" | "REJECTED" | "EXPIRED";
+};
+
 export type ApiProblem = {
     type: string;
     title: string;
@@ -1408,6 +1457,14 @@ export type NotificationPreferenceSetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type NotificationPreferenceSetError =
@@ -1462,6 +1519,14 @@ export type TelemetryIngestErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TelemetryIngestError =
@@ -1515,6 +1580,14 @@ export type SupplierConvertErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type SupplierConvertError =
@@ -1568,6 +1641,14 @@ export type SupplierSubmitResponseErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type SupplierSubmitResponseError =
@@ -1621,6 +1702,14 @@ export type TrustRecalculateErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TrustRecalculateError =
@@ -1674,6 +1763,14 @@ export type RiskTransitionErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type RiskTransitionError =
@@ -1725,6 +1822,14 @@ export type InsuranceCreateCaseErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type InsuranceCreateCaseError =
@@ -1778,6 +1883,14 @@ export type InsuranceRecordDecisionErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type InsuranceRecordDecisionError =
@@ -1829,6 +1942,14 @@ export type HandoverConfirmErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type HandoverConfirmError =
@@ -1882,6 +2003,14 @@ export type SupplierInviteErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type SupplierInviteError =
@@ -1936,6 +2065,14 @@ export type SupplierRevokeErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type SupplierRevokeError =
@@ -1989,6 +2126,14 @@ export type TransportCreateVehicleErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportCreateVehicleError =
@@ -2042,6 +2187,14 @@ export type TransportGetProfileErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportGetProfileError =
@@ -2095,6 +2248,14 @@ export type TransportRegisterErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportRegisterError =
@@ -2148,6 +2309,14 @@ export type TransportCreateDriverErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportCreateDriverError =
@@ -2201,6 +2370,14 @@ export type TransportPublishOfferErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportPublishOfferError =
@@ -2255,6 +2432,14 @@ export type TransportCancelOfferErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportCancelOfferError =
@@ -2308,6 +2493,14 @@ export type TransportAssignDriverErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportAssignDriverError =
@@ -2362,6 +2555,14 @@ export type TransportEndAssignmentErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportEndAssignmentError =
@@ -2415,6 +2616,14 @@ export type ShipmentCreateErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ShipmentCreateError =
@@ -2469,6 +2678,14 @@ export type ShipmentTransitionErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ShipmentTransitionError =
@@ -2523,6 +2740,14 @@ export type TelemetryProvisionErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TelemetryProvisionError =
@@ -2577,6 +2802,14 @@ export type HandoverIssueErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type HandoverIssueError = HandoverIssueErrors[keyof HandoverIssueErrors];
@@ -2630,6 +2863,14 @@ export type ShipmentChangeAssignmentErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ShipmentChangeAssignmentError =
@@ -2683,6 +2924,14 @@ export type RoutingCalculateErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type RoutingCalculateError =
@@ -2737,6 +2986,14 @@ export type RouteScoringScoreErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type RouteScoringScoreError =
@@ -2790,6 +3047,14 @@ export type ProcurementCreateRequestErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ProcurementCreateRequestError =
@@ -2844,6 +3109,14 @@ export type ProcurementCreateQuoteErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ProcurementCreateQuoteError =
@@ -2898,6 +3171,14 @@ export type ProcurementCancelRequestErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ProcurementCancelRequestError =
@@ -2952,6 +3233,14 @@ export type ProcurementConfirmQuoteErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ProcurementConfirmQuoteError =
@@ -3005,6 +3294,14 @@ export type CapacityMatchingSearchErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type CapacityMatchingSearchError =
@@ -3059,6 +3356,14 @@ export type CapacityMatchingReserveErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type CapacityMatchingReserveError =
@@ -3113,6 +3418,14 @@ export type CapacityMatchingReleaseErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type CapacityMatchingReleaseError =
@@ -3174,6 +3487,14 @@ export type FileStorageUploadErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type FileStorageUploadError =
@@ -3227,6 +3548,14 @@ export type DocumentRegisterErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type DocumentRegisterError =
@@ -3281,6 +3610,14 @@ export type DocumentConfirmErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type DocumentConfirmError =
@@ -3334,6 +3671,14 @@ export type DocumentComparisonCompareErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type DocumentComparisonCompareError =
@@ -3387,6 +3732,14 @@ export type DemandAggregationSuggestErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type DemandAggregationSuggestError =
@@ -3438,6 +3791,14 @@ export type BusinessStartRegisteredOnboardingErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type BusinessStartRegisteredOnboardingError =
@@ -3491,6 +3852,14 @@ export type BusinessConfirmRegisteredOnboardingErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type BusinessConfirmRegisteredOnboardingError =
@@ -3542,6 +3911,14 @@ export type AuthRegisterErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type AuthRegisterError = AuthRegisterErrors[keyof AuthRegisterErrors];
@@ -3592,6 +3969,14 @@ export type AuthRefreshErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type AuthRefreshError = AuthRefreshErrors[keyof AuthRefreshErrors];
@@ -3605,6 +3990,301 @@ export type AuthRefreshResponses = {
 
 export type AuthRefreshResponse =
     AuthRefreshResponses[keyof AuthRefreshResponses];
+
+export type AuthVerifyOtpData = {
+    body: OtpVerifyRequest;
+    path?: never;
+    query?: never;
+    url: "/api/auth/otp/verify";
+};
+
+export type AuthVerifyOtpErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type AuthVerifyOtpError = AuthVerifyOtpErrors[keyof AuthVerifyOtpErrors];
+
+export type AuthVerifyOtpResponses = {
+    /**
+     * OK
+     */
+    200: TokenResponse;
+};
+
+export type AuthVerifyOtpResponse =
+    AuthVerifyOtpResponses[keyof AuthVerifyOtpResponses];
+
+export type AuthSendOtpData = {
+    body: OtpSendRequest;
+    path?: never;
+    query?: never;
+    url: "/api/auth/otp/send";
+};
+
+export type AuthSendOtpErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type AuthSendOtpError = AuthSendOtpErrors[keyof AuthSendOtpErrors];
+
+export type AuthSendOtpResponses = {
+    /**
+     * Accepted
+     */
+    202: OtpAcceptedResponse;
+};
+
+export type AuthSendOtpResponse =
+    AuthSendOtpResponses[keyof AuthSendOtpResponses];
+
+export type AuthValidateMomoData = {
+    body: MomoValidationRequest;
+    path?: never;
+    query?: never;
+    url: "/api/auth/momo/validate";
+};
+
+export type AuthValidateMomoErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type AuthValidateMomoError =
+    AuthValidateMomoErrors[keyof AuthValidateMomoErrors];
+
+export type AuthValidateMomoResponses = {
+    /**
+     * OK
+     */
+    200: MomoAccountHolderResponse;
+};
+
+export type AuthValidateMomoResponse =
+    AuthValidateMomoResponses[keyof AuthValidateMomoResponses];
+
+export type AuthCompleteMomoData = {
+    body?: never;
+    path: {
+        pollToken: string;
+    };
+    query?: never;
+    url: "/api/auth/momo/userinfo/{pollToken}";
+};
+
+export type AuthCompleteMomoErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type AuthCompleteMomoError =
+    AuthCompleteMomoErrors[keyof AuthCompleteMomoErrors];
+
+export type AuthCompleteMomoResponses = {
+    /**
+     * OK
+     */
+    200: MomoSignInResponse;
+};
+
+export type AuthCompleteMomoResponse =
+    AuthCompleteMomoResponses[keyof AuthCompleteMomoResponses];
+
+export type AuthInitiateMomoData = {
+    body: MomoInitiateRequest;
+    path?: never;
+    query?: never;
+    url: "/api/auth/momo/initiate";
+};
+
+export type AuthInitiateMomoErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type AuthInitiateMomoError =
+    AuthInitiateMomoErrors[keyof AuthInitiateMomoErrors];
+
+export type AuthInitiateMomoResponses = {
+    /**
+     * Accepted
+     */
+    202: MomoInitiatedResponse;
+};
+
+export type AuthInitiateMomoResponse =
+    AuthInitiateMomoResponses[keyof AuthInitiateMomoResponses];
 
 export type AuthLogoutData = {
     body: LogoutRequest;
@@ -3642,6 +4322,14 @@ export type AuthLogoutErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type AuthLogoutError = AuthLogoutErrors[keyof AuthLogoutErrors];
@@ -3691,6 +4379,14 @@ export type AuthLoginErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type AuthLoginError = AuthLoginErrors[keyof AuthLoginErrors];
@@ -3742,6 +4438,14 @@ export type SupplierViewGuestErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type SupplierViewGuestError =
@@ -3795,6 +4499,14 @@ export type TrustPublicSummaryErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TrustPublicSummaryError =
@@ -3846,6 +4558,14 @@ export type NotificationPreferenceGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type NotificationPreferenceGetError =
@@ -3899,6 +4619,14 @@ export type RiskListErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type RiskListError = RiskListErrors[keyof RiskListErrors];
@@ -3950,6 +4678,14 @@ export type InsuranceEvidenceErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type InsuranceEvidenceError =
@@ -4003,6 +4739,14 @@ export type BusinessGetBusinessErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type BusinessGetBusinessError =
@@ -4057,6 +4801,14 @@ export type TransportGetVehicleErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportGetVehicleError =
@@ -4111,6 +4863,14 @@ export type TransportAssignmentHistoryErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportAssignmentHistoryError =
@@ -4165,6 +4925,14 @@ export type TransportGetDriverErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportGetDriverError =
@@ -4219,6 +4987,14 @@ export type TransportGetOfferErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TransportGetOfferError =
@@ -4273,6 +5049,14 @@ export type ShipmentGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ShipmentGetError = ShipmentGetErrors[keyof ShipmentGetErrors];
@@ -4328,6 +5112,14 @@ export type TelemetryHistoryErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TelemetryHistoryError =
@@ -4382,6 +5174,14 @@ export type TelemetryLiveErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TelemetryLiveError = TelemetryLiveErrors[keyof TelemetryLiveErrors];
@@ -4436,6 +5236,14 @@ export type HandoverGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type HandoverGetError = HandoverGetErrors[keyof HandoverGetErrors];
@@ -4489,6 +5297,14 @@ export type RoutingGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type RoutingGetError = RoutingGetErrors[keyof RoutingGetErrors];
@@ -4541,6 +5357,14 @@ export type RouteScoringGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type RouteScoringGetError =
@@ -4595,6 +5419,14 @@ export type ProcurementGetRequestErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ProcurementGetRequestError =
@@ -4649,6 +5481,14 @@ export type ProcurementGetQuoteErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ProcurementGetQuoteError =
@@ -4703,6 +5543,14 @@ export type ProcurementGetOrderErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type ProcurementGetOrderError =
@@ -4757,6 +5605,14 @@ export type CapacityMatchingGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type CapacityMatchingGetError =
@@ -4811,6 +5667,14 @@ export type FileStorageMetadataErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type FileStorageMetadataError =
@@ -4865,6 +5729,14 @@ export type FileStorageDownloadErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type FileStorageDownloadError =
@@ -4919,6 +5791,14 @@ export type DocumentGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type DocumentGetError = DocumentGetErrors[keyof DocumentGetErrors];
@@ -4972,6 +5852,14 @@ export type DocumentComparisonGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type DocumentComparisonGetError =
@@ -5026,6 +5914,14 @@ export type DemandAggregationGetErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type DemandAggregationGetError =
@@ -5079,6 +5975,14 @@ export type BusinessGetRegisteredOnboardingErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type BusinessGetRegisteredOnboardingError =
@@ -5093,6 +5997,67 @@ export type BusinessGetRegisteredOnboardingResponses = {
 
 export type BusinessGetRegisteredOnboardingResponse =
     BusinessGetRegisteredOnboardingResponses[keyof BusinessGetRegisteredOnboardingResponses];
+
+export type AuthMomoStatusData = {
+    body?: never;
+    path: {
+        pollToken: string;
+    };
+    query?: never;
+    url: "/api/auth/momo/status/{pollToken}";
+};
+
+export type AuthMomoStatusErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type AuthMomoStatusError =
+    AuthMomoStatusErrors[keyof AuthMomoStatusErrors];
+
+export type AuthMomoStatusResponses = {
+    /**
+     * OK
+     */
+    200: MomoStatusResponse;
+};
+
+export type AuthMomoStatusResponse =
+    AuthMomoStatusResponses[keyof AuthMomoStatusResponses];
 
 export type TelemetryRevokeData = {
     body?: never;
@@ -5133,6 +6098,14 @@ export type TelemetryRevokeErrors = {
      * The server could not complete the request
      */
     500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
 };
 
 export type TelemetryRevokeError =

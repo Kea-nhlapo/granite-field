@@ -127,6 +127,14 @@ public class AuthService {
         refreshSessions.revokeByTokenHash(refreshTokens.hash(rawRefreshToken), clock.instant());
     }
 
+    @Transactional
+    public AuthTokens authenticateExternal(UUID userId) {
+        UserAccount account = accounts.findById(userId)
+                .filter(UserAccount::enabled)
+                .orElseThrow(AccessException::invalidExternalIdentity);
+        return issueTokenPair(account, clock.instant());
+    }
+
     private AuthTokens issueTokenPair(UserAccount account, Instant now) {
         String refreshToken = refreshTokens.create();
         refreshSessions.save(new RefreshSession(

@@ -53,7 +53,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -92,7 +94,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         },
         "security": []
       }
@@ -136,7 +140,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -175,7 +181,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         },
         "security": []
       }
@@ -209,7 +217,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -248,7 +258,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -279,7 +291,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -318,7 +332,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -351,7 +367,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -394,7 +412,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -431,7 +451,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -470,7 +492,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -501,7 +525,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       },
       "post": {
@@ -540,7 +566,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -579,7 +607,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -622,7 +652,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -661,7 +693,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -700,7 +734,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -737,7 +773,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -776,7 +814,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -823,7 +863,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -872,7 +914,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -919,7 +963,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -966,7 +1012,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1009,7 +1057,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1056,7 +1106,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1097,7 +1149,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1142,7 +1196,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1181,7 +1237,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1226,7 +1284,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1265,7 +1325,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1310,7 +1372,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1347,7 +1411,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1407,7 +1473,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1448,7 +1516,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1495,7 +1565,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1536,7 +1608,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1577,7 +1651,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1612,7 +1688,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1645,7 +1723,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1676,7 +1756,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         },
         "security": []
       }
@@ -1708,7 +1790,183 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/otp/verify": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authVerifyOtp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OtpVerifyRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/TokenResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/otp/send": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authSendOtp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OtpSendRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/OtpAcceptedResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/momo/validate": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authValidateMomo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MomoValidationRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MomoAccountHolderResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/momo/userinfo/{pollToken}": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authCompleteMomo",
+        "parameters": [
+          {
+            "name": "pollToken",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/MomoSignInResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
+    "/api/auth/momo/initiate": {
+      "post": {
+        "tags": ["auth-controller"],
+        "operationId": "authInitiateMomo",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MomoInitiateRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MomoInitiatedResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         },
         "security": []
       }
@@ -1733,7 +1991,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         },
         "security": []
       }
@@ -1765,7 +2025,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         },
         "security": []
       }
@@ -1799,7 +2061,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         },
         "security": []
       }
@@ -1833,7 +2097,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         },
         "security": []
       }
@@ -1857,7 +2123,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1890,7 +2158,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1923,7 +2193,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1956,7 +2228,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -1993,7 +2267,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2033,7 +2309,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2070,7 +2348,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2109,7 +2389,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2146,7 +2428,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2191,7 +2475,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2230,7 +2516,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2273,7 +2561,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2312,7 +2602,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2351,7 +2643,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2390,7 +2684,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2427,7 +2723,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2464,7 +2762,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2501,7 +2801,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2540,7 +2842,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2579,7 +2883,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2616,7 +2922,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2653,7 +2961,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2690,7 +3000,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     },
@@ -2723,8 +3035,44 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
+      }
+    },
+    "/api/auth/momo/status/{pollToken}": {
+      "get": {
+        "tags": ["auth-controller"],
+        "operationId": "authMomoStatus",
+        "parameters": [
+          {
+            "name": "pollToken",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/MomoStatusResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
       }
     },
     "/api/businesses/{businessId}/telemetry-devices/{deviceId}": {
@@ -2753,7 +3101,9 @@
           "404": { "$ref": "#/components/responses/NotFound" },
           "409": { "$ref": "#/components/responses/Conflict" },
           "429": { "$ref": "#/components/responses/RateLimited" },
-          "500": { "$ref": "#/components/responses/ServerError" }
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
         }
       }
     }
@@ -4560,6 +4910,104 @@
         "properties": { "refreshToken": { "type": "string", "minLength": 1 } },
         "required": ["refreshToken"]
       },
+      "OtpVerifyRequest": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\+[1-9][0-9]{7,14}$"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[0-9]{4,10}$"
+          }
+        },
+        "required": ["code", "phoneNumber"]
+      },
+      "OtpSendRequest": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\+[1-9][0-9]{7,14}$"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "required": ["phoneNumber", "turnstileToken"]
+      },
+      "OtpAcceptedResponse": {
+        "type": "object",
+        "properties": { "status": { "type": "string" } }
+      },
+      "MomoValidationRequest": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\+[1-9][0-9]{7,14}$"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "required": ["phoneNumber", "turnstileToken"]
+      },
+      "MomoAccountHolderResponse": {
+        "type": "object",
+        "properties": { "active": { "type": "boolean" } }
+      },
+      "MomoProfileResponse": {
+        "type": "object",
+        "properties": {
+          "givenName": { "type": "string" },
+          "familyName": { "type": "string" },
+          "locale": { "type": "string" }
+        }
+      },
+      "MomoSignInResponse": {
+        "type": "object",
+        "properties": {
+          "profile": { "$ref": "#/components/schemas/MomoProfileResponse" },
+          "tokens": { "$ref": "#/components/schemas/TokenResponse" }
+        }
+      },
+      "MomoInitiateRequest": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\+[1-9][0-9]{7,14}$"
+          },
+          "turnstileToken": {
+            "type": "string",
+            "maxLength": 2048,
+            "minLength": 0
+          }
+        },
+        "required": ["phoneNumber", "turnstileToken"]
+      },
+      "MomoInitiatedResponse": {
+        "type": "object",
+        "properties": {
+          "pollToken": { "type": "string" },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "APPROVED", "REJECTED", "EXPIRED"]
+          },
+          "expiresAt": { "type": "string", "format": "date-time" }
+        }
+      },
       "LogoutRequest": {
         "type": "object",
         "properties": { "refreshToken": { "type": "string", "minLength": 1 } },
@@ -4953,6 +5401,15 @@
           "expiresAt": { "type": "string", "format": "date-time" }
         }
       },
+      "MomoStatusResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "APPROVED", "REJECTED", "EXPIRED"]
+          }
+        }
+      },
       "ApiProblem": {
         "type": "object",
         "properties": {
@@ -4991,13 +5448,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "title": "The request is invalid",
-              "requestId": "01JEXAMPLE00000000000000000",
-              "type": "about:blank",
-              "status": 400,
               "instance": "/api/example",
-              "code": "INVALID_REQUEST",
-              "detail": "The request is invalid."
+              "status": 400,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "The request is invalid",
+              "detail": "The request is invalid.",
+              "code": "INVALID_REQUEST"
             }
           }
         }
@@ -5011,13 +5468,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "title": "Authentication is required",
-              "requestId": "01JEXAMPLE00000000000000000",
-              "type": "about:blank",
-              "status": 401,
               "instance": "/api/example",
-              "code": "AUTHENTICATION_REQUIRED",
-              "detail": "Authentication is required."
+              "status": 401,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "Authentication is required",
+              "detail": "Authentication is required.",
+              "code": "AUTHENTICATION_REQUIRED"
             }
           }
         }
@@ -5031,13 +5488,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "title": "The caller is not allowed to perform this action",
-              "requestId": "01JEXAMPLE00000000000000000",
-              "type": "about:blank",
-              "status": 403,
               "instance": "/api/example",
-              "code": "ACCESS_DENIED",
-              "detail": "The caller is not allowed to perform this action."
+              "status": 403,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "The caller is not allowed to perform this action",
+              "detail": "The caller is not allowed to perform this action.",
+              "code": "ACCESS_DENIED"
             }
           }
         }
@@ -5051,13 +5508,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "title": "The requested resource was not found",
-              "requestId": "01JEXAMPLE00000000000000000",
-              "type": "about:blank",
-              "status": 404,
               "instance": "/api/example",
-              "code": "NOT_FOUND",
-              "detail": "The requested resource was not found."
+              "status": 404,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "The requested resource was not found",
+              "detail": "The requested resource was not found.",
+              "code": "NOT_FOUND"
             }
           }
         }
@@ -5071,13 +5528,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "title": "The request conflicts with current state",
-              "requestId": "01JEXAMPLE00000000000000000",
-              "type": "about:blank",
-              "status": 409,
               "instance": "/api/example",
-              "code": "STATE_CONFLICT",
-              "detail": "The request conflicts with current state."
+              "status": 409,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "The request conflicts with current state",
+              "detail": "The request conflicts with current state.",
+              "code": "STATE_CONFLICT"
             }
           }
         }
@@ -5091,13 +5548,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "title": "The request limit was exceeded",
-              "requestId": "01JEXAMPLE00000000000000000",
-              "type": "about:blank",
-              "status": 429,
               "instance": "/api/example",
-              "code": "RATE_LIMIT_EXCEEDED",
-              "detail": "The request limit was exceeded."
+              "status": 429,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "The request limit was exceeded",
+              "detail": "The request limit was exceeded.",
+              "code": "RATE_LIMIT_EXCEEDED"
             }
           }
         }
@@ -5111,13 +5568,53 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "title": "The server could not complete the request",
-              "requestId": "01JEXAMPLE00000000000000000",
-              "type": "about:blank",
-              "status": 500,
               "instance": "/api/example",
-              "code": "INTERNAL_ERROR",
-              "detail": "The server could not complete the request."
+              "status": 500,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "The server could not complete the request",
+              "detail": "The server could not complete the request.",
+              "code": "INTERNAL_ERROR"
+            }
+          }
+        }
+      },
+      "BadGateway": {
+        "description": "An external provider rejected the request",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "instance": "/api/example",
+              "status": 502,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "An external provider rejected the request",
+              "detail": "An external provider rejected the request.",
+              "code": "EXTERNAL_PROVIDER_FAILED"
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "An external provider is temporarily unavailable",
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "type": "object",
+              "$ref": "#/components/schemas/ApiProblem"
+            },
+            "example": {
+              "instance": "/api/example",
+              "status": 503,
+              "type": "about:blank",
+              "requestId": "01JEXAMPLE00000000000000000",
+              "title": "An external provider is temporarily unavailable",
+              "detail": "An external provider is temporarily unavailable.",
+              "code": "EXTERNAL_PROVIDER_UNAVAILABLE"
             }
           }
         }

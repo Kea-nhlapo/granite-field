@@ -28,8 +28,10 @@ public class OpenApiConfiguration {
     private static final String BEARER_AUTH = "bearerAuth";
     private static final Map<String, String> NON_DEFAULT_SUCCESS_STATUSES = Map.ofEntries(
             Map.entry("aggregationSuggest", "201"),
+            Map.entry("authInitiateMomo", "202"),
             Map.entry("authLogout", "204"),
             Map.entry("authRegister", "201"),
+            Map.entry("authSendOtp", "202"),
             Map.entry("businessStartRegisteredOnboarding", "201"),
             Map.entry("capacityMatchingReserve", "201"),
             Map.entry("capacityMatchingSearch", "201"),
@@ -115,6 +117,18 @@ public class OpenApiConfiguration {
                     components, "RateLimited", "429", "The request limit was exceeded", "RATE_LIMIT_EXCEEDED");
             addProblemComponent(
                     components, "ServerError", "500", "The server could not complete the request", "INTERNAL_ERROR");
+            addProblemComponent(
+                    components,
+                    "BadGateway",
+                    "502",
+                    "An external provider rejected the request",
+                    "EXTERNAL_PROVIDER_FAILED");
+            addProblemComponent(
+                    components,
+                    "ServiceUnavailable",
+                    "503",
+                    "An external provider is temporarily unavailable",
+                    "EXTERNAL_PROVIDER_UNAVAILABLE");
             openApi.getPaths().values().forEach(path -> path.readOperations().forEach(operation -> {
                 addProblem(operation.getResponses(), "400", "BadRequest");
                 addProblem(operation.getResponses(), "401", "Unauthorized");
@@ -123,6 +137,8 @@ public class OpenApiConfiguration {
                 addProblem(operation.getResponses(), "409", "Conflict");
                 addProblem(operation.getResponses(), "429", "RateLimited");
                 addProblem(operation.getResponses(), "500", "ServerError");
+                addProblem(operation.getResponses(), "502", "BadGateway");
+                addProblem(operation.getResponses(), "503", "ServiceUnavailable");
             }));
         };
     }

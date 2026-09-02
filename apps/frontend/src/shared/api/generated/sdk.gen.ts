@@ -10,18 +10,36 @@ import {
 } from "./client";
 import { client } from "./client.gen";
 import type {
+    AuthCompleteMomoData,
+    AuthCompleteMomoErrors,
+    AuthCompleteMomoResponses,
+    AuthInitiateMomoData,
+    AuthInitiateMomoErrors,
+    AuthInitiateMomoResponses,
     AuthLoginData,
     AuthLoginErrors,
     AuthLoginResponses,
     AuthLogoutData,
     AuthLogoutErrors,
     AuthLogoutResponses,
+    AuthMomoStatusData,
+    AuthMomoStatusErrors,
+    AuthMomoStatusResponses,
     AuthRefreshData,
     AuthRefreshErrors,
     AuthRefreshResponses,
     AuthRegisterData,
     AuthRegisterErrors,
     AuthRegisterResponses,
+    AuthSendOtpData,
+    AuthSendOtpErrors,
+    AuthSendOtpResponses,
+    AuthValidateMomoData,
+    AuthValidateMomoErrors,
+    AuthValidateMomoResponses,
+    AuthVerifyOtpData,
+    AuthVerifyOtpErrors,
+    AuthVerifyOtpResponses,
     BusinessConfirmRegisteredOnboardingData,
     BusinessConfirmRegisteredOnboardingErrors,
     BusinessConfirmRegisteredOnboardingResponses,
@@ -1068,6 +1086,91 @@ export const authRefresh = <ThrowOnError extends boolean = false>(
         },
     });
 
+export const authVerifyOtp = <ThrowOnError extends boolean = false>(
+    options: Options<AuthVerifyOtpData, ThrowOnError>,
+): RequestResult<AuthVerifyOtpResponses, AuthVerifyOtpErrors, ThrowOnError> =>
+    (options.client ?? client).post<
+        AuthVerifyOtpResponses,
+        AuthVerifyOtpErrors,
+        ThrowOnError
+    >({
+        url: "/api/auth/otp/verify",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const authSendOtp = <ThrowOnError extends boolean = false>(
+    options: Options<AuthSendOtpData, ThrowOnError>,
+): RequestResult<AuthSendOtpResponses, AuthSendOtpErrors, ThrowOnError> =>
+    (options.client ?? client).post<
+        AuthSendOtpResponses,
+        AuthSendOtpErrors,
+        ThrowOnError
+    >({
+        url: "/api/auth/otp/send",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const authValidateMomo = <ThrowOnError extends boolean = false>(
+    options: Options<AuthValidateMomoData, ThrowOnError>,
+): RequestResult<
+    AuthValidateMomoResponses,
+    AuthValidateMomoErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        AuthValidateMomoResponses,
+        AuthValidateMomoErrors,
+        ThrowOnError
+    >({
+        url: "/api/auth/momo/validate",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const authCompleteMomo = <ThrowOnError extends boolean = false>(
+    options: Options<AuthCompleteMomoData, ThrowOnError>,
+): RequestResult<
+    AuthCompleteMomoResponses,
+    AuthCompleteMomoErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        AuthCompleteMomoResponses,
+        AuthCompleteMomoErrors,
+        ThrowOnError
+    >({ url: "/api/auth/momo/userinfo/{pollToken}", ...options });
+
+export const authInitiateMomo = <ThrowOnError extends boolean = false>(
+    options: Options<AuthInitiateMomoData, ThrowOnError>,
+): RequestResult<
+    AuthInitiateMomoResponses,
+    AuthInitiateMomoErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        AuthInitiateMomoResponses,
+        AuthInitiateMomoErrors,
+        ThrowOnError
+    >({
+        url: "/api/auth/momo/initiate",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
 export const authLogout = <ThrowOnError extends boolean = false>(
     options: Options<AuthLogoutData, ThrowOnError>,
 ): RequestResult<AuthLogoutResponses, AuthLogoutErrors, ThrowOnError> =>
@@ -1513,6 +1616,15 @@ export const businessGetRegisteredOnboarding = <
         url: "/api/businesses/onboarding/registered/{onboardingId}",
         ...options,
     });
+
+export const authMomoStatus = <ThrowOnError extends boolean = false>(
+    options: Options<AuthMomoStatusData, ThrowOnError>,
+): RequestResult<AuthMomoStatusResponses, AuthMomoStatusErrors, ThrowOnError> =>
+    (options.client ?? client).get<
+        AuthMomoStatusResponses,
+        AuthMomoStatusErrors,
+        ThrowOnError
+    >({ url: "/api/auth/momo/status/{pollToken}", ...options });
 
 export const telemetryRevoke = <ThrowOnError extends boolean = false>(
     options: Options<TelemetryRevokeData, ThrowOnError>,

@@ -1,0 +1,9 @@
+trademesh:
+  access:
+    turnstile:
+      provider: cloudflare
+    otp:
+      provider: twilio
+  integrations:
+    momo:
+      provider: http

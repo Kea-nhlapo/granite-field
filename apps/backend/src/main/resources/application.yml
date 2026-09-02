@@ -2,7 +2,7 @@ spring:
   application:
     name: trademesh-backend
   profiles:
-    default: ${SPRING_PROFILES_DEFAULT:local}
+    default: ${APP_ENV:${SPRING_PROFILES_DEFAULT:local}}
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
@@ -62,7 +62,7 @@ logging:
 
 trademesh:
   runtime:
-    environment: ${TRADEMESH_RUNTIME_ENVIRONMENT:local}
+    environment: ${APP_ENV:${TRADEMESH_RUNTIME_ENVIRONMENT:local}}
   web:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
     cors-max-age: ${CORS_MAX_AGE:PT1H}
@@ -75,6 +75,41 @@ trademesh:
       uploads: ${API_RATE_LIMIT_UPLOADS:20}
       telemetry: ${API_RATE_LIMIT_TELEMETRY:120}
       qr-validation: ${API_RATE_LIMIT_QR_VALIDATION:30}
+      otp-send: ${API_RATE_LIMIT_OTP_SEND:10}
+      otp-verify: ${API_RATE_LIMIT_OTP_VERIFY:20}
+      momo-initiate: ${API_RATE_LIMIT_MOMO_INITIATE:10}
+  access:
+    turnstile:
+      provider: ${TURNSTILE_PROVIDER:unconfigured}
+      endpoint: ${CLOUDFLARE_TURNSTILE_ENDPOINT:https://challenges.cloudflare.com/turnstile/v0/siteverify}
+      secret-key: ${CLOUDFLARE_TURNSTILE_SECRET_KEY:}
+      expected-hostname: ${CLOUDFLARE_TURNSTILE_EXPECTED_HOSTNAME:}
+    otp:
+      provider: ${OTP_PROVIDER:unconfigured}
+      base-url: ${TWILIO_VERIFY_BASE_URL:https://verify.twilio.com/v2}
+      account-sid: ${TWILIO_ACCOUNT_SID:}
+      auth-token: ${TWILIO_AUTH_TOKEN:}
+      verify-service-sid: ${TWILIO_VERIFY_SERVICE_SID:}
+      local-code: ${OTP_LOCAL_CODE:}
+      send-cooldown: ${OTP_SEND_COOLDOWN:PT1M}
+    momo-sign-in:
+      poll-token-ttl: ${MOMO_SIGN_IN_POLL_TOKEN_TTL:PT10M}
+  integrations:
+    momo:
+      provider: ${MOMO_PROVIDER:unconfigured}
+      base-url: ${MOMO_BASE_URL:https://sandbox.momodeveloper.mtn.com}
+      target-environment: ${MOMO_TARGET_ENVIRONMENT:sandbox}
+      callback-host: ${MOMO_CALLBACK_HOST:}
+      currency: ${MOMO_CURRENCY:ZAR}
+      token-refresh-skew: ${MOMO_TOKEN_REFRESH_SKEW:PT30S}
+      collections:
+        subscription-key: ${MOMO_COLLECTIONS_SUBSCRIPTION_KEY:}
+        api-user: ${MOMO_COLLECTIONS_API_USER:}
+        api-key: ${MOMO_COLLECTIONS_API_KEY:}
+      disbursements:
+        subscription-key: ${MOMO_DISBURSEMENTS_SUBSCRIPTION_KEY:}
+        api-user: ${MOMO_DISBURSEMENTS_API_USER:}
+        api-key: ${MOMO_DISBURSEMENTS_API_KEY:}
   events:
     source: ${TRADEMESH_EVENTS_SOURCE:trademesh-backend}
   outbox:
@@ -244,6 +279,15 @@ spring:
     username: ${DATABASE_USERNAME:trademesh}
     password: ${DATABASE_PASSWORD:trademesh}
 trademesh:
+  access:
+    turnstile:
+      provider: ${TURNSTILE_PROVIDER:local}
+    otp:
+      provider: ${OTP_PROVIDER:local}
+      local-code: ${OTP_LOCAL_CODE:000000}
+  integrations:
+    momo:
+      provider: ${MOMO_PROVIDER:mock}
   storage:
     endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}
     access-key: ${OBJECT_STORAGE_ACCESS_KEY:trademesh-minio}
