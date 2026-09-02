@@ -40,6 +40,20 @@ git reset --hard "$NEW_TAG"
 
 cd infra/containers
 
+# .env is created once from the example and then belongs to the host, because it
+# holds this deployment's secrets. Settings added to the example afterwards would
+# never reach it, so a release that introduces a required variable fails on its
+# own change. Copy across any key .env does not have yet, and never touch a key
+# it already has - the secrets in there must survive untouched.
+while IFS= read -r line; do
+  case "$line" in ''|'#'*) continue ;; esac
+  key="${line%%=*}"
+  if ! grep -q "^${key}=" .env; then
+    echo "adding new setting from the example: ${key}"
+    printf '%s\n' "$line" >> .env
+  fi
+done < .env.aws.example
+
 PREVIOUS_IMAGE="$(grep '^BACKEND_IMAGE=' .env | cut -d= -f2-)"
 echo "previous image: ${PREVIOUS_IMAGE:-none}"
 
