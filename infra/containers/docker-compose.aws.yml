@@ -11,10 +11,10 @@
 # Sized for a t3.large (8 GiB). Adjust the limits together if you change instance type.
 services:
   backend:
-    build:
-      context: ../../apps/backend
-      dockerfile: Dockerfile
-    image: ${BACKEND_IMAGE:-trademesh-backend:local}
+    # Pulled, never built here. CI builds the image and pushes it to ECR, so a
+    # release does not put a Maven build on a host already running the JVM,
+    # PostgreSQL and clamd, and rolling back is redeploying an earlier tag.
+    image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE in infra/containers/.env}
     container_name: trademesh-backend
     restart: unless-stopped
     depends_on:
