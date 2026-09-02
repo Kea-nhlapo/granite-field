@@ -1,6 +1,7 @@
 package za.co.trademesh.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -19,9 +20,12 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import za.co.trademesh.modules.access.application.AuthService;
+import za.co.trademesh.modules.access.application.PhoneAuthService;
 import za.co.trademesh.modules.access.domain.RegistrationType;
 import za.co.trademesh.modules.aggregation.application.DemandAggregationService;
 import za.co.trademesh.modules.business.application.RegisteredBusinessOnboardingService;
+import za.co.trademesh.modules.delivery.application.DeliveryProposalService;
+import za.co.trademesh.modules.delivery.domain.DeliveryMobileChannel;
 import za.co.trademesh.modules.document.application.DocumentComparisonService;
 import za.co.trademesh.modules.document.application.DocumentService;
 import za.co.trademesh.modules.document.domain.ConfirmedDocumentField;
@@ -36,6 +40,15 @@ import za.co.trademesh.modules.handover.domain.QuantityOutcome;
 import za.co.trademesh.modules.insurance.application.InsuranceEvidencePackage;
 import za.co.trademesh.modules.insurance.application.InsuranceService;
 import za.co.trademesh.modules.insurance.domain.InsurancePurpose;
+import za.co.trademesh.modules.notification.application.LocalEmailCapture;
+import za.co.trademesh.modules.notification.application.LocalMobileCapture;
+import za.co.trademesh.modules.notification.application.NotificationContactService;
+import za.co.trademesh.modules.notification.application.NotificationPreferenceService;
+import za.co.trademesh.modules.notification.domain.NotificationCategory;
+import za.co.trademesh.modules.payment.application.EscrowException;
+import za.co.trademesh.modules.payment.application.EscrowService;
+import za.co.trademesh.modules.payment.application.MomoClient;
+import za.co.trademesh.modules.payment.domain.EscrowStatus;
 import za.co.trademesh.modules.procurement.application.ProcurementService;
 import za.co.trademesh.modules.procurement.domain.ConfirmedOrder;
 import za.co.trademesh.modules.procurement.domain.ProductRequest;
@@ -44,6 +57,7 @@ import za.co.trademesh.modules.risk.application.RiskService;
 import za.co.trademesh.modules.risk.domain.RiskRule;
 import za.co.trademesh.modules.routing.application.RouteScoringService;
 import za.co.trademesh.modules.routing.application.RoutingService;
+import za.co.trademesh.modules.routing.application.ShipmentRouteLookupService;
 import za.co.trademesh.modules.routing.domain.GeoPoint;
 import za.co.trademesh.modules.routing.domain.VehicleLimits;
 import za.co.trademesh.modules.shipment.application.ShipmentService;
@@ -60,6 +74,8 @@ import za.co.trademesh.modules.transport.domain.CapacityMatchStatus;
 import za.co.trademesh.modules.transport.domain.CargoRestriction;
 import za.co.trademesh.modules.transport.domain.CargoTrait;
 import za.co.trademesh.modules.transport.domain.RoutePoint;
+import za.co.trademesh.modules.trust.application.PremiumEstimateService;
+import za.co.trademesh.modules.trust.application.TrustScoreService;
 import za.co.trademesh.shared.events.outbox.OutboxWorker;
 import za.co.trademesh.shared.security.AccountRole;
 import za.co.trademesh.shared.storage.FileCategory;
@@ -83,6 +99,9 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
 
     @Autowired
     private AuthService auth;
+
+    @Autowired
+    private PhoneAuthService phoneAuth;
 
     @Autowired
     private RegisteredBusinessOnboardingService onboarding;
@@ -118,6 +137,9 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
     private RouteScoringService routeScoring;
 
     @Autowired
+    private ShipmentRouteLookupService shipmentRoutes;
+
+    @Autowired
     private ShipmentService shipments;
 
     @Autowired
@@ -128,6 +150,18 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
 
     @Autowired
     private HandoverService handovers;
+
+    @Autowired
+    private DeliveryProposalService deliveryProposals;
+
+    @Autowired
+    private EscrowService escrow;
+
+    @Autowired
+    private TrustScoreService trustScores;
+
+    @Autowired
+    private PremiumEstimateService premiumEstimates;
 
     @Autowired
     private InsuranceService insurance;
@@ -142,6 +176,18 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
     private InMemoryObjectStorage objectStorage;
 
     @Autowired
+    private LocalEmailCapture emailCapture;
+
+    @Autowired
+    private LocalMobileCapture mobileCapture;
+
+    @Autowired
+    private NotificationContactService notificationContacts;
+
+    @Autowired
+    private NotificationPreferenceService notificationPreferences;
+
+    @Autowired
     private JdbcTemplate jdbc;
 
     @BeforeEach
@@ -154,9 +200,11 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
         resetScenario();
     }
 
-    @Test
-    void completesTheSameEvidenceBackedJourneyEveryTime() {
-        Account buyer = register("demo-buyer@trademesh.test", RegistrationType.BUSINESS_OWNER);
+    @RepeatedTest(2)
+    void completesTheFullDemoJourneyTwiceWithoutManualIntervention() {
+        Account buyer = phoneAuthenticatedBuyer("+27821234567");
+        notificationContacts.save(buyer.userId(), "+27821234567", true, true);
+        notificationPreferences.set(buyer.userId(), NotificationCategory.SHIPMENT_UPDATE, null, true, true);
         Account supplier = register("demo-supplier@trademesh.test", RegistrationType.SUPPLIER);
         Account fleet = register("demo-fleet@trademesh.test", RegistrationType.TRANSPORTER);
         Account receiver = register("demo-receiver@trademesh.test", RegistrationType.BUSINESS_OWNER);
@@ -323,6 +371,34 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
         assertThat(shipment.loadOrders()).hasSize(2);
         assertThat(shipment.transporterId()).isEqualTo(transporter.id());
 
+        var liveRoute = shipmentRoutes.route(buyerBusinessId, shipment.id());
+        assertThat(liveRoute.shipmentId()).isEqualTo(shipment.id());
+        assertThat(liveRoute.encodedPolyline()).isNotBlank();
+        assertThat(liveRoute.geometry()).hasSizeGreaterThanOrEqualTo(2);
+
+        var proposedDelivery = deliveryProposals.propose(
+                buyerBusinessId,
+                shipment.id(),
+                new DeliveryProposalService.ProposeDelivery(
+                        id("delivery-proposal"),
+                        "delivery-supplier@trademesh.test",
+                        "+27821234599",
+                        DeliveryMobileChannel.WHATSAPP),
+                buyer.userId());
+        assertThat(proposedDelivery.newlyCreated()).isTrue();
+        drainOutbox();
+        String deliveryToken = deliveryConfirmationToken();
+        assertThat(deliveryProposals.preview(deliveryToken).id())
+                .isEqualTo(proposedDelivery.proposal().id());
+        assertThat(deliveryProposals.confirm(deliveryToken).status().name()).isEqualTo("ACCEPTED");
+
+        assertThat(escrow.get(buyerBusinessId, shipment.id()).status()).isEqualTo(EscrowStatus.LOCK_REQUESTED);
+        settleEscrow();
+        var lockedEscrow = escrow.get(buyerBusinessId, shipment.id());
+        assertThat(lockedEscrow.status()).isEqualTo(EscrowStatus.LOCKED);
+        trustScores.computeVerified(buyerBusinessId);
+        var premiumBeforeDelivery = premiumEstimates.estimate(shipment.id());
+
         completeHandover(buyerBusinessId, shipment.id(), null, HandoverType.COLLECTION, buyer, supplier, "collection");
         assertThat(shipments.get(buyerBusinessId, shipment.id()).status()).isEqualTo(ShipmentStatus.COLLECTED);
         shipments.transition(
@@ -337,23 +413,72 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
         var simulation = new DeterministicTelemetrySimulator(telemetry, clock)
                 .run(issuedDevice.rawCredential(), START.plus(Duration.ofMinutes(10)));
         assertThat(simulation.receipts()).hasSize(4);
+        assertThat(telemetry.getLivePosition(buyerBusinessId, shipment.id()).shipmentId())
+                .isEqualTo(shipment.id());
         assertThat(risk.listForShipment(shipment.id()))
                 .extracting(indicator -> indicator.rule())
                 .contains(RiskRule.ROUTE_DEVIATION, RiskRule.STATIONARY_FUEL_DROP);
 
         clock.set(simulation.completedAt().plus(Duration.ofMinutes(1)));
-        for (ShipmentLoadOrder order :
-                shipments.get(buyerBusinessId, shipment.id()).loadOrders()) {
-            completeHandover(
-                    order.buyerBusinessId(),
-                    shipment.id(),
-                    order.orderId(),
-                    HandoverType.DELIVERY,
-                    buyer,
-                    receiver,
-                    "delivery-" + order.sequence());
-        }
-        assertThat(shipments.get(buyerBusinessId, shipment.id()).status()).isEqualTo(ShipmentStatus.DELIVERED);
+        var disputedDelivery = handovers.issue(
+                buyerBusinessId,
+                shipment.id(),
+                new HandoverService.IssueChallenge(HandoverType.DELIVERY, anchorOrder.id(), receiver.userId()),
+                buyer.userId());
+        var disputedResult = handovers.scanDelivery(
+                shipment.id(),
+                new HandoverService.ScanDelivery(
+                        id("disputed-delivery-scan"),
+                        disputedDelivery.qrPayload(),
+                        amount("19"),
+                        "https://objects.trademesh.test/delivery/quantity.jpg",
+                        disputedDelivery.challenge().expectedLocation().latitude(),
+                        disputedDelivery.challenge().expectedLocation().longitude()),
+                receiver.userId());
+        assertThat(disputedResult.state()).isEqualTo(HandoverState.DISPUTED);
+        assertThat(disputedResult.expectedQuantity()).isEqualByComparingTo("20");
+
+        ShipmentLoadOrder remainingOrder = shipments.get(buyerBusinessId, shipment.id()).loadOrders().stream()
+                .filter(order -> !order.orderId().equals(anchorOrder.id()))
+                .findFirst()
+                .orElseThrow();
+        completeHandover(
+                remainingOrder.buyerBusinessId(),
+                shipment.id(),
+                remainingOrder.orderId(),
+                HandoverType.DELIVERY,
+                buyer,
+                receiver,
+                "delivery-" + remainingOrder.sequence());
+        assertThat(shipments.get(buyerBusinessId, shipment.id()).status()).isEqualTo(ShipmentStatus.DISPUTED);
+        assertThat(handovers.deliveryStatus(buyerBusinessId, shipment.id()).verificationStatus())
+                .isEqualTo("DISPUTED");
+
+        BigDecimal resolvedAmount = lockedEscrow.agreedAmount().subtract(amount("125"));
+        assertThatThrownBy(() -> escrow.release(buyerBusinessId, shipment.id(), id("blocked-release"), resolvedAmount))
+                .isInstanceOf(EscrowException.class)
+                .extracting(failure -> ((EscrowException) failure).code())
+                .isEqualTo("ESCROW_RELEASE_BLOCKED");
+
+        assertThat(escrow.resolveAndRelease(
+                                buyerBusinessId, shipment.id(), id("resolved-release"), resolvedAmount, buyer.userId())
+                        .status())
+                .isEqualTo(EscrowStatus.RELEASE_REQUESTED);
+        settleEscrow();
+        assertThat(escrow.get(buyerBusinessId, shipment.id()).status()).isEqualTo(EscrowStatus.RELEASED);
+        assertThat(handovers.deliveryStatus(buyerBusinessId, shipment.id()).verificationStatus())
+                .isEqualTo("RESOLVED");
+
+        trustScores.computeVerified(buyerBusinessId);
+        var premiumAfterRelease = premiumEstimates.estimate(shipment.id());
+        assertThat(premiumAfterRelease.verifiedTrustScore()).isGreaterThan(premiumBeforeDelivery.verifiedTrustScore());
+        assertThat(premiumAfterRelease.platformPremium()).isLessThan(premiumBeforeDelivery.platformPremium());
+
+        drainOutbox();
+        assertThat(mobileCapture.capturedMessages())
+                .extracting(LocalMobileCapture.CapturedMessage::body)
+                .anySatisfy(body -> assertThat(body).contains("handover needs attention"))
+                .anySatisfy(body -> assertThat(body).contains("released"));
 
         var insuranceCase = insurance.createCase(
                 new InsuranceService.CreateCase(
@@ -392,7 +517,7 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
         assertThat(timeline.stream()
                         .filter(entry -> entry.type().equals("SHIPMENT_STATUS_CHANGED"))
                         .map(entry -> entry.metadata().get("toStatus")))
-                .containsExactly("COLLECTED", "IN_TRANSIT", "DELIVERED");
+                .containsExactly("COLLECTED", "IN_TRANSIT", "DISPUTED");
     }
 
     private ProductRequest request(
@@ -510,6 +635,40 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
                 "Quantity checked by both parties");
     }
 
+    private Account phoneAuthenticatedBuyer(String phoneNumber) {
+        phoneAuth.sendOtp(phoneNumber, challenge("otp-send"), "127.0.0.1");
+        var otpSession = phoneAuth.verifyOtp(phoneNumber, "000000");
+
+        var initiated = phoneAuth.initiateMomo(phoneNumber, challenge("momo-sign-in"), "127.0.0.1");
+        assertThat(initiated.status()).isEqualTo(MomoClient.ConsentStatus.APPROVED);
+        assertThat(phoneAuth.momoStatus(initiated.pollToken())).isEqualTo(MomoClient.ConsentStatus.APPROVED);
+        var momoSession = phoneAuth.completeMomo(initiated.pollToken());
+        assertThat(momoSession.tokens().userId()).isEqualTo(otpSession.userId());
+        assertThat(momoSession.tokens().expiresInSeconds()).isGreaterThan(300);
+        return new Account(otpSession.userId());
+    }
+
+    private String deliveryConfirmationToken() {
+        String prefix = "http://localhost:5173/delivery/confirm/";
+        String body = emailCapture.capturedEmails().stream()
+                .filter(email -> email.subject().equals("Confirm your delivery"))
+                .map(LocalEmailCapture.CapturedEmail::textBody)
+                .findFirst()
+                .orElseThrow();
+        int start = body.indexOf(prefix);
+        assertThat(start).isGreaterThanOrEqualTo(0);
+        int tokenStart = start + prefix.length();
+        int tokenEnd = body.indexOf('\n', tokenStart);
+        return body.substring(tokenStart, tokenEnd < 0 ? body.length() : tokenEnd)
+                .strip();
+    }
+
+    private void settleEscrow() {
+        drainOutbox();
+        clock.set(clock.instant().plus(Duration.ofSeconds(3)));
+        drainOutbox();
+    }
+
     private Account register(String email, RegistrationType type) {
         var tokens = auth.register(email, PASSWORD, type);
         return new Account(tokens.userId());
@@ -537,6 +696,8 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
 
     private void resetScenario() {
         objectStorage.clear();
+        emailCapture.clear();
+        mobileCapture.clear();
         clock.set(START);
         jdbc.execute("""
             DO $$
@@ -553,6 +714,10 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
             END $$;
             """);
         jdbc.execute("ALTER SEQUENCE evidence_ledger_sequence RESTART WITH 1");
+    }
+
+    private static String challenge(String action) {
+        return "local-pass:" + action + ":" + UUID.randomUUID();
     }
 
     private static UUID id(String name) {

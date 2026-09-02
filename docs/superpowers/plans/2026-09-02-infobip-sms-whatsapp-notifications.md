@@ -36,7 +36,7 @@
 
 **Create**
 
-- `apps/backend/src/main/resources/db/migration/V20260903200000__notification_add_mobile_delivery.sql`
+- `apps/backend/src/main/resources/db/migration/V20260903210000__notification_add_mobile_delivery.sql`
 - `apps/backend/src/test/java/za/co/trademesh/integration/MobileNotificationMigrationUpgradeTest.java`
 
 **Modify**

@@ -218,6 +218,10 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
         Account owner = register("mobile-events@example.com");
         UUID businessId = createBusiness(owner, "2026/810002/07");
         String phone = "+27821234567";
+        jdbcTemplate.update(
+                "INSERT INTO access_phone_identity (phone_number, user_id, verification_method, verified_at) VALUES (?, ?, 'OTP', CURRENT_TIMESTAMP)",
+                phone,
+                owner.userId());
         mockMvc.perform(put("/api/notification-contacts/phone")
                         .header(HttpHeaders.AUTHORIZATION, bearer(owner))
                         .contentType(MediaType.APPLICATION_JSON)

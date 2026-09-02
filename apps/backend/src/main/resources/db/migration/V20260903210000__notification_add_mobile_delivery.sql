@@ -1,4 +1,4 @@
--- Version follows the independently merged trust-score migration.
+-- Version follows the provider-neutral OTP migration.
 ALTER TABLE notification_preference
     ADD COLUMN sms_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     ADD COLUMN whatsapp_enabled BOOLEAN NOT NULL DEFAULT FALSE;
