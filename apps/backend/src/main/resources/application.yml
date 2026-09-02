@@ -307,6 +307,8 @@ trademesh:
     allowed-clock-skew: ${HANDOVER_ALLOWED_CLOCK_SKEW:PT2M}
     location-tolerance-metres: ${HANDOVER_LOCATION_TOLERANCE_METRES:250}
     max-quantity-note-length: ${HANDOVER_MAX_QUANTITY_NOTE_LENGTH:500}
+    stream-timeout: ${HANDOVER_STREAM_TIMEOUT:PT30M}
+    signing-secret: ${HANDOVER_QR_SIGNING_SECRET:}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.
@@ -352,3 +354,5 @@ trademesh:
       data-encryption-key: ${NOTIFICATION_DATA_ENCRYPTION_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
     mobile:
       provider: ${MOBILE_NOTIFICATION_PROVIDER:local}
+  handover:
+    signing-secret: ${HANDOVER_QR_SIGNING_SECRET:local-only-handover-signing-secret-change-me}

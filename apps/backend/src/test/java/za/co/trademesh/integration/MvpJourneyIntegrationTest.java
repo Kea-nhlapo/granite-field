@@ -345,7 +345,7 @@ class MvpJourneyIntegrationTest extends PostgresIntegrationTest {
         for (ShipmentLoadOrder order :
                 shipments.get(buyerBusinessId, shipment.id()).loadOrders()) {
             completeHandover(
-                    buyerBusinessId,
+                    order.buyerBusinessId(),
                     shipment.id(),
                     order.orderId(),
                     HandoverType.DELIVERY,

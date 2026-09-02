@@ -5,6 +5,7 @@ import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -33,7 +34,7 @@ final class HandoverContracts {
 
     record ConfirmHandoverRequest(
             @NotNull UUID commandId,
-            @NotBlank @Size(max = 128) String qrPayload,
+            @NotBlank @Size(max = 1024) String qrPayload,
             @NotNull CaptureMode captureMode,
             @NotNull Instant observedAt,
             @DecimalMin("-90.0") @DecimalMax("90.0") double latitude,
@@ -59,6 +60,8 @@ final class HandoverContracts {
             HandoverType type,
             UUID deliveryOrderId,
             HandoverState state,
+            BigDecimal expectedQuantity,
+            String unitOfMeasure,
             UUID initiatorUserId,
             UUID counterpartyUserId,
             LocationResponse expectedLocation,
@@ -74,6 +77,8 @@ final class HandoverContracts {
                     challenge.type(),
                     challenge.deliveryOrderId(),
                     challenge.state(),
+                    challenge.expectedQuantity(),
+                    challenge.unitOfMeasure(),
                     challenge.initiatorUserId(),
                     challenge.counterpartyUserId(),
                     new LocationResponse(
@@ -100,6 +105,8 @@ final class HandoverContracts {
             double latitude,
             double longitude,
             double distanceMetres,
+            BigDecimal capturedQuantity,
+            String photoUrl,
             QuantityOutcome quantityOutcome,
             String quantityNote) {
 
@@ -113,6 +120,8 @@ final class HandoverContracts {
                     confirmation.latitude(),
                     confirmation.longitude(),
                     confirmation.distanceMetres(),
+                    confirmation.capturedQuantity(),
+                    confirmation.photoUrl(),
                     confirmation.quantityOutcome(),
                     confirmation.quantityNote());
         }

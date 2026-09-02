@@ -32,6 +32,7 @@ import za.co.trademesh.modules.access.application.AuthService;
 import za.co.trademesh.modules.access.domain.RegistrationType;
 import za.co.trademesh.modules.aggregation.application.ConsolidatedDemandCatalog;
 import za.co.trademesh.modules.business.application.RegisteredBusinessOnboardingService;
+import za.co.trademesh.modules.procurement.application.DeliveryOrderQuantityCatalog;
 import za.co.trademesh.modules.routing.application.RouteScoringService;
 import za.co.trademesh.modules.routing.application.RoutingService;
 import za.co.trademesh.modules.routing.domain.GeoPoint;
@@ -85,6 +86,7 @@ class HandoverControllerIntegrationTest extends PostgresIntegrationTest {
     @AfterEach
     void cleanState() {
         demandCatalog.clear();
+        jdbcTemplate.update("DELETE FROM handover_delivery_resolution");
         jdbcTemplate.update("DELETE FROM handover_attempt");
         jdbcTemplate.update("DELETE FROM handover_confirmation");
         jdbcTemplate.update("DELETE FROM handover_challenge");
@@ -158,7 +160,7 @@ class HandoverControllerIntegrationTest extends PostgresIntegrationTest {
         UUID challengeId = UUID.fromString(JsonPath.read(issued, "$.challenge.challengeId"));
         String qrPayload = JsonPath.read(issued, "$.qrPayload");
         assertThat(qrPayload)
-                .startsWith("tmh_")
+                .startsWith("tmh1.")
                 .doesNotContain(setup.shipmentId().toString());
         String storedHash = jdbcTemplate.queryForObject(
                 "SELECT nonce_hash FROM handover_challenge WHERE id = ?", String.class, challengeId);
@@ -282,7 +284,88 @@ class HandoverControllerIntegrationTest extends PostgresIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.state").value("DISPUTED"))
                 .andExpect(jsonPath("$.confirmations[1].quantityNote").value("Receiver counted 19 cases"));
-        assertThat(shipmentStatus(setup.shipmentId())).isEqualTo("DISPUTED");
+        assertThat(shipmentStatus(setup.shipmentId())).isEqualTo("IN_TRANSIT");
+    }
+
+    @Test
+    void issuesSignedDeliveryQrAndDerivesDisputeFromCapturedQuantity() throws Exception {
+        ShipmentSetup setup = createShipment();
+        shipmentService.transition(
+                setup.businessId(),
+                setup.shipmentId(),
+                new ShipmentService.TransitionShipment(
+                        UUID.randomUUID(), ShipmentStatus.COLLECTED, "Collection complete", UUID.randomUUID()),
+                setup.buyer().userId(),
+                ShipmentActionSource.OPERATIONS);
+        shipmentService.transition(
+                setup.businessId(),
+                setup.shipmentId(),
+                new ShipmentService.TransitionShipment(
+                        UUID.randomUUID(), ShipmentStatus.IN_TRANSIT, "Vehicle departed", UUID.randomUUID()),
+                setup.buyer().userId(),
+                ShipmentActionSource.OPERATIONS);
+        String issueBody = """
+            {
+              "businessId":"%s",
+              "deliveryOrderId":"%s",
+              "counterpartyUserId":"%s"
+            }
+            """.formatted(
+                        setup.businessId(),
+                        setup.deliveryOrderId(),
+                        setup.counterparty().userId());
+        String issued = mockMvc.perform(post("/api/delivery/{shipmentId}/qr", setup.shipmentId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(setup.buyer()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(issueBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.challenge.expectedQuantity").value(20.0))
+                .andExpect(jsonPath("$.challenge.unitOfMeasure").value("CASE"))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String token = JsonPath.read(issued, "$.qrPayload");
+        UUID scanRequestId = UUID.randomUUID();
+        String scanBody = """
+            {
+              "requestId":"%s",
+              "token":"%s",
+              "capturedQty":19,
+              "photoUrl":"https://objects.example.test/deliveries/count.jpg",
+              "gpsLat":-25.9992,
+              "gpsLng":28.1263
+            }
+            """.formatted(scanRequestId, token);
+
+        mockMvc.perform(post("/api/delivery/{shipmentId}/scan", setup.shipmentId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(setup.counterparty()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(scanBody.replace(token, token + "A")))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("HANDOVER_TOKEN_INVALID"));
+
+        for (int retry = 0; retry < 2; retry++) {
+            mockMvc.perform(post("/api/delivery/{shipmentId}/scan", setup.shipmentId())
+                            .header(HttpHeaders.AUTHORIZATION, bearer(setup.counterparty()))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(scanBody))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.state").value("DISPUTED"))
+                    .andExpect(jsonPath("$.confirmations.length()").value(1))
+                    .andExpect(jsonPath("$.confirmations[0].capturedQuantity").value(19.0))
+                    .andExpect(jsonPath("$.confirmations[0].quantityOutcome").value("DISPUTED"));
+        }
+
+        mockMvc.perform(get("/api/delivery/{shipmentId}/verification", setup.shipmentId())
+                        .param("businessId", setup.businessId().toString())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(setup.buyer())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.verificationStatus").value("DISPUTED"))
+                .andExpect(jsonPath("$.deliveries[0].expectedQuantity").value(20.0))
+                .andExpect(jsonPath("$.deliveries[0].capturedQuantity").value(19.0))
+                .andExpect(jsonPath("$.deliveries[0].photoUrl")
+                        .value("https://objects.example.test/deliveries/count.jpg"));
+        assertThat(shipmentStatus(setup.shipmentId())).isEqualTo("IN_TRANSIT");
     }
 
     private ShipmentSetup createShipment() {
@@ -438,6 +521,13 @@ class HandoverControllerIntegrationTest extends PostgresIntegrationTest {
         @Primary
         TestDemandCatalog testDemandCatalog() {
             return new TestDemandCatalog();
+        }
+
+        @Bean
+        @Primary
+        DeliveryOrderQuantityCatalog deliveryOrderQuantityCatalog() {
+            return (businessId, orderId) ->
+                    Optional.of(new DeliveryOrderQuantityCatalog.ExpectedQuantity(new BigDecimal("20.0000"), "CASE"));
         }
     }
 

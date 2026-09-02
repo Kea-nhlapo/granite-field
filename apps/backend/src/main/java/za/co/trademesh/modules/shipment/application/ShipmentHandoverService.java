@@ -23,7 +23,12 @@ class ShipmentHandoverService implements ShipmentHandoverCatalog {
     @Override
     @Transactional(readOnly = true)
     public Optional<HandoverShipment> findOwned(UUID businessId, UUID shipmentId) {
-        return repository.findById(businessId, shipmentId).map(ShipmentHandoverService::snapshot);
+        return repository
+                .findById(shipmentId)
+                .filter(shipment -> shipment.requestedByBusinessId().equals(businessId)
+                        || shipment.loadOrders().stream()
+                                .anyMatch(order -> order.buyerBusinessId().equals(businessId)))
+                .map(ShipmentHandoverService::snapshot);
     }
 
     @Override
@@ -41,8 +46,12 @@ class ShipmentHandoverService implements ShipmentHandoverCatalog {
                     case DELIVERY_VERIFIED -> ShipmentStatus.DELIVERED;
                     case DELIVERY_DISPUTED -> ShipmentStatus.DISPUTED;
                 };
+        UUID shipmentOwner = repository
+                .findById(shipmentId)
+                .map(shipment -> shipment.requestedByBusinessId())
+                .orElse(businessId);
         shipments.transition(
-                businessId,
+                shipmentOwner,
                 shipmentId,
                 new ShipmentService.TransitionShipment(commandId, target, reason, correlationId),
                 actorUserId,
