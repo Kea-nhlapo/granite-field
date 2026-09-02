@@ -123,6 +123,48 @@ trademesh:
     timeout: ${ROUTING_PROVIDER_TIMEOUT:PT3S}
     max-waypoints: ${ROUTING_MAX_WAYPOINTS:20}
     maximum-candidates: ${ROUTING_MAXIMUM_CANDIDATES:3}
+    scoring:
+      algorithm-version: ${ROUTING_SCORE_ALGORITHM_VERSION:route-score/v1}
+      unknown-data-penalty: ${ROUTING_UNKNOWN_DATA_PENALTY:0.85}
+      fuel-price-zar-per-litre: ${ROUTING_FUEL_PRICE_ZAR_PER_LITRE:24.00}
+      fuel-litres-per-100-km: ${ROUTING_FUEL_LITRES_PER_100_KM:34.00}
+      profiles:
+        balanced:
+          weights:
+            time: 0.20
+            distance: 0.10
+            fuel: 0.15
+            tolls: 0.10
+            safety-exposure: 0.25
+            road-quality: 0.10
+            connectivity: 0.10
+        high-value-electronics:
+          weights:
+            time: 0.10
+            distance: 0.05
+            fuel: 0.05
+            tolls: 0.05
+            safety-exposure: 0.35
+            road-quality: 0.15
+            connectivity: 0.25
+        temperature-sensitive:
+          weights:
+            time: 0.40
+            distance: 0.05
+            fuel: 0.05
+            tolls: 0.05
+            safety-exposure: 0.10
+            road-quality: 0.20
+            connectivity: 0.15
+        low-value-dry-goods:
+          weights:
+            time: 0.30
+            distance: 0.15
+            fuel: 0.25
+            tolls: 0.15
+            safety-exposure: 0.05
+            road-quality: 0.05
+            connectivity: 0.05
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.

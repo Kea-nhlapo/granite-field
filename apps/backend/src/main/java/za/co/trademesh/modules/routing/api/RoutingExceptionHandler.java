@@ -5,13 +5,13 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import za.co.trademesh.modules.routing.application.RoutingException;
 
-@RestControllerAdvice(assignableTypes = RoutingController.class)
+@RestControllerAdvice(assignableTypes = {RoutingController.class, RouteScoringController.class})
 public class RoutingExceptionHandler {
 
     @ExceptionHandler(RoutingException.class)
     ProblemDetail handle(RoutingException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(exception.status(), exception.getMessage());
-        problem.setTitle("Route calculation failed");
+        problem.setTitle("Routing request failed");
         problem.setProperty("code", exception.code());
         return problem;
     }
