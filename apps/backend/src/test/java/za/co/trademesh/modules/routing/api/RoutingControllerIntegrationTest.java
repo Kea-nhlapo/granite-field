@@ -42,6 +42,12 @@ class RoutingControllerIntegrationTest extends PostgresIntegrationTest {
     @BeforeEach
     @AfterEach
     void cleanState() {
+        jdbcTemplate.update("DELETE FROM routing_candidate_reason");
+        jdbcTemplate.update("DELETE FROM routing_candidate_option");
+        jdbcTemplate.update("DELETE FROM routing_factor_score");
+        jdbcTemplate.update("DELETE FROM routing_candidate_score");
+        jdbcTemplate.update("DELETE FROM routing_assessment_weight");
+        jdbcTemplate.update("DELETE FROM routing_assessment");
         jdbcTemplate.update("DELETE FROM routing_segment");
         jdbcTemplate.update("DELETE FROM routing_candidate");
         jdbcTemplate.update("DELETE FROM routing_avoidance");
