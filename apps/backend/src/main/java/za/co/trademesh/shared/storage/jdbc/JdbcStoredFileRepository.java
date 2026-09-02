@@ -5,7 +5,6 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -71,14 +70,28 @@ class JdbcStoredFileRepository implements StoredFileRepository {
 
     @Override
     public Optional<StoredFile> findByIdAndBusinessId(UUID fileId, UUID businessId) {
-        List<StoredFile> rows = jdbcTemplate.query("""
+        return one("""
             SELECT id, business_id, category, original_filename, object_key,
                    content_type, extension, size_bytes, sha256, scan_status,
                    storage_status, uploaded_by_user_id, created_at, stored_at
             FROM stored_file
             WHERE id = ? AND business_id = ?
-            """, this::mapFile, fileId, businessId);
-        return rows.stream().findFirst();
+            """, fileId, businessId);
+    }
+
+    @Override
+    public Optional<StoredFile> findById(UUID fileId) {
+        return one("""
+            SELECT id, business_id, category, original_filename, object_key,
+                   content_type, extension, size_bytes, sha256, scan_status,
+                   storage_status, uploaded_by_user_id, created_at, stored_at
+            FROM stored_file
+            WHERE id = ?
+            """, fileId);
+    }
+
+    private Optional<StoredFile> one(String sql, Object... parameters) {
+        return jdbcTemplate.query(sql, this::mapFile, parameters).stream().findFirst();
     }
 
     private StoredFile mapFile(ResultSet resultSet, int rowNumber) throws SQLException {

@@ -1,6 +1,7 @@
 package za.co.trademesh.modules.handover.domain;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -14,6 +15,8 @@ public interface HandoverRepository {
     boolean save(HandoverChallenge challenge);
 
     Optional<HandoverChallenge> findOwned(UUID businessId, UUID shipmentId, UUID challengeId);
+
+    List<HandoverChallenge> findByShipment(UUID shipmentId);
 
     Optional<HandoverChallenge> findByNonceHashForUpdate(String nonceHash);
 

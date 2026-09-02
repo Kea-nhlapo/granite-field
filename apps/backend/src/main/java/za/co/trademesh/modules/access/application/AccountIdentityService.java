@@ -20,8 +20,8 @@ public class AccountIdentityService {
     public Optional<AccountIdentity> findEnabled(UUID userId) {
         return accounts.findById(userId)
                 .filter(account -> account.enabled())
-                .map(account -> new AccountIdentity(account.id(), account.email()));
+                .map(account -> new AccountIdentity(account.id(), Optional.ofNullable(account.email())));
     }
 
-    public record AccountIdentity(UUID userId, String normalizedEmail) {}
+    public record AccountIdentity(UUID userId, Optional<String> normalizedEmail) {}
 }

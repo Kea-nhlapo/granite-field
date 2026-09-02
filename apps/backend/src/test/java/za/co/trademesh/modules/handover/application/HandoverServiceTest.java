@@ -326,6 +326,14 @@ class HandoverServiceTest {
         }
 
         @Override
+        public List<HandoverChallenge> findByShipment(UUID shipmentId) {
+            return Optional.ofNullable(challenge)
+                    .filter(value -> value.shipmentId().equals(shipmentId))
+                    .stream()
+                    .toList();
+        }
+
+        @Override
         public Optional<HandoverChallenge> findByNonceHashForUpdate(String nonceHash) {
             return Optional.ofNullable(challenge)
                     .filter(value -> value.nonceHash().equals(nonceHash));

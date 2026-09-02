@@ -1,0 +1,9 @@
+{
+    "type": "about:blank",
+    "title": "Request could not be completed",
+    "status": 500,
+    "detail": "An unexpected error occurred. Use the request ID when asking for help.",
+    "instance": "/api",
+    "code": "INTERNAL_ERROR",
+    "requestId": "00000000-0000-4000-8000-000000000099"
+}

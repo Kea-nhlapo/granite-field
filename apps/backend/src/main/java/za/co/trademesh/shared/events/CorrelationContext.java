@@ -54,6 +54,26 @@ public final class CorrelationContext {
         });
     }
 
+    /**
+     * Variant for boundaries such as servlet filters whose work can throw a
+     * checked exception. Keeping the scope here preserves the same guaranteed
+     * cleanup as the ordinary helpers.
+     */
+    public static <E extends Exception> void runCheckedWithin(
+            UUID correlationId, String actor, ThrowingRunnable<E> work) throws E {
+        Scope previous = CURRENT.get();
+        CURRENT.set(new Scope(correlationId, actor));
+        try {
+            work.run();
+        } finally {
+            if (previous == null) {
+                CURRENT.remove();
+            } else {
+                CURRENT.set(previous);
+            }
+        }
+    }
+
     public static <T> T callWithin(UUID correlationId, String actor, Supplier<T> work) {
         Scope previous = CURRENT.get();
         CURRENT.set(new Scope(correlationId, actor));
@@ -66,5 +86,10 @@ public final class CorrelationContext {
                 CURRENT.set(previous);
             }
         }
+    }
+
+    @FunctionalInterface
+    public interface ThrowingRunnable<E extends Exception> {
+        void run() throws E;
     }
 }

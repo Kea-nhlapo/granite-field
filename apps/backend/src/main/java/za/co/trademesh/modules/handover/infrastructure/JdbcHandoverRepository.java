@@ -109,6 +109,19 @@ class JdbcHandoverRepository implements HandoverRepository {
     }
 
     @Override
+    public List<HandoverChallenge> findByShipment(UUID shipmentId) {
+        return jdbcTemplate
+                .query(
+                        "SELECT " + CHALLENGE_COLUMNS
+                                + " FROM handover_challenge WHERE shipment_id = ? ORDER BY created_at, id",
+                        this::mapChallengeBase,
+                        shipmentId)
+                .stream()
+                .map(this::withConfirmations)
+                .toList();
+    }
+
+    @Override
     public Optional<HandoverChallenge> findByNonceHashForUpdate(String nonceHash) {
         return find(
                 "SELECT " + CHALLENGE_COLUMNS + " FROM handover_challenge WHERE nonce_hash = ? FOR UPDATE", nonceHash);

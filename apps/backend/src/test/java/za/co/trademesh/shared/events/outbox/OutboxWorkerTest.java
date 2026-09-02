@@ -88,7 +88,11 @@ class OutboxWorkerTest extends OutboxTestSupport {
         assertThat(row.status()).isEqualTo("PENDING");
         assertThat(row.attempts()).isEqualTo(1);
         assertThat(row.availableAt()).isAfter(before);
-        assertThat(row.lastError()).get().asString().contains("handler refused");
+        assertThat(row.lastError())
+                .get()
+                .asString()
+                .contains(IllegalStateException.class.getName())
+                .doesNotContain("handler refused");
         assertThat(row.claimedAt()).isEmpty();
     }
 

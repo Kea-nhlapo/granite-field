@@ -1,0 +1,9 @@
+{
+    "type": "about:blank",
+    "title": "Access denied",
+    "status": 403,
+    "detail": "This account is not allowed to perform the requested operation.",
+    "instance": "/api",
+    "code": "ACCESS_DENIED",
+    "requestId": "00000000-0000-4000-8000-000000000099"
+}
