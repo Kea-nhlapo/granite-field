@@ -1,14 +1,16 @@
 import { http, HttpResponse } from "msw";
 
 import type {
-    ApiProblem,
     GuestInvitationResponse,
     PublicSummaryResponse,
     TokenResponse,
 } from "../generated";
 import { runtimeConfig } from "../../lib/runtime-config";
+import { problem, scenarioOf, standardError } from "./mock-http";
+import { onboardingHandlers } from "./onboarding-handlers";
 
-export const mockScenarioHeader = "X-Mock-Scenario";
+export { mockScenarioHeader } from "./mock-http";
+export { resetOnboardingMocks } from "./onboarding-handlers";
 
 export const ownerTokens: TokenResponse = {
     userId: "00000000-0000-4000-8000-000000000010",
@@ -180,34 +182,5 @@ export const handlers = [
         }
         return new HttpResponse(null, { status: 204 });
     }),
+    ...onboardingHandlers,
 ];
-
-function scenarioOf(request: Request) {
-    return request.headers.get(mockScenarioHeader) ?? "success";
-}
-
-function standardError(scenario: string) {
-    if (scenario === "validation") {
-        return problem(400, "Request validation failed", "INVALID_REQUEST");
-    }
-    if (scenario === "forbidden") {
-        return problem(403, "Access denied", "ACCESS_DENIED");
-    }
-    if (scenario === "server-error") {
-        return problem(500, "Request could not be completed", "INTERNAL_ERROR");
-    }
-    return undefined;
-}
-
-function problem(status: number, title: string, code: string) {
-    const response: ApiProblem = {
-        code,
-        detail: `${title}.`,
-        instance: "/api",
-        requestId: "00000000-0000-4000-8000-000000000099",
-        status,
-        title,
-        type: "about:blank",
-    };
-    return HttpResponse.json(response, { status });
-}

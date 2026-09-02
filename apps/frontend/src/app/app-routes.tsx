@@ -8,6 +8,7 @@ import { RequireRole } from "../features/access/RequireRole";
 import { RequireSession } from "../features/access/RequireSession";
 import { useSession } from "../features/access/SessionProvider";
 import WorkspacePage from "../features/access/WorkspacePage";
+import OnboardingPage from "../features/business/OnboardingPage";
 
 function HomeRedirect() {
     const { session, status } = useSession();
@@ -43,6 +44,22 @@ export const appRoutes: RouteObject[] = [
                     </RequireRole>
                 ),
                 path: "internal-risk",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER"]}>
+                        <OnboardingPage />
+                    </RequireRole>
+                ),
+                path: "onboarding",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER"]}>
+                        <OnboardingPage />
+                    </RequireRole>
+                ),
+                path: "onboarding/:onboardingId",
             },
         ],
         element: (

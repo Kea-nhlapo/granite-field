@@ -12,6 +12,8 @@ export function AppShell() {
     const showInternalRisk =
         session !== null &&
         hasAnyRole(session.roles, ["INTERNAL_RISK_ANALYST", "ADMINISTRATOR"]);
+    const showOnboarding =
+        session !== null && hasAnyRole(session.roles, ["BUSINESS_OWNER"]);
 
     return (
         <div className={styles.shell} data-testid="app-shell">
@@ -42,6 +44,18 @@ export function AppShell() {
                             to="/app/internal-risk"
                         >
                             Internal risk
+                        </NavLink>
+                    ) : null}
+                    {showOnboarding ? (
+                        <NavLink
+                            className={({ isActive }) =>
+                                isActive
+                                    ? `${styles.navLink} ${styles.navLinkActive}`
+                                    : styles.navLink
+                            }
+                            to="/app/onboarding"
+                        >
+                            Onboarding
                         </NavLink>
                     ) : null}
                     <Button

@@ -61,7 +61,9 @@ describe("session shell", () => {
             screen.getByText(`Signed in as user ${ownerTokens.userId}`),
         ).toBeInTheDocument();
         expect(screen.getByText("Roles: BUSINESS_OWNER")).toBeInTheDocument();
-        expect(screen.queryByText(/onboarding/i)).not.toBeInTheDocument();
+        expect(
+            screen.queryByText(/onboardingComplete/i),
+        ).not.toBeInTheDocument();
     });
 
     it("restores the session after a reload using the refresh token", async () => {
