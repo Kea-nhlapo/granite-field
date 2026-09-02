@@ -19,6 +19,28 @@ export type PreferenceResponse = {
     updatedAt?: string;
 };
 
+export type PositionRequest = {
+    clientEventId?: string;
+    recordedAt?: string;
+    lat: number;
+    lng: number;
+    speedKilometresPerHour?: number;
+    batteryPercent?: number;
+    networkStatus?: "CONNECTED" | "LIMITED" | "OFFLINE" | "UNKNOWN";
+    networkSignalDbm?: number;
+};
+
+export type PositionIngestionResponse = {
+    shipmentId?: string;
+    clientEventId?: string;
+    readingId?: string;
+    status?: "ACCEPTED" | "DUPLICATE";
+    recordedAt?: string;
+    latitude?: number;
+    longitude?: number;
+    speedKilometresPerHour?: number;
+};
+
 export type IngestReadingsRequest = {
     readings: Array<ReadingRequest>;
 };
@@ -1241,6 +1263,34 @@ export type LoginRequest = {
     password: string;
 };
 
+export type SseEmitter = {
+    timeout?: number;
+};
+
+export type BackhaulMatchResponse = {
+    shipmentId?: string;
+    businessId?: string;
+    pickup?: PointResponse;
+    destination?: PointResponse;
+    windowStart?: string;
+    windowEnd?: string;
+    pickupDistanceMetres?: number;
+    pickupDurationSeconds?: number;
+    roadDistanceMeasured?: boolean;
+    averageRating?: number;
+    successfulDeliveryRate?: number;
+    trustScore?: number;
+    score?: number;
+};
+
+export type BackhaulMatchesResponse = {
+    matches?: Array<BackhaulMatchResponse>;
+};
+
+export type NearbySuppliersResponse = {
+    suppliers?: Array<SupplierResponse>;
+};
+
 export type GuestInvitationResponse = {
     invitationId?: string;
     supplierProfileId?: string;
@@ -1472,6 +1522,21 @@ export type StatusResponse = {
     updatedAt?: string;
 };
 
+export type RouteResponse = {
+    shipmentId?: string;
+    providerName?: string;
+    providerVersion?: string;
+    fallbackUsed?: boolean;
+    fallbackReason?: string;
+    label?: string;
+    encodedPolyline?: string;
+    geometry?: Array<PointResponse>;
+    distanceMetres?: number;
+    durationSeconds?: number;
+    generatedAt?: string;
+    estimatedArrivalAt?: string;
+};
+
 export type ReadingHistoryResponse = {
     readings?: Array<ReadingResponse>;
     units?: UnitsResponse;
@@ -1602,6 +1667,70 @@ export type NotificationPreferenceSetResponses = {
 
 export type NotificationPreferenceSetResponse =
     NotificationPreferenceSetResponses[keyof NotificationPreferenceSetResponses];
+
+export type TelemetryPositionData = {
+    body: PositionRequest;
+    headers: {
+        "X-Telemetry-Credential": string;
+    };
+    path: {
+        shipmentId: string;
+    };
+    query?: never;
+    url: "/api/tracking/{shipmentId}/position";
+};
+
+export type TelemetryPositionErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type TelemetryPositionError =
+    TelemetryPositionErrors[keyof TelemetryPositionErrors];
+
+export type TelemetryPositionResponses = {
+    /**
+     * Accepted
+     */
+    202: PositionIngestionResponse;
+};
+
+export type TelemetryPositionResponse =
+    TelemetryPositionResponses[keyof TelemetryPositionResponses];
 
 export type TelemetryIngestData = {
     body: IngestReadingsRequest;
@@ -5072,6 +5201,195 @@ export type AuthLoginResponses = {
 
 export type AuthLoginResponse = AuthLoginResponses[keyof AuthLoginResponses];
 
+export type TelemetryPositionEventsData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/tracking/{shipmentId}/events";
+};
+
+export type TelemetryPositionEventsErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type TelemetryPositionEventsError =
+    TelemetryPositionEventsErrors[keyof TelemetryPositionEventsErrors];
+
+export type TelemetryPositionEventsResponses = {
+    /**
+     * OK
+     */
+    200: SseEmitter;
+};
+
+export type TelemetryPositionEventsResponse =
+    TelemetryPositionEventsResponses[keyof TelemetryPositionEventsResponses];
+
+export type TelemetryBackhaulMatchesData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/tracking/{shipmentId}/backhaul-matches";
+};
+
+export type TelemetryBackhaulMatchesErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type TelemetryBackhaulMatchesError =
+    TelemetryBackhaulMatchesErrors[keyof TelemetryBackhaulMatchesErrors];
+
+export type TelemetryBackhaulMatchesResponses = {
+    /**
+     * OK
+     */
+    200: BackhaulMatchesResponse;
+};
+
+export type TelemetryBackhaulMatchesResponse =
+    TelemetryBackhaulMatchesResponses[keyof TelemetryBackhaulMatchesResponses];
+
+export type NearbySupplierNearbyData = {
+    body?: never;
+    path?: never;
+    query: {
+        lat: number;
+        lng: number;
+        limit?: number;
+    };
+    url: "/api/suppliers/nearby";
+};
+
+export type NearbySupplierNearbyErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type NearbySupplierNearbyError =
+    NearbySupplierNearbyErrors[keyof NearbySupplierNearbyErrors];
+
+export type NearbySupplierNearbyResponses = {
+    /**
+     * OK
+     */
+    200: NearbySuppliersResponse;
+};
+
+export type NearbySupplierNearbyResponse =
+    NearbySupplierNearbyResponses[keyof NearbySupplierNearbyResponses];
+
 export type SupplierViewGuestData = {
     body?: never;
     path: {
@@ -5498,6 +5816,69 @@ export type DeliveryVerificationEventsResponses = {
 
 export type DeliveryVerificationEventsResponse =
     DeliveryVerificationEventsResponses[keyof DeliveryVerificationEventsResponses];
+
+export type ShipmentRouteRouteData = {
+    body?: never;
+    path: {
+        shipmentId: string;
+    };
+    query: {
+        businessId: string;
+    };
+    url: "/api/delivery/{shipmentId}/route";
+};
+
+export type ShipmentRouteRouteErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type ShipmentRouteRouteError =
+    ShipmentRouteRouteErrors[keyof ShipmentRouteRouteErrors];
+
+export type ShipmentRouteRouteResponses = {
+    /**
+     * OK
+     */
+    200: RouteResponse;
+};
+
+export type ShipmentRouteRouteResponse =
+    ShipmentRouteRouteResponses[keyof ShipmentRouteRouteResponses];
 
 export type EscrowGetData = {
     body?: never;

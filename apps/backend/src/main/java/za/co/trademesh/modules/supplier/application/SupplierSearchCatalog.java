@@ -8,6 +8,8 @@ public interface SupplierSearchCatalog {
 
     List<Candidate> search(String query, int limit);
 
+    List<Candidate> listRegistered(int limit);
+
     record Candidate(
             UUID supplierProfileId,
             UUID businessId,

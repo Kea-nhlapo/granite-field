@@ -231,6 +231,8 @@ trademesh:
     algorithm-version: ${CAPACITY_MATCH_ALGORITHM_VERSION:capacity-match/v1}
   routing:
     provider: ${ROUTING_PROVIDER:mock}
+    directions-endpoint: ${GOOGLE_DIRECTIONS_ENDPOINT:https://maps.googleapis.com/maps/api/directions/json}
+    maps-api-key: ${GOOGLE_MAPS_API_KEY:}
     timeout: ${ROUTING_PROVIDER_TIMEOUT:PT3S}
     max-waypoints: ${ROUTING_MAX_WAYPOINTS:20}
     maximum-candidates: ${ROUTING_MAXIMUM_CANDIDATES:3}
@@ -287,6 +289,13 @@ trademesh:
     retention: ${TELEMETRY_RETENTION:P90D}
     cleanup-batch-size: ${TELEMETRY_CLEANUP_BATCH_SIZE:5000}
     cleanup-interval: ${TELEMETRY_CLEANUP_INTERVAL:PT1H}
+  tracking:
+    stream-timeout: ${TRACKING_STREAM_TIMEOUT:PT30M}
+    backhaul-radius-metres: ${BACKHAUL_RADIUS_METRES:30000}
+    backhaul-time-window: ${BACKHAUL_TIME_WINDOW:PT6H}
+    backhaul-candidate-limit: ${BACKHAUL_CANDIDATE_LIMIT:20}
+    backhaul-distance-weight: ${BACKHAUL_DISTANCE_WEIGHT:0.70}
+    backhaul-trust-weight: ${BACKHAUL_TRUST_WEIGHT:0.30}
   risk:
     # Two off-route readings reduce false alerts from a single noisy GPS fix.
     route-deviation-metres: ${RISK_ROUTE_DEVIATION_METRES:1000}

@@ -59,6 +59,56 @@
         }
       }
     },
+    "/api/tracking/{shipmentId}/position": {
+      "post": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryPosition",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "X-Telemetry-Credential",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PositionRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PositionIngestionResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
     "/api/telemetry/readings": {
       "post": {
         "tags": ["telemetry-controller"],
@@ -2406,6 +2456,133 @@
         "security": []
       }
     },
+    "/api/tracking/{shipmentId}/events": {
+      "get": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryPositionEvents",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {
+                "schema": { "$ref": "#/components/schemas/SseEmitter" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/tracking/{shipmentId}/backhaul-matches": {
+      "get": {
+        "tags": ["telemetry-controller"],
+        "operationId": "telemetryBackhaulMatches",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackhaulMatchesResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/suppliers/nearby": {
+      "get": {
+        "tags": ["nearby-supplier-controller"],
+        "operationId": "nearbySupplierNearby",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "format": "int32", "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NearbySuppliersResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
     "/api/supplier-invitations/guest/{token}": {
       "get": {
         "tags": ["supplier-controller"],
@@ -2636,6 +2813,45 @@
             "content": {
               "text/event-stream": {
                 "schema": { "$ref": "#/components/schemas/StatusResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/{shipmentId}/route": {
+      "get": {
+        "tags": ["shipment-route-controller"],
+        "operationId": "shipmentRouteRoute",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          },
+          {
+            "name": "businessId",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/RouteResponse" }
               }
             }
           },
@@ -3662,6 +3878,46 @@
           "updatedAt": { "type": "string", "format": "date-time" }
         }
       },
+      "PositionRequest": {
+        "type": "object",
+        "properties": {
+          "clientEventId": { "type": "string", "format": "uuid" },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "lat": {
+            "type": "number",
+            "format": "double",
+            "maximum": 90.0,
+            "minimum": -90.0
+          },
+          "lng": {
+            "type": "number",
+            "format": "double",
+            "maximum": 180.0,
+            "minimum": -180.0
+          },
+          "speedKilometresPerHour": { "type": "number" },
+          "batteryPercent": { "type": "number" },
+          "networkStatus": {
+            "type": "string",
+            "enum": ["CONNECTED", "LIMITED", "OFFLINE", "UNKNOWN"]
+          },
+          "networkSignalDbm": { "type": "integer", "format": "int32" }
+        },
+        "required": ["lat", "lng"]
+      },
+      "PositionIngestionResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "clientEventId": { "type": "string", "format": "uuid" },
+          "readingId": { "type": "string", "format": "uuid" },
+          "status": { "type": "string", "enum": ["ACCEPTED", "DUPLICATE"] },
+          "recordedAt": { "type": "string", "format": "date-time" },
+          "latitude": { "type": "number", "format": "double" },
+          "longitude": { "type": "number", "format": "double" },
+          "speedKilometresPerHour": { "type": "number" }
+        }
+      },
       "IngestReadingsRequest": {
         "type": "object",
         "properties": {
@@ -4073,7 +4329,7 @@
         "properties": {
           "businessId": { "type": "string", "format": "uuid" },
           "requestId": { "type": "string", "format": "uuid" },
-          "resolvedAmount": { "type": "number", "minimum": 0.0001 }
+          "resolvedAmount": { "type": "number", "minimum": 1.0e-4 }
         },
         "required": ["businessId", "requestId", "resolvedAmount"]
       },
@@ -4133,7 +4389,7 @@
         "properties": {
           "businessId": { "type": "string", "format": "uuid" },
           "requestId": { "type": "string", "format": "uuid" },
-          "resolvedAmount": { "type": "number", "minimum": 0.0001 }
+          "resolvedAmount": { "type": "number", "minimum": 1.0e-4 }
         },
         "required": ["businessId", "requestId", "resolvedAmount"]
       },
@@ -5727,6 +5983,46 @@
         },
         "required": ["email", "password"]
       },
+      "SseEmitter": {
+        "type": "object",
+        "properties": { "timeout": { "type": "integer", "format": "int64" } }
+      },
+      "BackhaulMatchResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "pickup": { "$ref": "#/components/schemas/PointResponse" },
+          "destination": { "$ref": "#/components/schemas/PointResponse" },
+          "windowStart": { "type": "string", "format": "date-time" },
+          "windowEnd": { "type": "string", "format": "date-time" },
+          "pickupDistanceMetres": { "type": "integer", "format": "int64" },
+          "pickupDurationSeconds": { "type": "integer", "format": "int64" },
+          "roadDistanceMeasured": { "type": "boolean" },
+          "averageRating": { "type": "number" },
+          "successfulDeliveryRate": { "type": "number" },
+          "trustScore": { "type": "number" },
+          "score": { "type": "number" }
+        }
+      },
+      "BackhaulMatchesResponse": {
+        "type": "object",
+        "properties": {
+          "matches": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BackhaulMatchResponse" }
+          }
+        }
+      },
+      "NearbySuppliersResponse": {
+        "type": "object",
+        "properties": {
+          "suppliers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SupplierResponse" }
+          }
+        }
+      },
       "GuestInvitationResponse": {
         "type": "object",
         "properties": {
@@ -6070,6 +6366,26 @@
           "updatedAt": { "type": "string", "format": "date-time" }
         }
       },
+      "RouteResponse": {
+        "type": "object",
+        "properties": {
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "providerName": { "type": "string" },
+          "providerVersion": { "type": "string" },
+          "fallbackUsed": { "type": "boolean" },
+          "fallbackReason": { "type": "string" },
+          "label": { "type": "string" },
+          "encodedPolyline": { "type": "string" },
+          "geometry": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/PointResponse" }
+          },
+          "distanceMetres": { "type": "integer", "format": "int64" },
+          "durationSeconds": { "type": "integer", "format": "int64" },
+          "generatedAt": { "type": "string", "format": "date-time" },
+          "estimatedArrivalAt": { "type": "string", "format": "date-time" }
+        }
+      },
       "ReadingHistoryResponse": {
         "type": "object",
         "properties": {
@@ -6188,13 +6504,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The request is invalid",
-              "detail": "The request is invalid.",
-              "code": "INVALID_REQUEST",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 400,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "INVALID_REQUEST",
+              "detail": "The request is invalid.",
+              "title": "The request is invalid",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -6208,13 +6524,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "Authentication is required",
-              "detail": "Authentication is required.",
-              "code": "AUTHENTICATION_REQUIRED",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 401,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "AUTHENTICATION_REQUIRED",
+              "detail": "Authentication is required.",
+              "title": "Authentication is required",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -6228,13 +6544,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The caller is not allowed to perform this action",
-              "detail": "The caller is not allowed to perform this action.",
-              "code": "ACCESS_DENIED",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 403,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "ACCESS_DENIED",
+              "detail": "The caller is not allowed to perform this action.",
+              "title": "The caller is not allowed to perform this action",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -6248,13 +6564,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The requested resource was not found",
-              "detail": "The requested resource was not found.",
-              "code": "NOT_FOUND",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 404,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "NOT_FOUND",
+              "detail": "The requested resource was not found.",
+              "title": "The requested resource was not found",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -6268,13 +6584,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The request conflicts with current state",
-              "detail": "The request conflicts with current state.",
-              "code": "STATE_CONFLICT",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 409,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "STATE_CONFLICT",
+              "detail": "The request conflicts with current state.",
+              "title": "The request conflicts with current state",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -6288,13 +6604,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The request limit was exceeded",
-              "detail": "The request limit was exceeded.",
-              "code": "RATE_LIMIT_EXCEEDED",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 429,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "RATE_LIMIT_EXCEEDED",
+              "detail": "The request limit was exceeded.",
+              "title": "The request limit was exceeded",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -6308,13 +6624,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The server could not complete the request",
-              "detail": "The server could not complete the request.",
-              "code": "INTERNAL_ERROR",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 500,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "INTERNAL_ERROR",
+              "detail": "The server could not complete the request.",
+              "title": "The server could not complete the request",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -6328,13 +6644,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "An external provider rejected the request",
-              "detail": "An external provider rejected the request.",
-              "code": "EXTERNAL_PROVIDER_FAILED",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 502,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "EXTERNAL_PROVIDER_FAILED",
+              "detail": "An external provider rejected the request.",
+              "title": "An external provider rejected the request",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }
@@ -6348,13 +6664,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "requestId": "01JEXAMPLE00000000000000000",
-              "title": "An external provider is temporarily unavailable",
-              "detail": "An external provider is temporarily unavailable.",
-              "code": "EXTERNAL_PROVIDER_UNAVAILABLE",
-              "instance": "/api/example",
+              "type": "about:blank",
               "status": 503,
-              "type": "about:blank"
+              "instance": "/api/example",
+              "code": "EXTERNAL_PROVIDER_UNAVAILABLE",
+              "detail": "An external provider is temporarily unavailable.",
+              "title": "An external provider is temporarily unavailable",
+              "requestId": "01JEXAMPLE00000000000000000"
             }
           }
         }

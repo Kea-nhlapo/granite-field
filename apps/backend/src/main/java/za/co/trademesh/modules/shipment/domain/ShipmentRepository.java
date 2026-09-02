@@ -13,6 +13,8 @@ public interface ShipmentRepository {
 
     Optional<Shipment> findById(UUID shipmentId);
 
+    Optional<Shipment> findByParticipantBusinessId(UUID businessId, UUID shipmentId);
+
     List<Shipment> findOperational(int limit);
 
     Optional<Shipment> findByIdForUpdate(UUID businessId, UUID shipmentId);
