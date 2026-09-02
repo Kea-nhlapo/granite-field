@@ -10,11 +10,7 @@ import za.co.trademesh.modules.notification.application.LocalMobileCapture;
 import za.co.trademesh.modules.notification.application.MobileDeliveryProvider;
 
 @Component
-@ConditionalOnProperty(
-        prefix = "trademesh.notifications.mobile",
-        name = "provider",
-        havingValue = "local",
-        matchIfMissing = true)
+@ConditionalOnProperty(prefix = "trademesh.notifications.mobile", name = "provider", havingValue = "local")
 class LocalCaptureMobileProvider implements MobileDeliveryProvider, LocalMobileCapture {
 
     private final ConcurrentHashMap<String, CapturedMessage> captured = new ConcurrentHashMap<>();

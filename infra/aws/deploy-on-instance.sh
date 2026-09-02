@@ -30,6 +30,12 @@ if ! command -v aws >/dev/null 2>&1; then
   aws --version
 fi
 
+# The watchdog must not fight the deploy: a backend that is still starting looks
+# exactly like a backend that has hung. Hold the lock for the whole release.
+mkdir -p /opt/trademesh
+touch /opt/trademesh/deploying
+trap 'rm -f /opt/trademesh/deploying' EXIT
+
 cd "$APP_DIR"
 
 # The compose file and .env template ship with the code, so the checkout has to
@@ -70,6 +76,70 @@ else
   echo "WARNING: pre-deploy dump failed; continuing"
 fi
 
+# Releases accumulate one image each. A full disk takes down PostgreSQL, clamd and
+# the backend at once and looks like a mystery outage, so keep only what a rollback
+# could need: the tag just released, the one before it, and "latest".
+prune_old_images() {
+  docker images --format '{{.Repository}}:{{.Tag}}' "$IMAGE_REPO" 2>/dev/null \
+    | grep -v -e ":${NEW_TAG}$" -e ':latest$' -e "^${PREVIOUS_IMAGE}$" \
+    | xargs -r docker rmi -f >/dev/null 2>&1 || true
+  docker image prune -f >/dev/null 2>&1 || true
+}
+
+# "restart: unless-stopped" covers a process that dies. It does nothing for a JVM
+# that is alive but wedged, which is the failure that quietly loses a demo. This
+# timer notices that case and restarts the backend; it stands down during releases
+# and for the first five minutes of a container's life, when a slow start is normal.
+install_watchdog() {
+  cat > /opt/trademesh/watchdog.sh <<'WATCHDOG'
+#!/usr/bin/env bash
+set -u
+HEALTH=http://127.0.0.1:8080/actuator/health
+cd /opt/trademesh/granite-field/infra/containers || exit 0
+
+[ -f /opt/trademesh/deploying ] && exit 0
+curl -fsS --max-time 10 "$HEALTH" >/dev/null 2>&1 && exit 0
+
+# One bad probe is not an outage. Confirm before touching anything.
+sleep 20
+[ -f /opt/trademesh/deploying ] && exit 0
+curl -fsS --max-time 10 "$HEALTH" >/dev/null 2>&1 && exit 0
+
+started=$(docker inspect -f '{{.State.StartedAt}}' trademesh-backend 2>/dev/null) || exit 0
+age=$(( $(date +%s) - $(date -d "$started" +%s 2>/dev/null || echo 0) ))
+[ "$age" -lt 300 ] && exit 0
+
+logger -t trademesh-watchdog "backend unhealthy for over 5 minutes; restarting"
+docker compose -f docker-compose.aws.yml --env-file .env up -d --force-recreate backend
+WATCHDOG
+  chmod 750 /opt/trademesh/watchdog.sh
+
+  cat > /etc/systemd/system/trademesh-watchdog.service <<'UNIT'
+[Unit]
+Description=Restart the TradeMesh backend if it stops answering its health check
+
+[Service]
+Type=oneshot
+ExecStart=/opt/trademesh/watchdog.sh
+UNIT
+
+  cat > /etc/systemd/system/trademesh-watchdog.timer <<'UNIT'
+[Unit]
+Description=Check the TradeMesh backend every two minutes
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=2min
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+  systemctl daemon-reload
+  systemctl enable --now trademesh-watchdog.timer >/dev/null 2>&1 || true
+}
+
 release() {
   sed -i "s|^BACKEND_IMAGE=.*|BACKEND_IMAGE=$1|" .env
   # Not fatal: the very first rollback target is the image that was built on the
@@ -89,11 +159,18 @@ wait_for_health() {
   return 1
 }
 
+# Docker restarts containers on crash and on boot only if the daemon itself comes
+# back, and a host that reboots with Docker disabled comes back with nothing.
+systemctl enable docker >/dev/null 2>&1 || true
+
+install_watchdog
+
 echo "releasing ${IMAGE_REPO}:${NEW_TAG}"
 release "${IMAGE_REPO}:${NEW_TAG}"
 
 if wait_for_health; then
   echo "$NEW_TAG" > /opt/trademesh/current-tag.txt
+  prune_old_images
   echo "DEPLOY_OK ${NEW_TAG}"
   exit 0
 fi

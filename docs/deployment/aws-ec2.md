@@ -124,6 +124,18 @@ Five lines is correct: endpoint, region, bucket, access key, secret key.
 
 ## 5. Releases are automatic
 
+Work happens on `dev`. Feature branches open pull requests into `dev`, and `dev`
+opens a pull request into `main` when the team is ready to release. Quality Gate
+runs on both. `main` is the only branch wired to the instance, so nothing reaches
+AWS until someone deliberately merges into it.
+
+There is one workflow, `.github/workflows/quality-gate.yml`. Its `deploy` job
+declares `needs: [backend, frontend, secrets, api-contract]`, so GitHub will not
+start a release unless every check above it is green — the gate is not a
+convention, it is a dependency. The green tick on a commit on `main` therefore
+means "tested **and** released", and there is no second workflow run to go
+looking for when something fails.
+
 Once `infra/aws/bootstrap-cd.sh` has been run and the `AWS_DEPLOY_ROLE`
 repository variable is set, every commit that reaches `main` and passes Quality
 Gate is released without anyone touching the instance:
@@ -145,9 +157,39 @@ dump first, into `/opt/trademesh/backups/pre-<sha>.sql` on the instance. A
 migration that drops or rewrites a column needs a deliberate plan, not the
 automatic rollback.
 
-To release a specific commit by hand, run the Deploy workflow from the Actions
-tab. To go back to a known-good build, set `BACKEND_IMAGE` in `.env` to that tag
-and run the commands below.
+To re-release the tip of `main` by hand, run Quality Gate from the Actions tab
+with `main` selected. To go back to a known-good build, set `BACKEND_IMAGE` in
+`.env` to that tag and run the commands below.
+
+### A missing setting costs one feature, not the service
+
+Every provider the application selects by configuration has a bean registered for
+the value `unconfigured`, and that bean is what Spring uses when nothing is set.
+The application therefore always starts; a feature nobody has wired throws a clear
+error the first time somebody calls it. Nothing in `docker-compose.aws.yml`
+requires a provider to be chosen either — only genuine secrets are mandatory.
+
+This matters because `.env` lives on the host and is not in git. Without it, any
+new feature merged to `main` that reads a new setting takes the whole backend down
+on the next release, and the image rollback cannot recover it because both images
+read the same `.env`. The release script still copies newly added keys across from
+`.env.aws.example`, but that is now a convenience rather than the thing standing
+between the team and an outage.
+
+### Keeping it up
+
+* `restart: unless-stopped` on all three services, and `docker` is enabled at
+  boot, so a reboot brings the whole stack back.
+* A systemd timer, installed by the release script, checks `/actuator/health`
+  every two minutes and recreates the backend if it has been unhealthy for more
+  than five minutes. It stands down during a release and while a container is
+  still starting. Docker's restart policy covers a process that dies; this covers
+  a JVM that is alive but wedged. Check it with
+  `systemctl list-timers trademesh-watchdog` and
+  `journalctl -t trademesh-watchdog`.
+* Each release deletes backend images other than the one just released, the one
+  before it, and `latest`. A full disk stops PostgreSQL, clamd and the backend at
+  the same time and is easy to misread as something more interesting.
 
 ## 6. Starting the stack by hand
 
