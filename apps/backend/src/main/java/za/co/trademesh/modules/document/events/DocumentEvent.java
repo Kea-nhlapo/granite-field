@@ -3,7 +3,8 @@ package za.co.trademesh.modules.document.events;
 import java.util.UUID;
 import za.co.trademesh.shared.events.DomainEvent;
 
-public sealed interface DocumentEvent extends DomainEvent permits DocumentEvent.Confirmed {
+public sealed interface DocumentEvent extends DomainEvent
+        permits DocumentEvent.Confirmed, DocumentEvent.ComparisonCompleted {
 
     @Override
     default int schemaVersion() {
@@ -14,6 +15,13 @@ public sealed interface DocumentEvent extends DomainEvent permits DocumentEvent.
         @Override
         public String type() {
             return "document.confirmed";
+        }
+    }
+
+    record ComparisonCompleted(UUID comparisonId, UUID businessId, int indicatorCount) implements DocumentEvent {
+        @Override
+        public String type() {
+            return "document.comparison-completed";
         }
     }
 }
