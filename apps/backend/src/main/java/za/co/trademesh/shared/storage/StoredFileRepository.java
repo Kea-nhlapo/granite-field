@@ -13,4 +13,6 @@ public interface StoredFileRepository {
     void markFailed(UUID fileId);
 
     Optional<StoredFile> findByIdAndBusinessId(UUID fileId, UUID businessId);
+
+    Optional<StoredFile> findById(UUID fileId);
 }
