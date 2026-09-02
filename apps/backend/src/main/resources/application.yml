@@ -87,6 +87,21 @@ trademesh:
     bucket: ${OBJECT_STORAGE_BUCKET:trademesh}
     max-upload-bytes: ${OBJECT_STORAGE_MAX_UPLOAD_BYTES:10485760}
     download-ttl: ${OBJECT_STORAGE_DOWNLOAD_TTL:PT5M}
+    # Required by AWS S3 in opt-in regions such as af-south-1. Blank lets the
+    # client negotiate, which is correct for MinIO and for always-on regions.
+    region: ${OBJECT_STORAGE_REGION:}
+    file-scanner:
+      # fail-closed | mock | clamav. Unset means fail-closed: an environment that
+      # forgets to choose refuses uploads instead of accepting unscanned files.
+      provider: ${FILE_SCANNER_PROVIDER:fail-closed}
+      clamav:
+        host: ${CLAMAV_HOST:clamav}
+        port: ${CLAMAV_PORT:3310}
+        timeout: ${CLAMAV_TIMEOUT:PT30S}
+  business:
+    registry:
+      # mock | unconfigured. Mocked registry data must never be an accident.
+      provider: ${COMPANY_REGISTRY_PROVIDER:unconfigured}
   documents:
     extraction:
       provider: ${DOCUMENT_EXTRACTION_PROVIDER:unconfigured}
@@ -214,6 +229,11 @@ trademesh:
     endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}
     access-key: ${OBJECT_STORAGE_ACCESS_KEY:trademesh-minio}
     secret-key: ${OBJECT_STORAGE_SECRET_KEY:trademesh-minio}
+    file-scanner:
+      provider: ${FILE_SCANNER_PROVIDER:mock}
+  business:
+    registry:
+      provider: ${COMPANY_REGISTRY_PROVIDER:mock}
   documents:
     extraction:
       provider: ${DOCUMENT_EXTRACTION_PROVIDER:mock}

@@ -2,13 +2,13 @@ package za.co.trademesh.modules.business.infrastructure;
 
 import java.util.List;
 import java.util.Optional;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import za.co.trademesh.modules.business.application.CompanyRegistryProvider;
 import za.co.trademesh.modules.business.domain.RegistrationNumber;
 
 @Component
-@Profile("local")
+@ConditionalOnProperty(prefix = "trademesh.business.registry", name = "provider", havingValue = "mock")
 class MockCompanyRegistryProvider implements CompanyRegistryProvider {
 
     private static final List<String> DEMO_ADDRESSES = List.of(
