@@ -1,0 +1,812 @@
+openapi: 3.1.0
+info:
+  title: Granite Field API
+  version: 0.1.0
+  description: >
+    Shared HTTP contract. Ordinary-user schemas omit precise live location
+    and internal risk fields.
+servers:
+  - url: http://localhost:8080
+security:
+  - cookieAuth: []
+tags:
+  - name: Auth
+  - name: Business
+  - name: Supplier
+  - name: Documents
+  - name: Procurement
+  - name: Logistics
+  - name: Routing
+  - name: Shipments
+  - name: Handover
+  - name: Risk
+  - name: Insurance
+paths:
+  /auth/login:
+    post:
+      operationId: login
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            examples:
+              business:
+                value: { email: naledi@khanyisa.co.za, password: stockroom }
+      responses:
+        "204": { description: Session cookie set }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/ServerError" }
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [Auth]
+      responses:
+        "204": { description: Signed out }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /auth/session:
+    get:
+      operationId: getSession
+      tags: [Auth]
+      responses:
+        "200":
+          description: Current principal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /auth/refresh:
+    post:
+      operationId: refreshSession
+      tags: [Auth]
+      responses:
+        "204": { description: Cookie rotated }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /business/lookup:
+    post:
+      operationId: lookupBusiness
+      tags: [Business]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [registrationNumber]
+              properties:
+                registrationNumber: { type: string }
+      responses:
+        "200":
+          description: Unconfirmed registry match
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessLookup"
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "502": { $ref: "#/components/responses/ProviderFailure" }
+  /business/profile:
+    post:
+      operationId: confirmBusinessProfile
+      tags: [Business]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BusinessProfile"
+      responses:
+        "200":
+          description: Confirmed profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessProfile"
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /invitations/{token}:
+    get:
+      operationId: getInvitation
+      tags: [Supplier]
+      security: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Invitation payload without the raw token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+        "410": { $ref: "#/components/responses/Gone" }
+  /invitations/{token}/quotes:
+    post:
+      operationId: submitGuestQuote
+      tags: [Supplier]
+      security: []
+      parameters:
+        - in: path
+          name: token
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuestQuote"
+      responses:
+        "201":
+          description: Quote stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuestQuoteReceipt"
+        "409": { $ref: "#/components/responses/Conflict" }
+        "410": { $ref: "#/components/responses/Gone" }
+  /documents:
+    post:
+      operationId: uploadDocument
+      tags: [Documents]
+      responses:
+        "202":
+          description: Processing started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentJob"
+  /documents/{id}:
+    get:
+      operationId: getDocument
+      tags: [Documents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentReview"
+  /documents/{id}/corrections:
+    post:
+      operationId: correctExtraction
+      tags: [Documents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExtractionCorrection"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentReview"
+  /mismatches/{id}:
+    get:
+      operationId: getMismatch
+      tags: [Documents]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MismatchEvidence"
+  /requests:
+    post:
+      operationId: createStockRequest
+      tags: [Procurement]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StockRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StockRequest"
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /quotes/{id}:
+    get:
+      operationId: getQuote
+      tags: [Procurement]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+        "410": { $ref: "#/components/responses/Gone" }
+  /orders:
+    post:
+      operationId: confirmOrder
+      tags: [Procurement]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderConfirmation"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /logistics/consolidations/{id}:
+    get:
+      operationId: getConsolidation
+      tags: [Logistics]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Consolidation"
+  /logistics/capacity-matches:
+    get:
+      operationId: getCapacityMatches
+      tags: [Logistics]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapacityMatchList"
+  /routes:
+    get:
+      operationId: getRouteOptions
+      tags: [Routing]
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteOptionList"
+  /routes/selection:
+    post:
+      operationId: selectRoute
+      tags: [Routing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RouteSelection"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteOption"
+  /shipments/{id}:
+    get:
+      operationId: getShipment
+      tags: [Shipments]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shipment"
+  /handovers/challenges:
+    post:
+      operationId: createHandoverChallenge
+      tags: [Handover]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HandoverChallengeRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HandoverChallenge"
+  /handovers/confirm:
+    post:
+      operationId: confirmHandover
+      tags: [Handover]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HandoverConfirmation"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HandoverReceipt"
+        "409": { $ref: "#/components/responses/Conflict" }
+  /internal/risk/cases/{id}:
+    get:
+      operationId: getRiskCase
+      tags: [Risk]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskCase"
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /internal/insurance/cases/{id}:
+    get:
+      operationId: getInsuranceCase
+      tags: [Insurance]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsuranceCase"
+        "403": { $ref: "#/components/responses/Forbidden" }
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: granite.sid
+  schemas:
+    PublicRole:
+      type: string
+      enum: [BUSINESS, INTERNAL_RISK, INSURER]
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+    Session:
+      type: object
+      additionalProperties: false
+      required: [id, email, role, displayName, onboardingComplete]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        role: { $ref: "#/components/schemas/PublicRole" }
+        displayName: { type: string }
+        onboardingComplete: { type: boolean }
+    ApiError:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            [
+              UNAUTHORIZED,
+              FORBIDDEN,
+              VALIDATION,
+              NOT_FOUND,
+              CONFLICT,
+              GONE,
+              PROVIDER_FAILURE,
+              SERVER_ERROR,
+            ]
+        message: { type: string }
+    Money:
+      type: object
+      additionalProperties: false
+      required: [currency, minor]
+      properties:
+        currency: { type: string }
+        minor: { type: integer }
+    BusinessLookup:
+      type: object
+      additionalProperties: false
+      required: [registrationNumber, legalName, confirmed]
+      properties:
+        registrationNumber: { type: string }
+        legalName: { type: string }
+        confirmed: { type: boolean }
+    BusinessProfile:
+      type: object
+      additionalProperties: false
+      required: [registrationNumber, legalName, confirmed]
+      properties:
+        registrationNumber: { type: string }
+        legalName: { type: string }
+        confirmed: { type: boolean }
+    Invitation:
+      type: object
+      additionalProperties: false
+      required: [status, requestSummary]
+      properties:
+        status:
+          type: string
+          enum: [VALID, EXPIRED, REVOKED, USED, INVALID]
+        requestSummary: { type: string }
+    GuestQuote:
+      type: object
+      additionalProperties: false
+      required: [lines]
+      properties:
+        lines:
+          type: array
+          items:
+            type: object
+            required: [sku, quantity, unitPrice]
+            properties:
+              sku: { type: string }
+              quantity: { type: string }
+              unitPrice: { $ref: "#/components/schemas/Money" }
+    GuestQuoteReceipt:
+      type: object
+      additionalProperties: false
+      required: [quoteId, conversionOffered]
+      properties:
+        quoteId: { type: string }
+        conversionOffered: { type: boolean }
+    DocumentJob:
+      type: object
+      additionalProperties: false
+      required: [id, state]
+      properties:
+        id: { type: string }
+        state: { type: string, enum: [QUEUED, PROCESSING, READY, FAILED] }
+    DocumentReview:
+      type: object
+      additionalProperties: false
+      required: [id, state, confidence, lines]
+      properties:
+        id: { type: string }
+        state: { type: string }
+        confidence: { type: string, enum: [HIGH, REVIEW_NEEDED] }
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtractedLine"
+    ExtractedLine:
+      type: object
+      additionalProperties: false
+      required: [id, label, extracted, current]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        extracted: { type: string }
+        current: { type: string }
+    ExtractionCorrection:
+      type: object
+      additionalProperties: false
+      required: [lineId, value]
+      properties:
+        lineId: { type: string }
+        value: { type: string }
+    MismatchEvidence:
+      type: object
+      additionalProperties: false
+      required: [id, left, right, language]
+      properties:
+        id: { type: string }
+        left: { $ref: "#/components/schemas/EvidenceSide" }
+        right: { $ref: "#/components/schemas/EvidenceSide" }
+        language: { type: string, enum: [MISMATCH, RISK_INDICATOR] }
+    EvidenceSide:
+      type: object
+      additionalProperties: false
+      required: [source, value]
+      properties:
+        source: { type: string }
+        value: { type: string }
+    StockRequest:
+      type: object
+      additionalProperties: false
+      required: [items, destination, window]
+      properties:
+        destination: { type: string }
+        window: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            required: [sku, quantity, unit]
+            properties:
+              sku: { type: string }
+              quantity: { type: string }
+              unit: { type: string }
+    Quote:
+      type: object
+      additionalProperties: false
+      required: [id, supplier, validUntil, total, lines]
+      properties:
+        id: { type: string }
+        supplier: { type: string }
+        validUntil: { type: string, format: date-time }
+        total: { $ref: "#/components/schemas/Money" }
+        lines:
+          type: array
+          items:
+            type: object
+            required: [sku, requested, quoted]
+            properties:
+              sku: { type: string }
+              requested: { type: string }
+              quoted: { type: string }
+    OrderConfirmation:
+      type: object
+      additionalProperties: false
+      required: [quoteId, idempotencyKey]
+      properties:
+        quoteId: { type: string }
+        idempotencyKey: { type: string }
+    Order:
+      type: object
+      additionalProperties: false
+      required: [id, quoteId, state]
+      properties:
+        id: { type: string }
+        quoteId: { type: string }
+        state: { type: string }
+    Consolidation:
+      type: object
+      additionalProperties: false
+      required: [id, included, exclusions]
+      properties:
+        id: { type: string }
+        included:
+          type: array
+          items:
+            type: object
+            required: [label, weightKg, volumeM3]
+            properties:
+              label: { type: string }
+              weightKg: { type: number }
+              volumeM3: { type: number }
+        exclusions:
+          type: array
+          items:
+            type: object
+            required: [reason]
+            properties:
+              reason: { type: string }
+    CapacityMatchList:
+      type: object
+      additionalProperties: false
+      required: [matches]
+      properties:
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/CapacityMatch"
+    CapacityMatch:
+      type: object
+      additionalProperties: false
+      required: [id, spareKg, addedKm, cost, score, hardness]
+      properties:
+        id: { type: string }
+        spareKg: { type: number }
+        addedKm: { type: number }
+        cost: { $ref: "#/components/schemas/Money" }
+        score: { type: number }
+        hardness: { type: string, enum: [HARD_FAIL, TRADE_OFF] }
+        reason: { type: string }
+    RouteOptionList:
+      type: object
+      additionalProperties: false
+      required: [options]
+      properties:
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/RouteOption"
+    RouteOption:
+      type: object
+      additionalProperties: false
+      required: [id, name, kind, time, distanceKm, missingData]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind:
+          type: string
+          enum: [FASTEST, LOWEST_COST, SAFEST, BEST_CONNECTIVITY, RECOMMENDED]
+        time: { type: string }
+        distanceKm: { type: number }
+        missingData: { type: boolean }
+        reason: { type: string }
+        geometry: { type: string }
+    RouteSelection:
+      type: object
+      additionalProperties: false
+      required: [routeId, cargoProfile]
+      properties:
+        routeId: { type: string }
+        cargoProfile: { type: string }
+        weights: { type: object, additionalProperties: { type: number } }
+    Shipment:
+      type: object
+      additionalProperties: false
+      required: [id, state, approvedPath, actualPath, events]
+      properties:
+        id: { type: string }
+        state: { type: string }
+        approvedPath: { type: string }
+        actualPath: { type: string }
+        approximateArea: { type: string }
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShipmentEvent"
+    ShipmentEvent:
+      type: object
+      additionalProperties: false
+      required: [at, kind, summary]
+      properties:
+        at: { type: string, format: date-time }
+        kind:
+          type: string
+          enum:
+            [
+              POSITION,
+              OFFLINE,
+              DELAYED,
+              DEVIATION,
+              FUEL_LOSS,
+              SEAL,
+              DEVICE_CHANGE,
+              HANDOVER,
+            ]
+        summary: { type: string }
+    HandoverChallengeRequest:
+      type: object
+      additionalProperties: false
+      required: [shipmentId, kind]
+      properties:
+        shipmentId: { type: string }
+        kind: { type: string, enum: [COLLECTION, DELIVERY] }
+    HandoverChallenge:
+      type: object
+      additionalProperties: false
+      required: [id, expiresAt, displayCode]
+      properties:
+        id: { type: string }
+        expiresAt: { type: string, format: date-time }
+        displayCode: { type: string }
+    HandoverConfirmation:
+      type: object
+      additionalProperties: false
+      required: [challengeId, quantity, fallback]
+      properties:
+        challengeId: { type: string }
+        quantity: { type: string }
+        fallback: { type: boolean }
+        disputeNote: { type: string }
+    HandoverReceipt:
+      type: object
+      additionalProperties: false
+      required: [id, confirmedAt]
+      properties:
+        id: { type: string }
+        confirmedAt: { type: string, format: date-time }
+    RiskCase:
+      type: object
+      additionalProperties: false
+      required: [id, indicators, notes]
+      properties:
+        id: { type: string }
+        indicators:
+          type: array
+          items:
+            type: object
+            required: [label, state, source, at]
+            properties:
+              label: { type: string }
+              state: { type: string }
+              source: { type: string }
+              at: { type: string }
+        notes: { type: string }
+    InsuranceCase:
+      type: object
+      additionalProperties: false
+      required: [id, evidence]
+      properties:
+        id: { type: string }
+        evidence:
+          type: array
+          items:
+            type: object
+            required: [label, source]
+            properties:
+              label: { type: string }
+              source: { type: string }
+  responses:
+    Unauthorized:
+      description: Not signed in
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+          example: { code: UNAUTHORIZED, message: Sign in to continue. }
+    Forbidden:
+      description: Signed in without permission
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+          example:
+            { code: FORBIDDEN, message: You do not have access to this area. }
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+    NotFound:
+      description: Missing resource
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+    Conflict:
+      description: Duplicate or conflicting state
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+    Gone:
+      description: Expired or revoked
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+    ProviderFailure:
+      description: Upstream registry failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
+    ServerError:
+      description: Unexpected failure
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ApiError" }
