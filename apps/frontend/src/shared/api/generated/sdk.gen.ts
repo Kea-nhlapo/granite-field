@@ -64,6 +64,18 @@ import type {
     CapacityMatchingSearchData,
     CapacityMatchingSearchErrors,
     CapacityMatchingSearchResponses,
+    DeliveryConfirmData,
+    DeliveryConfirmErrors,
+    DeliveryConfirmResponses,
+    DeliveryPreviewData,
+    DeliveryPreviewErrors,
+    DeliveryPreviewResponses,
+    DeliveryProposeData,
+    DeliveryProposeErrors,
+    DeliveryProposeResponses,
+    DeliveryVoiceSearchData,
+    DeliveryVoiceSearchErrors,
+    DeliveryVoiceSearchResponses,
     DemandAggregationGetData,
     DemandAggregationGetErrors,
     DemandAggregationGetResponses,
@@ -441,6 +453,75 @@ export const handoverConfirm = <ThrowOnError extends boolean = false>(
             ...options.headers,
         },
     });
+
+export const deliveryPropose = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryProposeData, ThrowOnError>,
+): RequestResult<
+    DeliveryProposeResponses,
+    DeliveryProposeErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        DeliveryProposeResponses,
+        DeliveryProposeErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/propose",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const deliveryVoiceSearch = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryVoiceSearchData, ThrowOnError>,
+): RequestResult<
+    DeliveryVoiceSearchResponses,
+    DeliveryVoiceSearchErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        DeliveryVoiceSearchResponses,
+        DeliveryVoiceSearchErrors,
+        ThrowOnError
+    >({
+        ...formDataBodySerializer,
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/voice-search",
+        ...options,
+        headers: {
+            "Content-Type": null,
+            ...options.headers,
+        },
+    });
+
+export const deliveryPreview = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryPreviewData, ThrowOnError>,
+): RequestResult<
+    DeliveryPreviewResponses,
+    DeliveryPreviewErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        DeliveryPreviewResponses,
+        DeliveryPreviewErrors,
+        ThrowOnError
+    >({ url: "/api/delivery/confirm/{token}", ...options });
+
+export const deliveryConfirm = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryConfirmData, ThrowOnError>,
+): RequestResult<
+    DeliveryConfirmResponses,
+    DeliveryConfirmErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        DeliveryConfirmResponses,
+        DeliveryConfirmErrors,
+        ThrowOnError
+    >({ url: "/api/delivery/confirm/{token}", ...options });
 
 export const supplierInvite = <ThrowOnError extends boolean = false>(
     options: Options<SupplierInviteData, ThrowOnError>,

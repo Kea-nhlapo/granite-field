@@ -138,6 +138,20 @@ trademesh:
     rate-limit-window: ${SUPPLIER_INVITATION_RATE_LIMIT_WINDOW:PT1M}
     max-tracked-clients: ${SUPPLIER_INVITATION_MAX_TRACKED_CLIENTS:10000}
     guest-base-url: ${SUPPLIER_INVITATION_GUEST_BASE_URL:http://localhost:5173/supplier-invitations/guest}
+  delivery:
+    search:
+      speech-provider: ${DELIVERY_SPEECH_PROVIDER:unconfigured}
+      speech-endpoint: ${GOOGLE_SPEECH_ENDPOINT:https://speech.googleapis.com/v1/speech:recognize}
+      speech-api-key: ${GOOGLE_SPEECH_API_KEY:}
+      language-codes: ${DELIVERY_SPEECH_LANGUAGE_CODES:en-ZA,zu-ZA,xh-ZA,af-ZA}
+      distance-provider: ${DELIVERY_DISTANCE_PROVIDER:unconfigured}
+      distance-endpoint: ${GOOGLE_DISTANCE_MATRIX_ENDPOINT:https://maps.googleapis.com/maps/api/distancematrix/json}
+      maps-api-key: ${GOOGLE_MAPS_API_KEY:}
+      maximum-audio-bytes: ${DELIVERY_MAXIMUM_AUDIO_BYTES:2097152}
+      supplier-limit: ${DELIVERY_SUPPLIER_LIMIT:10}
+    confirmation:
+      time-to-live: ${DELIVERY_CONFIRMATION_TTL:P2D}
+      confirmation-base-url: ${DELIVERY_CONFIRMATION_BASE_URL:http://localhost:5173/delivery/confirm}
   notifications:
     security:
       # Required outside the local profile. Generate 32 random bytes and store
@@ -149,6 +163,13 @@ trademesh:
       endpoint: ${EMAIL_PROVIDER_ENDPOINT:}
       api-key: ${EMAIL_PROVIDER_API_KEY:}
       from-address: ${EMAIL_FROM_ADDRESS:no-reply@trademesh.local}
+    mobile:
+      provider: ${MOBILE_NOTIFICATION_PROVIDER:unconfigured}
+      base-url: ${TWILIO_API_BASE_URL:https://api.twilio.com}
+      account-sid: ${TWILIO_ACCOUNT_SID:}
+      auth-token: ${TWILIO_AUTH_TOKEN:}
+      sms-from: ${TWILIO_SMS_NUMBER:}
+      whats-app-from: ${TWILIO_WHATSAPP_NUMBER:}
   storage:
     endpoint: ${OBJECT_STORAGE_ENDPOINT}
     access-key: ${OBJECT_STORAGE_ACCESS_KEY}
@@ -303,6 +324,10 @@ trademesh:
   integrations:
     momo:
       provider: ${MOMO_PROVIDER:mock}
+  delivery:
+    search:
+      speech-provider: ${DELIVERY_SPEECH_PROVIDER:local}
+      distance-provider: ${DELIVERY_DISTANCE_PROVIDER:local}
   storage:
     endpoint: ${OBJECT_STORAGE_ENDPOINT:http://localhost:9000}
     access-key: ${OBJECT_STORAGE_ACCESS_KEY:trademesh-minio}
@@ -319,3 +344,5 @@ trademesh:
     security:
       # Local-only key. Production has no fallback and refuses to start without one.
       data-encryption-key: ${NOTIFICATION_DATA_ENCRYPTION_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}
+    mobile:
+      provider: ${MOBILE_NOTIFICATION_PROVIDER:local}

@@ -71,6 +71,8 @@ public class SecurityConfiguration {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/public/businesses/*/trust")
                         .permitAll()
+                        .requestMatchers("/api/delivery/confirm/**")
+                        .permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/supplier-invitations/guest/**",

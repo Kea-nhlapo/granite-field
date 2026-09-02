@@ -11,9 +11,11 @@ import za.co.trademesh.modules.supplier.domain.SupplierProfileStatus;
 public class SupplierDirectory {
 
     private final SupplierInvitationRepository suppliers;
+    private final SupplierSearchCatalog searchCatalog;
 
-    public SupplierDirectory(SupplierInvitationRepository suppliers) {
+    public SupplierDirectory(SupplierInvitationRepository suppliers, SupplierSearchCatalog searchCatalog) {
         this.suppliers = suppliers;
+        this.searchCatalog = searchCatalog;
     }
 
     @Transactional(readOnly = true)
@@ -24,5 +26,30 @@ public class SupplierDirectory {
                         profile.id(), profile.status() == SupplierProfileStatus.REGISTERED, profile.businessId()));
     }
 
+    @Transactional(readOnly = true)
+    public java.util.List<SearchResult> search(String rawQuery, int limit) {
+        String query = rawQuery == null ? "" : rawQuery.strip();
+        if (query.isBlank() || query.length() > 200 || limit < 1 || limit > 50) {
+            throw new IllegalArgumentException("Invalid supplier search");
+        }
+        return searchCatalog.search(query, limit).stream()
+                .map(candidate -> new SearchResult(
+                        candidate.supplierProfileId(),
+                        candidate.businessId(),
+                        candidate.displayName(),
+                        candidate.registeredAddress(),
+                        candidate.averageRating(),
+                        candidate.successfulDeliveryRate()))
+                .toList();
+    }
+
     public record SupplierReference(UUID supplierProfileId, boolean registered, UUID businessId) {}
+
+    public record SearchResult(
+            UUID supplierProfileId,
+            UUID businessId,
+            String displayName,
+            String registeredAddress,
+            java.math.BigDecimal averageRating,
+            java.math.BigDecimal successfulDeliveryRate) {}
 }

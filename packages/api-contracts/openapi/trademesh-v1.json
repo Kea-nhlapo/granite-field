@@ -373,6 +373,173 @@
         }
       }
     },
+    "/api/delivery/{shipmentId}/propose": {
+      "post": {
+        "tags": ["delivery-controller"],
+        "operationId": "deliveryPropose",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposeDeliveryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryProposalResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/voice-search": {
+      "post": {
+        "tags": ["delivery-controller"],
+        "operationId": "deliveryVoiceSearch",
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "number", "format": "double" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "audio": { "type": "string", "format": "binary" }
+                },
+                "required": ["audio"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/VoiceSearchResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/delivery/confirm/{token}": {
+      "get": {
+        "tags": ["delivery-controller"],
+        "operationId": "deliveryPreview",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryProposalResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      },
+      "post": {
+        "tags": ["delivery-controller"],
+        "operationId": "deliveryConfirm",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryProposalResponse"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
     "/api/businesses/{buyerBusinessId}/supplier-invitations": {
       "post": {
         "tags": ["supplier-controller"],
@@ -3512,6 +3679,70 @@
           "longitude": { "type": "number", "format": "double" }
         }
       },
+      "ProposeDeliveryRequest": {
+        "type": "object",
+        "properties": {
+          "businessId": { "type": "string", "format": "uuid" },
+          "requestId": { "type": "string", "format": "uuid" },
+          "recipientEmail": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 320,
+            "minLength": 0
+          },
+          "recipientPhone": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^\\+[1-9][0-9]{7,14}$"
+          },
+          "mobileChannel": { "type": "string", "enum": ["SMS", "WHATSAPP"] }
+        },
+        "required": [
+          "businessId",
+          "mobileChannel",
+          "recipientEmail",
+          "recipientPhone",
+          "requestId"
+        ]
+      },
+      "DeliveryProposalResponse": {
+        "type": "object",
+        "properties": {
+          "proposalId": { "type": "string", "format": "uuid" },
+          "shipmentId": { "type": "string", "format": "uuid" },
+          "status": {
+            "type": "string",
+            "enum": ["PROPOSED", "ACCEPTED", "EXPIRED"]
+          },
+          "expiresAt": { "type": "string", "format": "date-time" },
+          "acceptedAt": { "type": "string", "format": "date-time" },
+          "newlyCreated": { "type": "boolean" }
+        }
+      },
+      "SupplierResponse": {
+        "type": "object",
+        "properties": {
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "businessId": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string" },
+          "averageRating": { "type": "number" },
+          "successfulDeliveryRate": { "type": "number" },
+          "distanceMetres": { "type": "integer", "format": "int64" },
+          "durationSeconds": { "type": "integer", "format": "int64" },
+          "rankingScore": { "type": "number" }
+        }
+      },
+      "VoiceSearchResponse": {
+        "type": "object",
+        "properties": {
+          "detectedLanguage": { "type": "string" },
+          "transcript": { "type": "string" },
+          "suppliers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SupplierResponse" }
+          }
+        }
+      },
       "CreateInvitationRequest": {
         "type": "object",
         "properties": {
@@ -5448,13 +5679,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 400,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The request is invalid",
+              "type": "about:blank",
+              "status": 400,
+              "instance": "/api/example",
+              "code": "INVALID_REQUEST",
               "detail": "The request is invalid.",
-              "code": "INVALID_REQUEST"
+              "title": "The request is invalid"
             }
           }
         }
@@ -5468,13 +5699,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 401,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "Authentication is required",
+              "type": "about:blank",
+              "status": 401,
+              "instance": "/api/example",
+              "code": "AUTHENTICATION_REQUIRED",
               "detail": "Authentication is required.",
-              "code": "AUTHENTICATION_REQUIRED"
+              "title": "Authentication is required"
             }
           }
         }
@@ -5488,13 +5719,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 403,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The caller is not allowed to perform this action",
+              "type": "about:blank",
+              "status": 403,
+              "instance": "/api/example",
+              "code": "ACCESS_DENIED",
               "detail": "The caller is not allowed to perform this action.",
-              "code": "ACCESS_DENIED"
+              "title": "The caller is not allowed to perform this action"
             }
           }
         }
@@ -5508,13 +5739,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 404,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The requested resource was not found",
+              "type": "about:blank",
+              "status": 404,
+              "instance": "/api/example",
+              "code": "NOT_FOUND",
               "detail": "The requested resource was not found.",
-              "code": "NOT_FOUND"
+              "title": "The requested resource was not found"
             }
           }
         }
@@ -5528,13 +5759,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 409,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The request conflicts with current state",
+              "type": "about:blank",
+              "status": 409,
+              "instance": "/api/example",
+              "code": "STATE_CONFLICT",
               "detail": "The request conflicts with current state.",
-              "code": "STATE_CONFLICT"
+              "title": "The request conflicts with current state"
             }
           }
         }
@@ -5548,13 +5779,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 429,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The request limit was exceeded",
+              "type": "about:blank",
+              "status": 429,
+              "instance": "/api/example",
+              "code": "RATE_LIMIT_EXCEEDED",
               "detail": "The request limit was exceeded.",
-              "code": "RATE_LIMIT_EXCEEDED"
+              "title": "The request limit was exceeded"
             }
           }
         }
@@ -5568,13 +5799,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 500,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "The server could not complete the request",
+              "type": "about:blank",
+              "status": 500,
+              "instance": "/api/example",
+              "code": "INTERNAL_ERROR",
               "detail": "The server could not complete the request.",
-              "code": "INTERNAL_ERROR"
+              "title": "The server could not complete the request"
             }
           }
         }
@@ -5588,13 +5819,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 502,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "An external provider rejected the request",
+              "type": "about:blank",
+              "status": 502,
+              "instance": "/api/example",
+              "code": "EXTERNAL_PROVIDER_FAILED",
               "detail": "An external provider rejected the request.",
-              "code": "EXTERNAL_PROVIDER_FAILED"
+              "title": "An external provider rejected the request"
             }
           }
         }
@@ -5608,13 +5839,13 @@
               "$ref": "#/components/schemas/ApiProblem"
             },
             "example": {
-              "instance": "/api/example",
-              "status": 503,
-              "type": "about:blank",
               "requestId": "01JEXAMPLE00000000000000000",
-              "title": "An external provider is temporarily unavailable",
+              "type": "about:blank",
+              "status": 503,
+              "instance": "/api/example",
+              "code": "EXTERNAL_PROVIDER_UNAVAILABLE",
               "detail": "An external provider is temporarily unavailable.",
-              "code": "EXTERNAL_PROVIDER_UNAVAILABLE"
+              "title": "An external provider is temporarily unavailable"
             }
           }
         }

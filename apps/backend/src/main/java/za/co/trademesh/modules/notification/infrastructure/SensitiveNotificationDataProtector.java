@@ -11,9 +11,10 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Component;
 import za.co.trademesh.modules.notification.application.NotificationDataProtectionProperties;
+import za.co.trademesh.modules.notification.application.NotificationDataProtector;
 
 @Component
-class SensitiveNotificationDataProtector {
+public class SensitiveNotificationDataProtector implements NotificationDataProtector {
 
     private static final String VERSION = "v1:";
     private static final int IV_BYTES = 12;
@@ -22,7 +23,7 @@ class SensitiveNotificationDataProtector {
     private final SecretKeySpec key;
     private final SecureRandom secureRandom = new SecureRandom();
 
-    SensitiveNotificationDataProtector(NotificationDataProtectionProperties properties) {
+    public SensitiveNotificationDataProtector(NotificationDataProtectionProperties properties) {
         byte[] decoded;
         try {
             decoded = Base64.getDecoder().decode(properties.dataEncryptionKey());
@@ -35,7 +36,8 @@ class SensitiveNotificationDataProtector {
         this.key = new SecretKeySpec(decoded, "AES");
     }
 
-    String protect(String plainText) {
+    @Override
+    public String protect(String plainText) {
         byte[] iv = new byte[IV_BYTES];
         secureRandom.nextBytes(iv);
         try {
@@ -53,7 +55,8 @@ class SensitiveNotificationDataProtector {
         }
     }
 
-    String unprotect(String protectedText) {
+    @Override
+    public String unprotect(String protectedText) {
         if (protectedText == null || !protectedText.startsWith(VERSION)) {
             throw new IllegalStateException("Unsupported protected notification data");
         }
