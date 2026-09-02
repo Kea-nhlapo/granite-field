@@ -41,6 +41,22 @@ jobs:
         id: tag
         run: echo "sha=${{ github.event.workflow_run.head_sha || github.sha }}" >> "$GITHUB_OUTPUT"
 
+      - name: Show the OIDC claims this run presents
+        # Diagnostic only. Prints the token's claims, never the token itself,
+        # so the exact subject can be matched against the role's trust policy.
+        run: |
+          token=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" \
+            | python3 -c 'import sys,json; print(json.load(sys.stdin)["value"])')
+          python3 - "$token" <<'PY'
+          import base64, json, sys
+          payload = sys.argv[1].split('.')[1]
+          payload += '=' * (-len(payload) % 4)
+          claims = json.loads(base64.urlsafe_b64decode(payload))
+          for key in ("sub", "aud", "repository", "ref", "event_name", "workflow_ref"):
+              print(f"{key}: {claims.get(key)}")
+          PY
+
       - name: Assume the deploy role
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
         with:
