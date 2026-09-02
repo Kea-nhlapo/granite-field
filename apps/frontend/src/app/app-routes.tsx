@@ -14,6 +14,7 @@ import DocumentReviewPage from "../features/documents/DocumentReviewPage";
 import ProcurementPage from "../features/procurement/ProcurementPage";
 import LogisticsPage from "../features/logistics/LogisticsPage";
 import RoutingPage from "../features/routing/RoutingPage";
+import TrackingPage from "../features/tracking/TrackingPage";
 
 function HomeRedirect() {
     const { session, status } = useSession();
@@ -149,6 +150,22 @@ export const appRoutes: RouteObject[] = [
                     </RequireRole>
                 ),
                 path: "routing/:businessId/calculations/:calculationId/assessments/:assessmentId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <TrackingPage />
+                    </RequireRole>
+                ),
+                path: "tracking/:businessId",
+            },
+            {
+                element: (
+                    <RequireRole roles={["BUSINESS_OWNER", "BUSINESS_MEMBER"]}>
+                        <TrackingPage />
+                    </RequireRole>
+                ),
+                path: "tracking/:businessId/shipments/:shipmentId",
             },
         ],
         element: (
