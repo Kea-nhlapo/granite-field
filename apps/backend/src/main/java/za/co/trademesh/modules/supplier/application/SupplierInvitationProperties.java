@@ -5,7 +5,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("trademesh.supplier-invitations")
 public record SupplierInvitationProperties(
-        Duration timeToLive, int validationAttempts, Duration rateLimitWindow, int maxTrackedClients) {
+        Duration timeToLive,
+        int validationAttempts,
+        Duration rateLimitWindow,
+        int maxTrackedClients,
+        String guestBaseUrl) {
 
     public SupplierInvitationProperties {
         if (timeToLive == null || timeToLive.isZero() || timeToLive.isNegative()) {
@@ -19,6 +23,11 @@ public record SupplierInvitationProperties(
         }
         if (maxTrackedClients <= 0) {
             maxTrackedClients = 10_000;
+        }
+        if (guestBaseUrl == null || guestBaseUrl.isBlank()) {
+            guestBaseUrl = "http://localhost:5173/supplier-invitations/guest";
+        } else {
+            guestBaseUrl = guestBaseUrl.strip().replaceAll("/+$", "");
         }
     }
 }

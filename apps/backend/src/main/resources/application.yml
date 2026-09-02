@@ -68,6 +68,18 @@ trademesh:
     validation-attempts: ${SUPPLIER_INVITATION_VALIDATION_ATTEMPTS:30}
     rate-limit-window: ${SUPPLIER_INVITATION_RATE_LIMIT_WINDOW:PT1M}
     max-tracked-clients: ${SUPPLIER_INVITATION_MAX_TRACKED_CLIENTS:10000}
+    guest-base-url: ${SUPPLIER_INVITATION_GUEST_BASE_URL:http://localhost:5173/supplier-invitations/guest}
+  notifications:
+    security:
+      # Required outside the local profile. Generate 32 random bytes and store
+      # their Base64 representation in the deployment secret manager.
+      data-encryption-key: ${NOTIFICATION_DATA_ENCRYPTION_KEY}
+    email:
+      provider: ${EMAIL_PROVIDER:local}
+      max-delivery-attempts: ${EMAIL_MAX_DELIVERY_ATTEMPTS:3}
+      endpoint: ${EMAIL_PROVIDER_ENDPOINT:}
+      api-key: ${EMAIL_PROVIDER_API_KEY:}
+      from-address: ${EMAIL_FROM_ADDRESS:no-reply@trademesh.local}
   storage:
     endpoint: ${OBJECT_STORAGE_ENDPOINT}
     access-key: ${OBJECT_STORAGE_ACCESS_KEY}
@@ -113,3 +125,7 @@ trademesh:
   documents:
     extraction:
       provider: ${DOCUMENT_EXTRACTION_PROVIDER:mock}
+  notifications:
+    security:
+      # Local-only key. Production has no fallback and refuses to start without one.
+      data-encryption-key: ${NOTIFICATION_DATA_ENCRYPTION_KEY:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=}

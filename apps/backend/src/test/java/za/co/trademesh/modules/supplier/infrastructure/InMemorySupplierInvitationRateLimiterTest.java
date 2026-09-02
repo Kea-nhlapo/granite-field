@@ -11,7 +11,7 @@ class InMemorySupplierInvitationRateLimiterTest {
 
     @Test
     void limitsEachClientAndAllowsItAgainAfterTheWindow() {
-        var properties = new SupplierInvitationProperties(Duration.ofDays(7), 2, Duration.ofMinutes(1), 10);
+        var properties = new SupplierInvitationProperties(Duration.ofDays(7), 2, Duration.ofMinutes(1), 10, null);
         var limiter = new InMemorySupplierInvitationRateLimiter(properties);
         Instant now = Instant.parse("2026-09-02T00:00:00Z");
 
@@ -24,7 +24,7 @@ class InMemorySupplierInvitationRateLimiterTest {
 
     @Test
     void failsClosedWhenTheBoundedClientMapIsFull() {
-        var properties = new SupplierInvitationProperties(Duration.ofDays(7), 2, Duration.ofMinutes(1), 1);
+        var properties = new SupplierInvitationProperties(Duration.ofDays(7), 2, Duration.ofMinutes(1), 1, null);
         var limiter = new InMemorySupplierInvitationRateLimiter(properties);
         Instant now = Instant.parse("2026-09-02T00:00:00Z");
 

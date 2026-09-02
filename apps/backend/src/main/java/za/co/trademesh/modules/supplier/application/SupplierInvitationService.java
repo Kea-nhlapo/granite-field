@@ -2,11 +2,14 @@ package za.co.trademesh.modules.supplier.application;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.co.trademesh.modules.access.application.AccountIdentityService;
+import za.co.trademesh.modules.notification.application.NotificationRequests;
+import za.co.trademesh.modules.notification.application.NotificationTemplates;
 import za.co.trademesh.modules.supplier.domain.SupplierEmail;
 import za.co.trademesh.modules.supplier.domain.SupplierInvitation;
 import za.co.trademesh.modules.supplier.domain.SupplierInvitationPurpose;
@@ -25,6 +28,7 @@ public class SupplierInvitationService {
     private final SupplierInvitationRateLimiter rateLimiter;
     private final SupplierInvitationProperties properties;
     private final AccountIdentityService accountIdentities;
+    private final NotificationRequests notifications;
     private final DomainEvents events;
     private final Clock clock;
 
@@ -34,6 +38,7 @@ public class SupplierInvitationService {
             SupplierInvitationRateLimiter rateLimiter,
             SupplierInvitationProperties properties,
             AccountIdentityService accountIdentities,
+            NotificationRequests notifications,
             DomainEvents events,
             Clock clock) {
         this.repository = repository;
@@ -41,6 +46,7 @@ public class SupplierInvitationService {
         this.rateLimiter = rateLimiter;
         this.properties = properties;
         this.accountIdentities = accountIdentities;
+        this.notifications = notifications;
         this.events = events;
         this.clock = clock;
     }
@@ -75,6 +81,16 @@ public class SupplierInvitationService {
         } catch (DataIntegrityViolationException concurrentInvitation) {
             throw SupplierException.invitationAlreadyActive();
         }
+
+        notifications.requestEmail(new NotificationRequests.EmailRequest(
+                "supplier-invitation:" + invitation.id(),
+                profile.email().value(),
+                null,
+                "SUPPLIER_INVITATION",
+                NotificationTemplates.SUPPLIER_INVITATION,
+                NotificationTemplates.SUPPLIER_INVITATION_VERSION,
+                Map.of("invitationUrl", properties.guestBaseUrl() + "/" + issuedToken.rawToken()),
+                true));
 
         events.publish(
                 new SupplierEvent.InvitationCreated(invitation.id(), buyerBusinessId, profile.id(), requestId),

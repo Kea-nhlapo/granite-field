@@ -41,6 +41,11 @@ class SupplierControllerIntegrationTest extends PostgresIntegrationTest {
     @BeforeEach
     @AfterEach
     void cleanTables() {
+        jdbcTemplate.update("DELETE FROM email_delivery_attempt");
+        jdbcTemplate.update("DELETE FROM email_notification_template_data");
+        jdbcTemplate.update("DELETE FROM email_notification");
+        jdbcTemplate.update("DELETE FROM notification_preference");
+        jdbcTemplate.update("DELETE FROM outbox_message");
         jdbcTemplate.update("DELETE FROM supplier_invitation");
         jdbcTemplate.update("DELETE FROM supplier_profile");
         jdbcTemplate.update("DELETE FROM access_refresh_session");
