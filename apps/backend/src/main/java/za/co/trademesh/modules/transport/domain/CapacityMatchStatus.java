@@ -4,6 +4,7 @@ public enum CapacityMatchStatus {
     MATCHED,
     NO_MATCH,
     RESERVED,
+    ASSIGNED,
     RELEASED,
     EXPIRED
 }
