@@ -1,0 +1,176 @@
+:root,
+[data-theme="light"] {
+    --momo-yellow: #ffcc00;
+    --momo-blue: #003e85;
+    --momo-navy: #002b49;
+    --momo-blue-tint: #ebf3fc;
+    --fluent-bg-canvas: #f8f9fa;
+    --fluent-bg-surface: #ffffff;
+    --fluent-stroke-divider: #e5e7eb;
+    --fluent-text-primary: #1a1a1a;
+    --fluent-text-secondary: #595959;
+    --fluent-text-tertiary: #5c5c61;
+    --fluent-success: #006644;
+    --fluent-success-tint: #e3fcef;
+    --fluent-warning: #f57c00;
+    --fluent-radius-md: 8px;
+    --fluent-radius-lg: 12px;
+    --font-family-unified:
+        "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue",
+        sans-serif;
+}
+
+[data-theme="dark"] {
+    --fluent-bg-canvas: #001b2e;
+    --fluent-bg-surface: #002b49;
+    --fluent-stroke-divider: #134066;
+    --fluent-text-primary: #f3f6f8;
+    --fluent-text-secondary: #b7c4ce;
+    --fluent-text-tertiary: #8e8e93;
+    --momo-navy: #f3f6f8;
+    --momo-blue-tint: #013258;
+}
+
+html,
+body,
+#root {
+    min-height: 100dvh;
+    margin: 0;
+    background: var(--fluent-bg-canvas);
+    color: var(--fluent-text-primary);
+    font-family: var(--font-family-unified);
+}
+
+.app-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--momo-navy);
+}
+
+.app-heading {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--momo-navy);
+}
+
+.app-overline {
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--fluent-text-secondary);
+}
+
+.app-caption {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--fluent-text-secondary);
+}
+
+.app-micro {
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--fluent-text-tertiary);
+}
+
+.app-metric-hero {
+    margin: 0;
+    font-size: 2.75rem;
+    font-weight: 700;
+    color: var(--momo-blue);
+}
+
+.momo-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 56px;
+    padding: 0.75rem 1rem;
+    background: var(--fluent-bg-surface);
+    border-bottom: 1px solid var(--fluent-stroke-divider);
+}
+
+.momo-card {
+    background: var(--fluent-bg-surface);
+    border: 1px solid var(--fluent-stroke-divider);
+    border-radius: var(--fluent-radius-lg);
+}
+
+.momo-tile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.momo-tile {
+    display: flex;
+    min-height: 105px;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0.85rem;
+    text-align: left;
+    text-decoration: none;
+    color: inherit;
+    background: var(--fluent-bg-surface);
+    border: 1px solid var(--fluent-stroke-divider);
+    border-radius: var(--fluent-radius-lg);
+}
+
+.momo-tile:hover,
+.momo-tile:focus-visible {
+    border-color: var(--momo-blue);
+}
+
+.momo-icon {
+    display: flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    color: var(--momo-blue);
+    background: var(--momo-blue-tint);
+    border-radius: var(--fluent-radius-md);
+}
+
+.momo-page {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.momo-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.momo-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.5rem;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--fluent-success);
+    background: var(--fluent-success-tint);
+    border-radius: 999px;
+}
+
+.momo-avatar {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--momo-blue);
+    text-decoration: none;
+    background: var(--momo-blue-tint);
+    border-radius: 999px;
+}

@@ -45,8 +45,9 @@ async function signIn(
     await user.type(screen.getByLabelText(/email/i), email);
     await user.type(screen.getByLabelText(/password/i), "correct-horse");
     await user.click(screen.getByRole("button", { name: "Sign in" }));
+    const homeName = email.includes("analyst") ? "Workspace" : "Home";
     expect(
-        await screen.findByRole("heading", { name: "Workspace" }),
+        await screen.findByRole("heading", { name: homeName }),
     ).toBeInTheDocument();
 }
 
@@ -58,9 +59,8 @@ describe("session shell", () => {
 
         expect(router.state.location.pathname).toBe("/app");
         expect(
-            screen.getByText(`Signed in as user ${ownerTokens.userId}`),
+            screen.getByRole("link", { name: "Source stock" }),
         ).toBeInTheDocument();
-        expect(screen.getByText("Roles: BUSINESS_OWNER")).toBeInTheDocument();
         expect(
             screen.queryByText(/onboardingComplete/i),
         ).not.toBeInTheDocument();
@@ -75,7 +75,7 @@ describe("session shell", () => {
         const { router } = renderAccessApp("/app");
 
         expect(
-            await screen.findByRole("heading", { name: "Workspace" }),
+            await screen.findByRole("heading", { name: "Home" }),
         ).toBeInTheDocument();
         expect(router.state.location.pathname).toBe("/app");
         expect(screen.getByTestId("app-shell")).toBeInTheDocument();
@@ -174,7 +174,7 @@ describe("session shell", () => {
         await user.keyboard("correct-horse{Enter}");
 
         expect(
-            await screen.findByRole("heading", { name: "Workspace" }),
+            await screen.findByRole("heading", { name: "Home" }),
         ).toBeInTheDocument();
     });
 
@@ -216,7 +216,7 @@ describe("session shell", () => {
         applyTokenResponse(ownerTokens);
         const { router } = renderAccessApp("/app");
 
-        await screen.findByRole("heading", { name: "Workspace" });
+        await screen.findByRole("heading", { name: "Home" });
         await router.navigate("/app/internal-risk");
         expect(
             await screen.findByRole("heading", { name: "Access denied" }),
@@ -225,7 +225,7 @@ describe("session shell", () => {
         await router.navigate(-1);
 
         expect(
-            await screen.findByRole("heading", { name: "Workspace" }),
+            await screen.findByRole("heading", { name: "Home" }),
         ).toBeInTheDocument();
         expect(router.state.location.pathname).toBe("/app");
     });

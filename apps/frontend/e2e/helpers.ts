@@ -27,9 +27,8 @@ export async function signIn(
     await page.getByLabel(/password/i).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page.getByTestId("app-shell")).toBeVisible();
-    await expect(
-        page.getByRole("heading", { name: "Workspace" }),
-    ).toBeVisible();
+    const homeName = email.includes("analyst") ? "Workspace" : "Home";
+    await expect(page.getByRole("heading", { name: homeName })).toBeVisible();
 }
 
 export async function scanPage(page: Page) {

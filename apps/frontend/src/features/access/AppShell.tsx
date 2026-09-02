@@ -1,28 +1,23 @@
 import { Button } from "@fluentui/react-components";
 import { NavLink, Outlet } from "react-router-dom";
 
+import { clearAccountProfile } from "./account-profile";
 import { useAccessStyles } from "./access.styles";
 import { hasAnyRole } from "./roles";
 import { useSession } from "./SessionProvider";
-import { mockBusinessId } from "../../shared/api/mocks/onboarding-handlers";
 
 export function AppShell() {
     const styles = useAccessStyles();
     const { logout, session } = useSession();
 
+    const isCustomer =
+        session !== null &&
+        hasAnyRole(session.roles, ["BUSINESS_OWNER", "BUSINESS_MEMBER"]);
+    const isSupplier =
+        session !== null && hasAnyRole(session.roles, ["SUPPLIER"]);
     const showInternalRisk =
         session !== null &&
         hasAnyRole(session.roles, ["INTERNAL_RISK_ANALYST", "ADMINISTRATOR"]);
-    const showOnboarding =
-        session !== null && hasAnyRole(session.roles, ["BUSINESS_OWNER"]);
-    const showDocuments =
-        session !== null &&
-        hasAnyRole(session.roles, ["BUSINESS_OWNER", "BUSINESS_MEMBER"]);
-    const showProcurement = showDocuments;
-    const showLogistics = showDocuments;
-    const showRouting = showDocuments;
-    const showTracking = showDocuments;
-    const showHandover = showDocuments;
     const showInsurance =
         session !== null && hasAnyRole(session.roles, ["INSURER"]);
 
@@ -33,139 +28,69 @@ export function AppShell() {
             </a>
             <header className={styles.header}>
                 <p className={styles.brand}>TradeMesh</p>
-                <nav aria-label="Workspace" className={styles.nav}>
+            </header>
+            <div className={styles.main} id="workspace-main">
+                <Outlet />
+            </div>
+            <nav aria-label="Workspace" className={styles.nav}>
+                <NavLink
+                    className={({ isActive }) =>
+                        isActive
+                            ? `${styles.navLink} ${styles.navLinkActive}`
+                            : styles.navLink
+                    }
+                    end
+                    to={isSupplier ? "/app/supplier" : "/app"}
+                >
+                    Home
+                </NavLink>
+                {isCustomer ? (
                     <NavLink
                         className={({ isActive }) =>
                             isActive
                                 ? `${styles.navLink} ${styles.navLinkActive}`
                                 : styles.navLink
                         }
-                        end
-                        to="/app"
+                        to="/app/settings"
                     >
-                        Workspace
+                        Settings
                     </NavLink>
-                    {showInternalRisk ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to="/app/internal-risk"
-                        >
-                            Internal risk
-                        </NavLink>
-                    ) : null}
-                    {showOnboarding ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to="/app/onboarding"
-                        >
-                            Onboarding
-                        </NavLink>
-                    ) : null}
-                    {showDocuments ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to={`/app/documents/${mockBusinessId}`}
-                        >
-                            Documents
-                        </NavLink>
-                    ) : null}
-                    {showProcurement ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to={`/app/procurement/${mockBusinessId}`}
-                        >
-                            Procurement
-                        </NavLink>
-                    ) : null}
-                    {showLogistics ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to={`/app/logistics/${mockBusinessId}`}
-                        >
-                            Logistics
-                        </NavLink>
-                    ) : null}
-                    {showRouting ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to={`/app/routing/${mockBusinessId}`}
-                        >
-                            Routing
-                        </NavLink>
-                    ) : null}
-                    {showTracking ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to={`/app/tracking/${mockBusinessId}`}
-                        >
-                            Tracking
-                        </NavLink>
-                    ) : null}
-                    {showHandover ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to={`/app/handover/${mockBusinessId}`}
-                        >
-                            Handover
-                        </NavLink>
-                    ) : null}
-                    {showInsurance ? (
-                        <NavLink
-                            className={({ isActive }) =>
-                                isActive
-                                    ? `${styles.navLink} ${styles.navLinkActive}`
-                                    : styles.navLink
-                            }
-                            to="/app/insurance"
-                        >
-                            Insurance
-                        </NavLink>
-                    ) : null}
-                    <Button
-                        className={styles.touchTarget}
-                        onClick={() => {
-                            void logout();
-                        }}
+                ) : null}
+                {showInternalRisk ? (
+                    <NavLink
+                        className={({ isActive }) =>
+                            isActive
+                                ? `${styles.navLink} ${styles.navLinkActive}`
+                                : styles.navLink
+                        }
+                        to="/app/internal-risk"
                     >
-                        Sign out
-                    </Button>
-                </nav>
-            </header>
-            <div className={styles.main} id="workspace-main">
-                <Outlet />
-            </div>
+                        Internal risk
+                    </NavLink>
+                ) : null}
+                {showInsurance ? (
+                    <NavLink
+                        className={({ isActive }) =>
+                            isActive
+                                ? `${styles.navLink} ${styles.navLinkActive}`
+                                : styles.navLink
+                        }
+                        to="/app/insurance"
+                    >
+                        Insurance
+                    </NavLink>
+                ) : null}
+                <Button
+                    appearance="subtle"
+                    className={styles.touchTarget}
+                    onClick={() => {
+                        clearAccountProfile();
+                        void logout();
+                    }}
+                >
+                    Sign out
+                </Button>
+            </nav>
         </div>
     );
 }

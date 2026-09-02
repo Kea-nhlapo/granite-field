@@ -1,16 +1,11 @@
-import { FluentProvider } from "@fluentui/react-components";
 import type { ReactNode } from "react";
 
-import { momoLightTheme } from "./momo-theme";
+import { ThemeProvider } from "../shared/theme/ThemeProvider";
 
 type FluentAppProviderProps = {
     children: ReactNode;
 };
 
 export function FluentAppProvider({ children }: FluentAppProviderProps) {
-    return (
-        <FluentProvider theme={momoLightTheme} style={{ minHeight: "100dvh" }}>
-            {children}
-        </FluentProvider>
-    );
+    return <ThemeProvider>{children}</ThemeProvider>;
 }
