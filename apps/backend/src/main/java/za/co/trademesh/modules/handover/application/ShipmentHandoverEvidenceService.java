@@ -24,6 +24,8 @@ class ShipmentHandoverEvidenceService implements ShipmentHandoverEvidenceCatalog
                         challenge.type().name(),
                         challenge.deliveryOrderId(),
                         challenge.state().name(),
+                        challenge.expectedQuantity(),
+                        challenge.unitOfMeasure(),
                         challenge.expectedLocation().label(),
                         challenge.expectedLocation().latitude(),
                         challenge.expectedLocation().longitude(),
@@ -40,6 +42,8 @@ class ShipmentHandoverEvidenceService implements ShipmentHandoverEvidenceCatalog
                                         confirmation.latitude(),
                                         confirmation.longitude(),
                                         confirmation.distanceMetres(),
+                                        confirmation.capturedQuantity(),
+                                        confirmation.photoUrl(),
                                         confirmation.quantityOutcome().name(),
                                         confirmation.quantityNote()))
                                 .toList()))

@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.co.trademesh.modules.delivery.events.DeliveryEvent;
+import za.co.trademesh.modules.handover.application.DeliveryReleaseGate;
 import za.co.trademesh.modules.payment.domain.Escrow;
 import za.co.trademesh.modules.payment.domain.EscrowRepository;
 import za.co.trademesh.modules.payment.domain.EscrowStatus;
@@ -26,6 +27,7 @@ public class EscrowService {
     private final EscrowRepository escrows;
     private final EscrowContextResolver contexts;
     private final ShipmentEscrowCatalog shipments;
+    private final DeliveryReleaseGate deliveryReleaseGate;
     private final SensitiveDataProtector dataProtector;
     private final EscrowOutboxRequests requests;
     private final EscrowProperties properties;
@@ -36,6 +38,7 @@ public class EscrowService {
             EscrowRepository escrows,
             EscrowContextResolver contexts,
             ShipmentEscrowCatalog shipments,
+            DeliveryReleaseGate deliveryReleaseGate,
             SensitiveDataProtector dataProtector,
             EscrowOutboxRequests requests,
             EscrowProperties properties,
@@ -44,6 +47,7 @@ public class EscrowService {
         this.escrows = escrows;
         this.contexts = contexts;
         this.shipments = shipments;
+        this.deliveryReleaseGate = deliveryReleaseGate;
         this.dataProtector = dataProtector;
         this.requests = requests;
         this.properties = properties;
@@ -144,7 +148,8 @@ public class EscrowService {
         }
         var shipment =
                 shipments.find(escrow.businessId(), escrow.shipmentId()).orElseThrow(EscrowException::releaseBlocked);
-        if (!shipment.releaseAllowed()) {
+        if (!shipment.releaseAllowed()
+                && !deliveryReleaseGate.releaseAllowed(escrow.businessId(), escrow.shipmentId(), shipment.orderIds())) {
             throw EscrowException.releaseBlocked();
         }
         if (escrow.status() != EscrowStatus.LOCKED && escrow.status() != EscrowStatus.RELEASE_FAILED) {
@@ -164,6 +169,18 @@ public class EscrowService {
         events.publish(new PaymentEvent.ReleaseRequested(
                 escrow.id(), escrow.shipmentId(), escrow.businessId(), amount, escrow.currency()));
         return snapshot(escrow.id());
+    }
+
+    @Transactional
+    public EscrowSnapshot resolveAndRelease(
+            UUID businessId, UUID shipmentId, UUID requestId, BigDecimal resolvedAmount, UUID actorUserId) {
+        deliveryReleaseGate.resolve(
+                requiredId(businessId),
+                requiredId(shipmentId),
+                requiredId(requestId),
+                positiveAmount(resolvedAmount),
+                requiredId(actorUserId));
+        return release(businessId, shipmentId, requestId, resolvedAmount);
     }
 
     @Transactional(readOnly = true)

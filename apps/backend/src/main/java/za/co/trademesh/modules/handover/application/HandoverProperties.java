@@ -5,22 +5,34 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties("trademesh.handover")
 public record HandoverProperties(
-        Duration challengeTtl, Duration allowedClockSkew, int locationToleranceMetres, int maxQuantityNoteLength) {
+        Duration challengeTtl,
+        Duration allowedClockSkew,
+        int locationToleranceMetres,
+        int maxQuantityNoteLength,
+        Duration streamTimeout,
+        String signingSecret) {
 
     public HandoverProperties {
         requirePositive(challengeTtl, "challenge-ttl");
         requireNonNegative(allowedClockSkew, "allowed-clock-skew");
+        requirePositive(streamTimeout, "stream-timeout");
         if (challengeTtl.compareTo(Duration.ofHours(1)) > 0) {
             throw new IllegalArgumentException("Handover challenge-ttl cannot exceed one hour");
         }
         if (allowedClockSkew.compareTo(Duration.ofMinutes(10)) > 0) {
             throw new IllegalArgumentException("Handover allowed-clock-skew cannot exceed ten minutes");
         }
+        if (streamTimeout.compareTo(Duration.ofHours(24)) > 0) {
+            throw new IllegalArgumentException("Handover stream-timeout cannot exceed 24 hours");
+        }
         if (locationToleranceMetres < 1 || locationToleranceMetres > 10_000) {
             throw new IllegalArgumentException("Handover location-tolerance-metres must be between 1 and 10000");
         }
         if (maxQuantityNoteLength < 1 || maxQuantityNoteLength > 500) {
             throw new IllegalArgumentException("Handover max-quantity-note-length must be between 1 and 500");
+        }
+        if (signingSecret == null || signingSecret.length() < 32) {
+            throw new IllegalArgumentException("Handover signing-secret must contain at least 32 characters");
         }
     }
 

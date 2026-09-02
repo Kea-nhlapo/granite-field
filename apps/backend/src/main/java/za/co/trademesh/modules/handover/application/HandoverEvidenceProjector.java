@@ -36,6 +36,13 @@ class HandoverEvidenceProjector implements EvidenceProjector {
                         finalized.challengeId(),
                         finalized.shipmentId(),
                         EvidenceMetadata.of("handoverType", finalized.handoverType(), "outcome", finalized.outcome()));
+            case HandoverEvent.DisputeResolved resolved ->
+                new EvidenceProjection(
+                        "HANDOVER_RESOLUTION",
+                        resolved.resolutionId(),
+                        resolved.shipmentId(),
+                        EvidenceMetadata.of(
+                                "businessId", resolved.businessId(), "resolvedAmount", resolved.resolvedAmount()));
         };
     }
 }

@@ -102,4 +102,18 @@ public class HandoverException extends RuntimeException {
                 "HANDOVER_COMMAND_CONFLICT",
                 "The command ID has already been used with different confirmation data.");
     }
+
+    static HandoverException quantityUnavailable() {
+        return new HandoverException(
+                HttpStatus.CONFLICT,
+                "HANDOVER_QUANTITY_UNAVAILABLE",
+                "The confirmed order does not have one comparable quantity unit.");
+    }
+
+    static HandoverException disputeNotFound() {
+        return new HandoverException(
+                HttpStatus.CONFLICT,
+                "HANDOVER_DISPUTE_NOT_FOUND",
+                "No unresolved delivery quantity dispute was found for this business.");
+    }
 }

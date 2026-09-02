@@ -3,6 +3,7 @@ package za.co.trademesh.modules.handover.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import za.co.trademesh.modules.handover.domain.CaptureMode;
+import za.co.trademesh.modules.handover.domain.DeliveryDisputeResolution;
 import za.co.trademesh.modules.handover.domain.HandoverAttempt;
 import za.co.trademesh.modules.handover.domain.HandoverAttemptOutcome;
 import za.co.trademesh.modules.handover.domain.HandoverChallenge;
@@ -41,12 +43,14 @@ class HandoverServiceTest {
 
     private FakeHandoverRepository handovers;
     private FakeShipmentCatalog shipments;
+    private FakeTokenGenerator tokenGenerator;
     private HandoverService service;
 
     @BeforeEach
     void setUp() {
         handovers = new FakeHandoverRepository();
         shipments = new FakeShipmentCatalog(ShipmentHandoverCatalog.Stage.AWAITING_COLLECTION);
+        tokenGenerator = new FakeTokenGenerator();
         service = service(Clock.fixed(NOW, ZoneOffset.UTC));
     }
 
@@ -167,6 +171,56 @@ class HandoverServiceTest {
     }
 
     @Test
+    void scansDeliveryQuantityIdempotentlyAndRequiresResolutionBeforeRelease() {
+        shipments.stage = ShipmentHandoverCatalog.Stage.IN_TRANSIT;
+        var issued = service.issue(
+                BUSINESS_ID,
+                SHIPMENT_ID,
+                new HandoverService.IssueChallenge(HandoverType.DELIVERY, ORDER_ID, COUNTERPARTY_ID),
+                INITIATOR_ID);
+        UUID commandId = UUID.randomUUID();
+        HandoverService.ScanDelivery scan = new HandoverService.ScanDelivery(
+                commandId,
+                issued.qrPayload(),
+                new BigDecimal("19"),
+                "https://objects.example.test/deliveries/count.jpg",
+                -26.1000,
+                28.2333);
+
+        HandoverChallenge disputed = service.scanDelivery(SHIPMENT_ID, scan, COUNTERPARTY_ID);
+        HandoverChallenge duplicate = service.scanDelivery(SHIPMENT_ID, scan, COUNTERPARTY_ID);
+
+        assertThat(disputed.state()).isEqualTo(HandoverState.DISPUTED);
+        assertThat(duplicate.confirmations()).hasSize(1);
+        assertThat(disputed.confirmations().getFirst().capturedQuantity()).isEqualByComparingTo("19.0000");
+        assertThat(disputed.confirmations().getFirst().photoUrl())
+                .isEqualTo("https://objects.example.test/deliveries/count.jpg");
+        assertThat(service.releaseAllowed(BUSINESS_ID, SHIPMENT_ID, List.of(ORDER_ID)))
+                .isFalse();
+
+        UUID resolutionCommand = UUID.randomUUID();
+        var resolution =
+                service.resolve(BUSINESS_ID, SHIPMENT_ID, resolutionCommand, new BigDecimal("7800"), INITIATOR_ID);
+        var repeatedResolution =
+                service.resolve(BUSINESS_ID, SHIPMENT_ID, resolutionCommand, new BigDecimal("7800"), INITIATOR_ID);
+
+        assertThat(resolution.resolutionId()).isEqualTo(repeatedResolution.resolutionId());
+        assertThat(resolution.resolvedAmount()).isEqualByComparingTo("7800.0000");
+        assertThat(service.releaseAllowed(BUSINESS_ID, SHIPMENT_ID, List.of(ORDER_ID)))
+                .isTrue();
+        assertThat(service.deliveryStatus(BUSINESS_ID, SHIPMENT_ID).verificationStatus())
+                .isEqualTo("RESOLVED");
+
+        assertThatThrownBy(() -> service.scanDelivery(
+                        SHIPMENT_ID,
+                        new HandoverService.ScanDelivery(
+                                UUID.randomUUID(), issued.qrPayload(), new BigDecimal("19"), null, -26.1000, 28.2333),
+                        COUNTERPARTY_ID))
+                .isInstanceOf(HandoverException.class)
+                .hasMessageContaining("cannot be reused");
+    }
+
+    @Test
     void keepsAMultiStopShipmentMovingUntilEveryDeliveryIsVerified() {
         shipments.stage = ShipmentHandoverCatalog.Stage.IN_TRANSIT;
         shipments.includeSecondDelivery = true;
@@ -222,15 +276,24 @@ class HandoverServiceTest {
         return new HandoverService(
                 handovers,
                 shipments,
+                (businessId, orderId) -> Optional.of(
+                        new za.co.trademesh.modules.procurement.application.DeliveryOrderQuantityCatalog
+                                .ExpectedQuantity(new BigDecimal("20.0000"), "CASE")),
                 userId -> COUNTERPARTY_ID.equals(userId),
-                () -> TOKEN,
+                tokenGenerator,
                 properties(),
                 events,
                 clock);
     }
 
     private static HandoverProperties properties() {
-        return new HandoverProperties(Duration.ofMinutes(5), Duration.ofMinutes(2), 250, 500);
+        return new HandoverProperties(
+                Duration.ofMinutes(5),
+                Duration.ofMinutes(2),
+                250,
+                500,
+                Duration.ofMinutes(30),
+                "test-only-handover-signing-secret-32-characters");
     }
 
     private static HandoverService.ConfirmHandover confirmation(UUID commandId, QuantityOutcome outcome, String note) {
@@ -291,6 +354,7 @@ class HandoverServiceTest {
 
     private static final class FakeHandoverRepository implements HandoverRepository {
         private HandoverChallenge challenge;
+        private DeliveryDisputeResolution resolution;
         private final Map<UUID, HandoverConfirmation> confirmationsByCommand = new HashMap<>();
         private final List<HandoverAttempt> attempts = new ArrayList<>();
 
@@ -370,10 +434,32 @@ class HandoverServiceTest {
         public Set<UUID> findFinalizedDeliveryOrderIds(UUID shipmentId) {
             if (challenge != null
                     && challenge.type() == HandoverType.DELIVERY
-                    && challenge.state().terminal()) {
+                    && (challenge.state() == HandoverState.COMPLETED || challenge.state() == HandoverState.DISPUTED)) {
                 return Set.of(challenge.deliveryOrderId());
             }
             return Set.of();
+        }
+
+        @Override
+        public Optional<DeliveryDisputeResolution> findResolution(UUID businessId, UUID shipmentId) {
+            return Optional.ofNullable(resolution)
+                    .filter(value -> value.businessId().equals(businessId))
+                    .filter(value -> value.shipmentId().equals(shipmentId));
+        }
+
+        @Override
+        public Optional<DeliveryDisputeResolution> findResolutionByCommandId(UUID commandId) {
+            return Optional.ofNullable(resolution)
+                    .filter(value -> value.commandId().equals(commandId));
+        }
+
+        @Override
+        public boolean saveResolution(DeliveryDisputeResolution value) {
+            if (resolution != null) {
+                return false;
+            }
+            resolution = value;
+            return true;
         }
 
         @Override
@@ -401,12 +487,32 @@ class HandoverServiceTest {
                     source.initiatorUserId(),
                     source.counterpartyUserId(),
                     source.expectedLocation(),
+                    source.expectedQuantity(),
+                    source.unitOfMeasure(),
                     source.locationToleranceMetres(),
                     source.expiresAt(),
                     completedAt,
                     source.correlationId(),
                     source.createdAt(),
                     confirmations);
+        }
+    }
+
+    private static final class FakeTokenGenerator implements HandoverTokenGenerator {
+        private TokenClaims claims;
+
+        @Override
+        public String generate(TokenClaims value) {
+            claims = value;
+            return TOKEN;
+        }
+
+        @Override
+        public TokenClaims verify(String token) {
+            if (!TOKEN.equals(token) || claims == null) {
+                throw HandoverException.invalidToken();
+            }
+            return claims;
         }
     }
 }

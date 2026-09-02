@@ -28,5 +28,11 @@ public interface HandoverRepository {
 
     Set<UUID> findFinalizedDeliveryOrderIds(UUID shipmentId);
 
+    Optional<DeliveryDisputeResolution> findResolution(UUID businessId, UUID shipmentId);
+
+    Optional<DeliveryDisputeResolution> findResolutionByCommandId(UUID commandId);
+
+    boolean saveResolution(DeliveryDisputeResolution resolution);
+
     void saveAttempt(HandoverAttempt attempt);
 }

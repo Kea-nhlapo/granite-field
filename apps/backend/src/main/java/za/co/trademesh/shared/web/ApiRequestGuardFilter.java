@@ -28,7 +28,9 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
             Pattern.compile("^/api/supplier-invitations/guest/[^/]+(?:/responses)?$");
     private static final Pattern UPLOAD = Pattern.compile("^/api/businesses/[^/]+/files$");
     private static final Pattern DELIVERY_CONFIRMATION = Pattern.compile("^/api/delivery/confirm/[^/]+$");
-    private static final Pattern MOMO_TRANSACTION = Pattern.compile("^/api/delivery/[^/]+/(?:escrow/retry|release)$");
+    private static final Pattern DELIVERY_QR_MUTATION = Pattern.compile("^/api/delivery/[^/]+/(?:qr|scan)$");
+    private static final Pattern MOMO_TRANSACTION =
+            Pattern.compile("^/api/delivery/[^/]+/(?:escrow/retry|release|resolve)$");
 
     private final ApiRateLimitProperties limits;
     private final ApiWebProperties web;
@@ -129,6 +131,10 @@ public final class ApiRequestGuardFilter extends OncePerRequestFilter {
             return new Limit("telemetry", limits.telemetry());
         }
         if (HttpMethod.POST.matches(method) && "/api/handovers/confirmations".equals(path)) {
+            return new Limit("qr-validation", limits.qrValidation());
+        }
+        if (HttpMethod.POST.matches(method)
+                && DELIVERY_QR_MUTATION.matcher(path).matches()) {
             return new Limit("qr-validation", limits.qrValidation());
         }
         if (DELIVERY_CONFIRMATION.matcher(path).matches()) {

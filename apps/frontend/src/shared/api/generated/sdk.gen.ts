@@ -74,6 +74,19 @@ import type {
     DeliveryProposeData,
     DeliveryProposeErrors,
     DeliveryProposeResponses,
+    DeliveryVerificationEventsData,
+    DeliveryVerificationEventsErrors,
+    DeliveryVerificationEventsResponse,
+    DeliveryVerificationEventsResponses,
+    DeliveryVerificationGetData,
+    DeliveryVerificationGetErrors,
+    DeliveryVerificationGetResponses,
+    DeliveryVerificationIssueData,
+    DeliveryVerificationIssueErrors,
+    DeliveryVerificationIssueResponses,
+    DeliveryVerificationScanData,
+    DeliveryVerificationScanErrors,
+    DeliveryVerificationScanResponses,
     DeliveryVoiceSearchData,
     DeliveryVoiceSearchErrors,
     DeliveryVoiceSearchResponses,
@@ -108,6 +121,9 @@ import type {
     EscrowReleaseData,
     EscrowReleaseErrors,
     EscrowReleaseResponses,
+    EscrowResolveData,
+    EscrowResolveErrors,
+    EscrowResolveResponses,
     EscrowRetryData,
     EscrowRetryErrors,
     EscrowRetryResponses,
@@ -468,6 +484,44 @@ export const handoverConfirm = <ThrowOnError extends boolean = false>(
         },
     });
 
+export const deliveryVerificationScan = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryVerificationScanData, ThrowOnError>,
+): RequestResult<
+    DeliveryVerificationScanResponses,
+    DeliveryVerificationScanErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        DeliveryVerificationScanResponses,
+        DeliveryVerificationScanErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/scan",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const escrowResolve = <ThrowOnError extends boolean = false>(
+    options: Options<EscrowResolveData, ThrowOnError>,
+): RequestResult<EscrowResolveResponses, EscrowResolveErrors, ThrowOnError> =>
+    (options.client ?? client).post<
+        EscrowResolveResponses,
+        EscrowResolveErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/resolve",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
 export const escrowRelease = <ThrowOnError extends boolean = false>(
     options: Options<EscrowReleaseData, ThrowOnError>,
 ): RequestResult<EscrowReleaseResponses, EscrowReleaseErrors, ThrowOnError> =>
@@ -478,6 +532,27 @@ export const escrowRelease = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/delivery/{shipmentId}/release",
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    });
+
+export const deliveryVerificationIssue = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryVerificationIssueData, ThrowOnError>,
+): RequestResult<
+    DeliveryVerificationIssueResponses,
+    DeliveryVerificationIssueErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).post<
+        DeliveryVerificationIssueResponses,
+        DeliveryVerificationIssueErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/qr",
         ...options,
         headers: {
             "Content-Type": "application/json",
@@ -1402,6 +1477,42 @@ export const insuranceEvidence = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/insurance/cases/{caseId}/evidence",
+        ...options,
+    });
+
+export const deliveryVerificationGet = <ThrowOnError extends boolean = false>(
+    options: Options<DeliveryVerificationGetData, ThrowOnError>,
+): RequestResult<
+    DeliveryVerificationGetResponses,
+    DeliveryVerificationGetErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        DeliveryVerificationGetResponses,
+        DeliveryVerificationGetErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/verification",
+        ...options,
+    });
+
+export const deliveryVerificationEvents = <
+    ThrowOnError extends boolean = false,
+>(
+    options: Options<
+        DeliveryVerificationEventsData,
+        ThrowOnError,
+        DeliveryVerificationEventsResponse
+    >,
+): Promise<ServerSentEventsResult<DeliveryVerificationEventsResponses>> =>
+    (options.client ?? client).sse.get<
+        DeliveryVerificationEventsResponses,
+        DeliveryVerificationEventsErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/verification/events",
         ...options,
     });
 
