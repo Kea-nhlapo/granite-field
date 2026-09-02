@@ -5,12 +5,14 @@ import { runtimeConfig } from "../../lib/runtime-config";
 import { problem, scenarioOf, standardError } from "./mock-http";
 import { documentHandlers } from "./document-handlers";
 import { guestHandlers } from "./guest-handlers";
+import { logisticsHandlers } from "./logistics-handlers";
 import { onboardingHandlers } from "./onboarding-handlers";
 import { procurementHandlers } from "./procurement-handlers";
 
 export { mockScenarioHeader } from "./mock-http";
 export { resetDocumentMocks } from "./document-handlers";
 export { resetGuestMocks } from "./guest-handlers";
+export { resetLogisticsMocks } from "./logistics-handlers";
 export { resetOnboardingMocks } from "./onboarding-handlers";
 export { resetProcurementMocks } from "./procurement-handlers";
 
@@ -196,4 +198,5 @@ export const handlers = [
     ...documentHandlers,
     ...guestHandlers,
     ...procurementHandlers,
+    ...logisticsHandlers,
 ];
