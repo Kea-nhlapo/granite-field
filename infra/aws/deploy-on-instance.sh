@@ -17,9 +17,17 @@ HEALTH=http://127.0.0.1:8080/actuator/health
 # The host was provisioned with git, openssl and Docker only. Fetching an ECR
 # login token needs the AWS CLI, so install it if this host predates that need.
 if ! command -v aws >/dev/null 2>&1; then
-  echo "installing the AWS CLI"
+  # Ubuntu 24.04 has no awscli package: v1 was dropped from the archive and AWS
+  # ships v2 as its own installer. Use that rather than an apt package that does
+  # not exist on this release.
+  echo "installing the AWS CLI v2"
   DEBIAN_FRONTEND=noninteractive apt-get update -qq
-  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq awscli
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl unzip
+  curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip
+  unzip -q -o /tmp/awscliv2.zip -d /tmp
+  /tmp/aws/install --update
+  rm -rf /tmp/aws /tmp/awscliv2.zip
+  aws --version
 fi
 
 cd "$APP_DIR"
