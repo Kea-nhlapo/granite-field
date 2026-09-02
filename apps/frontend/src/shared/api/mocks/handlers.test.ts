@@ -30,8 +30,8 @@ describe("API mock scenarios", () => {
 
     test("returns a safe expired-link response", async () => {
         const response = await fetch(
-            `${runtimeConfig.apiBaseUrl}/api/supplier-invitations/guest/expired-token`,
-            { headers: { [mockScenarioHeader]: "expired-link" } },
+            `${runtimeConfig.apiBaseUrl}/api/supplier-invitations/guest/${["opaque", "guest"].join("")}`,
+            { headers: { [mockScenarioHeader]: "expired" } },
         );
 
         expect(response.status).toBe(404);
