@@ -80,6 +80,18 @@ trademesh:
       provider: ${DOCUMENT_EXTRACTION_PROVIDER:unconfigured}
     processing:
       claim-timeout: ${DOCUMENT_PROCESSING_CLAIM_TIMEOUT:PT5M}
+  aggregation:
+    # PostGIS limits the first search. Hard constraints then decide eligibility;
+    # the weights only rank candidates and never override a failed constraint.
+    search-radius-meters: ${AGGREGATION_SEARCH_RADIUS_METERS:30000}
+    maximum-distance-meters: ${AGGREGATION_MAXIMUM_DISTANCE_METERS:15000}
+    minimum-window-overlap: ${AGGREGATION_MINIMUM_WINDOW_OVERLAP:PT30M}
+    minimum-cargo-overlap-ratio: ${AGGREGATION_MINIMUM_CARGO_OVERLAP_RATIO:0.25}
+    candidate-limit: ${AGGREGATION_CANDIDATE_LIMIT:100}
+    distance-weight: ${AGGREGATION_DISTANCE_WEIGHT:0.35}
+    window-weight: ${AGGREGATION_WINDOW_WEIGHT:0.25}
+    cargo-weight: ${AGGREGATION_CARGO_WEIGHT:0.40}
+    algorithm-version: ${AGGREGATION_ALGORITHM_VERSION:demand-group/v1}
 
 # Local-only convenience defaults. Every other profile must supply these
 # explicitly, so a shipped default password can never reach a real database.
