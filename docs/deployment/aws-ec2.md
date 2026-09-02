@@ -37,6 +37,11 @@ Read this before putting anything but demonstration data through the deployment.
 | Company registry | `COMPANY_REGISTRY_PROVIDER=mock` | **Invented CIPC records.** Deliberate for the demo. Replace before real onboarding. |
 | Document extraction | `DOCUMENT_EXTRACTION_PROVIDER=mock` | Not a real extraction service. |
 | Email | `EMAIL_PROVIDER=local` | Captured locally, not delivered. |
+| Bot challenge | `TURNSTILE_PROVIDER=local` | Accepts any challenge. No Cloudflare check. |
+| One-time passwords | `OTP_PROVIDER=local` | Fixed local code. No SMS is sent. |
+| Mobile money | `MOMO_PROVIDER=mock` | No real payment is initiated. |
+| Speech and distance | `..._PROVIDER=local` | Local stand-ins, not Google. |
+| Mobile notifications | `MOBILE_NOTIFICATION_PROVIDER=local` | Captured locally, not delivered. |
 | Origin transport | HTTP | CloudFront terminates TLS. CloudFront-to-instance traffic is HTTP inside AWS. |
 
 Both provider settings are properties, not Spring profiles, so what is running is visible

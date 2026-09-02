@@ -49,6 +49,15 @@ services:
       COMPANY_REGISTRY_PROVIDER: ${COMPANY_REGISTRY_PROVIDER:?Set COMPANY_REGISTRY_PROVIDER in .env}
       DOCUMENT_EXTRACTION_PROVIDER: ${DOCUMENT_EXTRACTION_PROVIDER:-mock}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-local}
+      # Every provider below has no bean registered for "unconfigured", which is
+      # the base configuration's default. Leaving any of them unset stops the
+      # application from starting at all, so each is chosen explicitly here.
+      TURNSTILE_PROVIDER: ${TURNSTILE_PROVIDER:?Set TURNSTILE_PROVIDER in .env}
+      OTP_PROVIDER: ${OTP_PROVIDER:?Set OTP_PROVIDER in .env}
+      MOMO_PROVIDER: ${MOMO_PROVIDER:?Set MOMO_PROVIDER in .env}
+      DELIVERY_SPEECH_PROVIDER: ${DELIVERY_SPEECH_PROVIDER:?Set DELIVERY_SPEECH_PROVIDER in .env}
+      DELIVERY_DISTANCE_PROVIDER: ${DELIVERY_DISTANCE_PROVIDER:?Set DELIVERY_DISTANCE_PROVIDER in .env}
+      MOBILE_NOTIFICATION_PROVIDER: ${MOBILE_NOTIFICATION_PROVIDER:?Set MOBILE_NOTIFICATION_PROVIDER in .env}
     ports:
       # Reachable only from the CloudFront prefix list; see the security group.
       - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:${BACKEND_PORT:-8080}:8080"
