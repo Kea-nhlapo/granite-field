@@ -33,7 +33,7 @@ class GoogleSpeechRecognitionClient implements SpeechRecognitionClient {
                         builder.queryParam("key", properties.speechApiKey()).build())
                 .body(new SpeechRequest(
                         new RecognitionConfig(
-                                languages.getFirst(), languages.stream().skip(1).toList(), true, "latest_short"),
+                                languages.getFirst(), languages.stream().skip(1).toList(), true),
                         new RecognitionAudio(Base64.getEncoder().encodeToString(audio))))
                 .retrieve()
                 .body(SpeechResponse.class);
@@ -52,11 +52,11 @@ class GoogleSpeechRecognitionClient implements SpeechRecognitionClient {
 
     private record SpeechRequest(RecognitionConfig config, RecognitionAudio audio) {}
 
+    // No "model" field: pinning it to "latest_short" made Google reject en-ZA (and likely the
+    // other South African locales) with "model not supported for language". Omitting it lets
+    // Google pick a model that actually supports the requested language.
     private record RecognitionConfig(
-            String languageCode,
-            List<String> alternativeLanguageCodes,
-            boolean enableAutomaticPunctuation,
-            String model) {}
+            String languageCode, List<String> alternativeLanguageCodes, boolean enableAutomaticPunctuation) {}
 
     private record RecognitionAudio(String content) {}
 
