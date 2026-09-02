@@ -4,8 +4,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import za.co.trademesh.modules.trust.application.PremiumEstimateService;
 import za.co.trademesh.modules.trust.domain.PublicTrustSummary;
 import za.co.trademesh.modules.trust.domain.TrustHistoryBand;
+import za.co.trademesh.modules.trust.domain.TrustScoreSnapshot;
 
 final class TrustContracts {
 
@@ -59,6 +61,64 @@ final class TrustContracts {
                     PublicSummaryResponse.from(summary),
                     summary.successfulDeliveryCount(),
                     summary.sourceEvidenceThroughSequence());
+        }
+    }
+
+    record ScoreResponse(
+            UUID userId,
+            UUID businessId,
+            BigDecimal provisionalScore,
+            BigDecimal verifiedScore,
+            String verifiedScheduleMode,
+            String calculationVersion,
+            Instant provisionalCalculatedAt,
+            Instant verifiedCalculatedAt,
+            Instant nextVerificationAt) {
+
+        static ScoreResponse from(UUID userId, TrustScoreSnapshot score) {
+            return new ScoreResponse(
+                    userId,
+                    score.businessId(),
+                    score.provisionalScore(),
+                    score.verifiedScore(),
+                    score.verificationScheduleMode(),
+                    score.calculationVersion(),
+                    score.provisionalCalculatedAt(),
+                    score.verifiedCalculatedAt(),
+                    score.nextVerificationAt());
+        }
+    }
+
+    record PremiumEstimateResponse(
+            UUID shipmentId,
+            UUID businessId,
+            BigDecimal cargoValue,
+            String currency,
+            BigDecimal verifiedTrustScore,
+            BigDecimal platformRate,
+            BigDecimal platformPremium,
+            BigDecimal genericInsurerRate,
+            BigDecimal genericInsurerPremium,
+            BigDecimal estimatedSaving,
+            String status,
+            String calculationVersion,
+            Instant estimatedAt) {
+
+        static PremiumEstimateResponse from(PremiumEstimateService.PremiumEstimate estimate) {
+            return new PremiumEstimateResponse(
+                    estimate.shipmentId(),
+                    estimate.businessId(),
+                    estimate.cargoValue(),
+                    estimate.currency(),
+                    estimate.verifiedTrustScore(),
+                    estimate.platformRate(),
+                    estimate.platformPremium(),
+                    estimate.genericInsurerRate(),
+                    estimate.genericInsurerPremium(),
+                    estimate.estimatedSaving(),
+                    estimate.status(),
+                    estimate.calculationVersion(),
+                    estimate.estimatedAt());
         }
     }
 }

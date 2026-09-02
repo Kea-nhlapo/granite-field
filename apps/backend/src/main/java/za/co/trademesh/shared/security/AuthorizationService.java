@@ -34,6 +34,16 @@ public class AuthorizationService {
         requireAnyRole(authentication, AccountRole.INSURER, AccountRole.ADMINISTRATOR);
     }
 
+    public void requireSelfOrAdministrator(Authentication authentication, UUID userId) {
+        requireAuthenticated(authentication);
+        if (hasRole(authentication, AccountRole.ADMINISTRATOR)) {
+            return;
+        }
+        if (!authenticatedUserId(authentication).equals(userId)) {
+            throw new AccessDeniedException("This account cannot access the requested user");
+        }
+    }
+
     public UUID authenticatedUserId(Authentication authentication) {
         requireAuthenticated(authentication);
         try {

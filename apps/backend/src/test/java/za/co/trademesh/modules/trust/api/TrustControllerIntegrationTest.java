@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -16,9 +17,13 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import za.co.trademesh.modules.access.application.AuthService;
 import za.co.trademesh.modules.access.domain.RegistrationType;
 import za.co.trademesh.modules.business.application.RegisteredBusinessOnboardingService;
+import za.co.trademesh.modules.payment.events.PaymentEvent;
+import za.co.trademesh.shared.events.DomainEvents;
 import za.co.trademesh.support.PostgresIntegrationTest;
 
 @AutoConfigureMockMvc
@@ -38,11 +43,50 @@ class TrustControllerIntegrationTest extends PostgresIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private DomainEvents domainEvents;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
+
     @Test
     void keepsThePublicSummarySmallWhileProtectingInternalRecalculation() throws Exception {
         Account owner = register("trust-owner@example.com");
         var started = onboarding.start("2026/230001/07", owner.userId());
         UUID businessId = onboarding.confirm(started.id(), owner.userId()).id();
+
+        mockMvc.perform(get("/api/users/{userId}/trust", owner.userId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(owner.userId().toString()))
+                .andExpect(jsonPath("$.businessId").value(businessId.toString()))
+                .andExpect(jsonPath("$.provisionalScore").value(65.0))
+                .andExpect(jsonPath("$.verifiedScore").isNumber())
+                .andExpect(jsonPath("$.verifiedScheduleMode").value("COMPRESSED_DEMO"))
+                .andExpect(jsonPath("$.evidence").doesNotExist())
+                .andExpect(jsonPath("$.riskSignals").doesNotExist());
+
+        UUID paymentShipmentId = UUID.randomUUID();
+        appendEvidence(
+                "SHIPMENT_CREATED",
+                paymentShipmentId,
+                paymentShipmentId,
+                "{\"requestedByBusinessId\":\"" + businessId + "\"}",
+                1);
+        new TransactionTemplate(transactionManager)
+                .executeWithoutResult(ignored -> domainEvents.publish(
+                        new PaymentEvent.Locked(
+                                UUID.randomUUID(), paymentShipmentId, businessId, new BigDecimal("8500.00"), "ZAR"),
+                        owner.userId().toString()));
+        mockMvc.perform(get("/api/users/{userId}/trust", owner.userId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(owner)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provisionalScore").value(69.0));
+
+        Account otherOwner = register("other-trust-owner@example.com");
+        mockMvc.perform(get("/api/users/{userId}/trust", owner.userId())
+                        .header(HttpHeaders.AUTHORIZATION, bearer(otherOwner)))
+                .andExpect(status().isForbidden());
 
         mockMvc.perform(get("/api/public/businesses/{businessId}/trust", businessId))
                 .andExpect(status().isOk())

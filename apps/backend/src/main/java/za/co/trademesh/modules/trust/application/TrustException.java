@@ -24,4 +24,15 @@ public final class TrustException extends RuntimeException {
     static TrustException businessNotFound() {
         return new TrustException("TRUST_BUSINESS_NOT_FOUND", HttpStatus.NOT_FOUND, "The business was not found");
     }
+
+    static TrustException scoreNotFound() {
+        return new TrustException("TRUST_SCORE_NOT_FOUND", HttpStatus.NOT_FOUND, "A trust score is not available");
+    }
+
+    static TrustException premiumUnavailable() {
+        return new TrustException(
+                "PREMIUM_ESTIMATE_UNAVAILABLE",
+                HttpStatus.NOT_FOUND,
+                "A premium estimate is not available for this delivery");
+    }
 }

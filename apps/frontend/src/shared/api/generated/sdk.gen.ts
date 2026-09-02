@@ -293,12 +293,18 @@ import type {
     TransportRegisterData,
     TransportRegisterErrors,
     TransportRegisterResponses,
+    TrustPremiumEstimateData,
+    TrustPremiumEstimateErrors,
+    TrustPremiumEstimateResponses,
     TrustPublicSummaryData,
     TrustPublicSummaryErrors,
     TrustPublicSummaryResponses,
     TrustRecalculateData,
     TrustRecalculateErrors,
     TrustRecalculateResponses,
+    TrustScoreData,
+    TrustScoreErrors,
+    TrustScoreResponses,
 } from "./types.gen";
 
 export type Options<
@@ -1443,6 +1449,19 @@ export const authLogin = <ThrowOnError extends boolean = false>(
         },
     });
 
+export const trustScore = <ThrowOnError extends boolean = false>(
+    options: Options<TrustScoreData, ThrowOnError>,
+): RequestResult<TrustScoreResponses, TrustScoreErrors, ThrowOnError> =>
+    (options.client ?? client).get<
+        TrustScoreResponses,
+        TrustScoreErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/users/{userId}/trust",
+        ...options,
+    });
+
 export const telemetryPositionEvents = <ThrowOnError extends boolean = false>(
     options: Options<
         TelemetryPositionEventsData,
@@ -1617,6 +1636,23 @@ export const shipmentRouteRoute = <ThrowOnError extends boolean = false>(
     >({
         security: [{ scheme: "bearer", type: "http" }],
         url: "/api/delivery/{shipmentId}/route",
+        ...options,
+    });
+
+export const trustPremiumEstimate = <ThrowOnError extends boolean = false>(
+    options: Options<TrustPremiumEstimateData, ThrowOnError>,
+): RequestResult<
+    TrustPremiumEstimateResponses,
+    TrustPremiumEstimateErrors,
+    ThrowOnError
+> =>
+    (options.client ?? client).get<
+        TrustPremiumEstimateResponses,
+        TrustPremiumEstimateErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/delivery/{shipmentId}/premium-estimate",
         ...options,
     });
 

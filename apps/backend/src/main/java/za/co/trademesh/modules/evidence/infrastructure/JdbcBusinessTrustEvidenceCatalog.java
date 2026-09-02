@@ -1,5 +1,7 @@
 package za.co.trademesh.modules.evidence.infrastructure;
 
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -59,5 +61,54 @@ class JdbcBusinessTrustEvidenceCatalog implements BusinessTrustEvidenceCatalog {
                 (resultSet, rowNumber) -> new CompletionStats(
                         resultSet.getInt("completed"), resultSet.getInt("successful"), resultSet.getLong("sequence")),
                 businessId.toString());
+    }
+
+    @Override
+    public ScoreHistory scoreHistory(UUID businessId) {
+        List<ScoreEvent> events = jdbcTemplate.query(
+                """
+                WITH owned_shipments AS (
+                    SELECT subject_id AS shipment_id
+                      FROM evidence_record
+                     WHERE evidence_type = 'SHIPMENT_CREATED'
+                       AND metadata ->> 'requestedByBusinessId' = ?
+                )
+                SELECT record.evidence_type,
+                       COALESCE(record.metadata ->> 'outcome', record.metadata ->> 'rule', '') AS outcome,
+                       record.occurred_at,
+                       record.ledger_sequence
+                  FROM evidence_record record
+                 WHERE (
+                           record.evidence_type = 'business.profile-confirmed'
+                           AND record.subject_type = 'BUSINESS'
+                           AND record.subject_id = ?
+                       )
+                    OR (
+                           record.shipment_id IN (SELECT shipment_id FROM owned_shipments)
+                           AND (
+                               (record.evidence_type = 'HANDOVER_FINALIZED'
+                                AND record.metadata ->> 'handoverType' = 'DELIVERY')
+                               OR record.evidence_type IN (
+                                   'ESCROW_LOCKED',
+                                   'ESCROW_LOCK_FAILED',
+                                   'ESCROW_RELEASED',
+                                   'ESCROW_RELEASE_FAILED'
+                               )
+                               OR (record.evidence_type = 'RISK_INDICATOR_OPENED'
+                                   AND record.metadata ->> 'rule' = 'ROUTE_DEVIATION')
+                           )
+                       )
+                 ORDER BY record.occurred_at, record.ledger_sequence
+                """,
+                (resultSet, rowNumber) -> new ScoreEvent(
+                        resultSet.getString("evidence_type"),
+                        resultSet.getString("outcome"),
+                        resultSet.getObject("occurred_at", OffsetDateTime.class).toInstant(),
+                        resultSet.getLong("ledger_sequence")),
+                businessId.toString(),
+                businessId);
+        long sourceThroughSequence =
+                events.stream().mapToLong(ScoreEvent::ledgerSequence).max().orElse(0L);
+        return new ScoreHistory(events, sourceThroughSequence);
     }
 }
