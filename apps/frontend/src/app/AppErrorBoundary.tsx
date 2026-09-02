@@ -29,9 +29,13 @@ export class AppErrorBoundary extends Component<
     public render() {
         if (this.state.hasError) {
             return (
-                <main className="app-state" role="alert">
-                    <h1>Something went wrong</h1>
-                    <p>Refresh the page and try again.</p>
+                <main className="p-8" role="alert">
+                    <h1 className="text-xl font-semibold">
+                        Something went wrong
+                    </h1>
+                    <p className="text-sm mt-2">
+                        Refresh the page and try again.
+                    </p>
                 </main>
             );
         }

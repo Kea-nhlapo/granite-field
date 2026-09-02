@@ -1,16 +1,19 @@
-import { lazy, Suspense } from "react";
+import { RouterProvider } from "react-router";
+import type { RouterProviderProps } from "react-router";
 
+import { SessionProvider } from "../features/access/session";
 import { AppErrorBoundary } from "./AppErrorBoundary";
-import { AppLoading } from "./AppLoading";
 
-const RootRoute = lazy(() => import("./routes/RootRoute"));
+type AppProps = {
+    router: RouterProviderProps["router"];
+};
 
-export function App() {
+export function App({ router }: AppProps) {
     return (
         <AppErrorBoundary>
-            <Suspense fallback={<AppLoading />}>
-                <RootRoute />
-            </Suspense>
+            <SessionProvider>
+                <RouterProvider router={router} />
+            </SessionProvider>
         </AppErrorBoundary>
     );
 }
