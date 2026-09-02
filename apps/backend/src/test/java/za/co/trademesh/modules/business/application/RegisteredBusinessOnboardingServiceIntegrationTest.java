@@ -16,6 +16,7 @@ import za.co.trademesh.modules.access.domain.RegistrationType;
 import za.co.trademesh.modules.business.domain.BusinessVerificationStatus;
 import za.co.trademesh.modules.business.domain.OnboardingState;
 import za.co.trademesh.modules.business.events.BusinessEvent;
+import za.co.trademesh.shared.events.PublishedEvent;
 import za.co.trademesh.support.PostgresIntegrationTest;
 
 @RecordApplicationEvents
@@ -56,8 +57,9 @@ class RegisteredBusinessOnboardingServiceIntegrationTest extends PostgresIntegra
         assertThat(onboarding.businessId()).isNull();
         assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM business_profile", Integer.class))
                 .isZero();
-        assertThat(applicationEvents.stream(BusinessEvent.OnboardingStarted.class))
-                .hasSize(1);
+        var startedEvents = publishedEventsOfType(BusinessEvent.OnboardingStarted.class);
+        assertThat(startedEvents).hasSize(1);
+        assertThat(startedEvents.getFirst().envelope().actor()).contains(ownerId.toString());
 
         var business = onboardingService.confirm(onboarding.id(), ownerId);
 
@@ -68,8 +70,7 @@ class RegisteredBusinessOnboardingServiceIntegrationTest extends PostgresIntegra
                         business.id(),
                         ownerId))
                 .isEqualTo("ACTIVE");
-        assertThat(applicationEvents.stream(BusinessEvent.ProfileConfirmed.class))
-                .hasSize(1);
+        assertThat(publishedEventsOfType(BusinessEvent.ProfileConfirmed.class)).hasSize(1);
     }
 
     @Test
@@ -81,8 +82,7 @@ class RegisteredBusinessOnboardingServiceIntegrationTest extends PostgresIntegra
         var second = onboardingService.confirm(onboarding.id(), ownerId);
 
         assertThat(second.id()).isEqualTo(first.id());
-        assertThat(applicationEvents.stream(BusinessEvent.ProfileConfirmed.class))
-                .hasSize(1);
+        assertThat(publishedEventsOfType(BusinessEvent.ProfileConfirmed.class)).hasSize(1);
     }
 
     @Test
@@ -117,5 +117,11 @@ class RegisteredBusinessOnboardingServiceIntegrationTest extends PostgresIntegra
         return authService
                 .register(email, "correct-horse-battery", RegistrationType.BUSINESS_OWNER)
                 .userId();
+    }
+
+    private java.util.List<PublishedEvent> publishedEventsOfType(Class<? extends BusinessEvent> eventType) {
+        return applicationEvents.stream(PublishedEvent.class)
+                .filter(published -> eventType.isInstance(published.event()))
+                .toList();
     }
 }

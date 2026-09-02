@@ -15,6 +15,7 @@ import za.co.trademesh.modules.business.domain.OnboardingState;
 import za.co.trademesh.modules.business.domain.RegisteredBusinessOnboarding;
 import za.co.trademesh.modules.business.domain.RegistrationNumber;
 import za.co.trademesh.modules.business.events.BusinessEvent;
+import za.co.trademesh.shared.events.DomainEvents;
 
 @Service
 public class RegisteredBusinessOnboardingService {
@@ -22,14 +23,14 @@ public class RegisteredBusinessOnboardingService {
     private final BusinessRepository businesses;
     private final CompanyRegistryProvider companyRegistry;
     private final BusinessMembershipService memberships;
-    private final BusinessEventPublisher events;
+    private final DomainEvents events;
     private final Clock clock;
 
     public RegisteredBusinessOnboardingService(
             BusinessRepository businesses,
             CompanyRegistryProvider companyRegistry,
             BusinessMembershipService memberships,
-            BusinessEventPublisher events,
+            DomainEvents events,
             Clock clock) {
         this.businesses = businesses;
         this.companyRegistry = companyRegistry;
@@ -78,8 +79,9 @@ public class RegisteredBusinessOnboardingService {
             throw BusinessException.registrationAlreadyOnboarded();
         }
 
-        events.publish(new BusinessEvent.OnboardingStarted(
-                UUID.randomUUID(), onboarding.id(), ownerUserId, registrationNumber.value(), now));
+        events.publish(
+                new BusinessEvent.OnboardingStarted(onboarding.id(), registrationNumber.value()),
+                ownerUserId.toString());
         return onboarding;
     }
 
@@ -128,13 +130,12 @@ public class RegisteredBusinessOnboardingService {
             throw BusinessException.registrationAlreadyOnboarded();
         }
 
-        events.publish(new BusinessEvent.ProfileConfirmed(
-                UUID.randomUUID(),
-                onboarding.id(),
-                business.id(),
-                userId,
-                business.registrationNumber().value(),
-                now));
+        events.publish(
+                new BusinessEvent.ProfileConfirmed(
+                        onboarding.id(),
+                        business.id(),
+                        business.registrationNumber().value()),
+                userId.toString());
         return business;
     }
 
