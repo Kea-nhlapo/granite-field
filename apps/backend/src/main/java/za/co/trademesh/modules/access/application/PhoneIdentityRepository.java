@@ -11,7 +11,7 @@ public interface PhoneIdentityRepository {
     void save(String phoneNumber, UUID userId, VerificationMethod method, Instant verifiedAt);
 
     enum VerificationMethod {
-        TWILIO_OTP,
+        OTP,
         MOMO_CONSENT
     }
 }
