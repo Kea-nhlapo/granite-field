@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import za.co.trademesh.modules.handover.application.HandoverException;
 
-@RestControllerAdvice(assignableTypes = HandoverController.class)
+@RestControllerAdvice(assignableTypes = {HandoverController.class, DeliveryVerificationController.class})
 public class HandoverExceptionHandler {
 
     @ExceptionHandler(HandoverException.class)

@@ -1,5 +1,6 @@
 package za.co.trademesh.modules.handover.events;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 import za.co.trademesh.modules.handover.domain.HandoverParty;
 import za.co.trademesh.modules.handover.domain.HandoverState;
@@ -7,7 +8,10 @@ import za.co.trademesh.modules.handover.domain.HandoverType;
 import za.co.trademesh.shared.events.DomainEvent;
 
 public sealed interface HandoverEvent extends DomainEvent
-        permits HandoverEvent.ChallengeIssued, HandoverEvent.ConfirmationAccepted, HandoverEvent.HandoverFinalized {
+        permits HandoverEvent.ChallengeIssued,
+                HandoverEvent.ConfirmationAccepted,
+                HandoverEvent.HandoverFinalized,
+                HandoverEvent.DisputeResolved {
 
     @Override
     default int schemaVersion() {
@@ -33,6 +37,14 @@ public sealed interface HandoverEvent extends DomainEvent
         @Override
         public String type() {
             return "HANDOVER_FINALIZED";
+        }
+    }
+
+    record DisputeResolved(UUID resolutionId, UUID shipmentId, UUID businessId, BigDecimal resolvedAmount)
+            implements HandoverEvent {
+        @Override
+        public String type() {
+            return "DELIVERY_DISPUTE_RESOLVED";
         }
     }
 }

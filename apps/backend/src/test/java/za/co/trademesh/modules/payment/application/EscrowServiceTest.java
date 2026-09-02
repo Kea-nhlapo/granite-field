@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import za.co.trademesh.modules.delivery.events.DeliveryEvent;
+import za.co.trademesh.modules.handover.application.DeliveryReleaseGate;
 import za.co.trademesh.modules.payment.domain.Escrow;
 import za.co.trademesh.modules.payment.domain.EscrowRepository;
 import za.co.trademesh.modules.payment.domain.EscrowStatus;
@@ -64,6 +65,7 @@ class EscrowServiceTest {
                 repository,
                 contexts,
                 shipments,
+                mock(DeliveryReleaseGate.class),
                 protector,
                 requests,
                 new EscrowProperties(Duration.ofSeconds(2), Duration.ofMinutes(2), Duration.ofMinutes(30)),
@@ -90,6 +92,59 @@ class EscrowServiceTest {
         verify(requests, times(2)).submit(any());
         verify(events).publish(any(PaymentEvent.Locked.class));
         verify(events).publish(any(PaymentEvent.Released.class));
+    }
+
+    @Test
+    void disputedDeliveryMustBeResolvedBeforeReleaseIsQueued() {
+        UUID proposalId = UUID.randomUUID();
+        UUID shipmentId = UUID.randomUUID();
+        UUID businessId = UUID.randomUUID();
+        UUID orderId = UUID.randomUUID();
+        UUID actorUserId = UUID.randomUUID();
+        InMemoryEscrowRepository repository = new InMemoryEscrowRepository();
+        EscrowContextResolver contexts = mock(EscrowContextResolver.class);
+        ShipmentEscrowCatalog shipments = mock(ShipmentEscrowCatalog.class);
+        DeliveryReleaseGate releaseGate = mock(DeliveryReleaseGate.class);
+        EscrowOutboxRequests requests = mock(EscrowOutboxRequests.class);
+        when(contexts.resolve(proposalId, shipmentId, businessId))
+                .thenReturn(new EscrowContextResolver.LockContext(
+                        shipmentId,
+                        businessId,
+                        UUID.randomUUID(),
+                        "ZAR",
+                        new BigDecimal("8500.00"),
+                        "+27825550100",
+                        "+27825550200"));
+        when(shipments.find(businessId, shipmentId))
+                .thenReturn(Optional.of(new ShipmentEscrowCatalog.ShipmentEscrow(
+                        shipmentId, businessId, List.of(orderId), false, true)));
+        when(releaseGate.releaseAllowed(businessId, shipmentId, List.of(orderId)))
+                .thenReturn(true);
+        EscrowService service = new EscrowService(
+                repository,
+                contexts,
+                shipments,
+                releaseGate,
+                new PrefixProtector(),
+                requests,
+                new EscrowProperties(Duration.ofSeconds(2), Duration.ofMinutes(2), Duration.ofMinutes(30)),
+                mock(DomainEvents.class),
+                Clock.fixed(NOW, ZoneOffset.UTC));
+        EscrowSnapshot requested =
+                service.prepareLock(new DeliveryEvent.DeliveryAccepted(proposalId, shipmentId, businessId));
+        UUID lockTransactionId = requested.transactions().getFirst().transactionId();
+        service.markPending(lockTransactionId);
+        service.complete(lockTransactionId, MomoClient.TransactionStatus.SUCCESSFUL);
+        UUID resolutionCommand = UUID.randomUUID();
+
+        EscrowSnapshot resolved = service.resolveAndRelease(
+                businessId, shipmentId, resolutionCommand, new BigDecimal("7800.00"), actorUserId);
+
+        assertThat(resolved.status()).isEqualTo(EscrowStatus.RELEASE_REQUESTED);
+        assertThat(resolved.transactions().getLast().amount()).isEqualByComparingTo("7800.0000");
+        verify(releaseGate).resolve(businessId, shipmentId, resolutionCommand, new BigDecimal("7800.00"), actorUserId);
+        verify(releaseGate).releaseAllowed(businessId, shipmentId, List.of(orderId));
+        verify(requests, times(2)).submit(any());
     }
 
     private static final class PrefixProtector implements SensitiveDataProtector {

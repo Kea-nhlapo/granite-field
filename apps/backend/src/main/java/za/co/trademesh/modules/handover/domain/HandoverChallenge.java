@@ -1,5 +1,6 @@
 package za.co.trademesh.modules.handover.domain;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +16,8 @@ public record HandoverChallenge(
         UUID initiatorUserId,
         UUID counterpartyUserId,
         HandoverLocation expectedLocation,
+        BigDecimal expectedQuantity,
+        String unitOfMeasure,
         int locationToleranceMetres,
         Instant expiresAt,
         Instant completedAt,

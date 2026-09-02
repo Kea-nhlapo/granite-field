@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import za.co.trademesh.modules.handover.domain.DeliveryDisputeResolution;
 import za.co.trademesh.modules.handover.domain.HandoverAttempt;
 import za.co.trademesh.modules.handover.domain.HandoverChallenge;
 import za.co.trademesh.modules.handover.domain.HandoverConfirmation;
@@ -29,12 +30,14 @@ class JdbcHandoverRepository implements HandoverRepository {
         nonce_hash, initiator_user_id, counterparty_user_id, expected_location_label,
         ST_Y(expected_location::geometry) AS expected_latitude,
         ST_X(expected_location::geometry) AS expected_longitude,
-        location_tolerance_metres, expires_at, completed_at, correlation_id, created_at
+        expected_quantity, expected_unit_of_measure, location_tolerance_metres,
+        expires_at, completed_at, correlation_id, created_at
         """;
     private static final String CONFIRMATION_COLUMNS = """
         id, challenge_id, command_id, input_fingerprint, actor_user_id, party,
         observed_at, received_at, ST_Y(location::geometry) AS latitude,
-        ST_X(location::geometry) AS longitude, distance_metres, quantity_outcome, quantity_note
+        ST_X(location::geometry) AS longitude, distance_metres, captured_quantity,
+        photo_url, quantity_outcome, quantity_note
         """;
 
     private final JdbcTemplate jdbcTemplate;
@@ -72,10 +75,10 @@ class JdbcHandoverRepository implements HandoverRepository {
             INSERT INTO handover_challenge (
                 id, shipment_id, business_id, handover_type, delivery_order_id, state,
                 nonce_hash, initiator_user_id, counterparty_user_id, expected_location_label,
-                expected_location, location_tolerance_metres, expires_at, completed_at,
-                correlation_id, created_at
+                expected_location, expected_quantity, expected_unit_of_measure,
+                location_tolerance_metres, expires_at, completed_at, correlation_id, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?, ?, ?, ?, ?)
+                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT DO NOTHING
             """,
                         challenge.id(),
@@ -90,6 +93,8 @@ class JdbcHandoverRepository implements HandoverRepository {
                         challenge.expectedLocation().label(),
                         challenge.expectedLocation().longitude(),
                         challenge.expectedLocation().latitude(),
+                        challenge.expectedQuantity(),
+                        challenge.unitOfMeasure(),
                         challenge.locationToleranceMetres(),
                         time(challenge.expiresAt()),
                         nullableTime(challenge.completedAt()),
@@ -144,9 +149,10 @@ class JdbcHandoverRepository implements HandoverRepository {
                         """
             INSERT INTO handover_confirmation (
                 id, challenge_id, command_id, input_fingerprint, actor_user_id, party,
-                observed_at, received_at, location, distance_metres, quantity_outcome, quantity_note
+                observed_at, received_at, location, distance_metres, captured_quantity,
+                photo_url, quantity_outcome, quantity_note
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?,
-                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?, ?, ?)
+                ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?, ?, ?, ?, ?)
             ON CONFLICT DO NOTHING
             """,
                         confirmation.id(),
@@ -160,6 +166,8 @@ class JdbcHandoverRepository implements HandoverRepository {
                         confirmation.longitude(),
                         confirmation.latitude(),
                         confirmation.distanceMetres(),
+                        confirmation.capturedQuantity(),
+                        confirmation.photoUrl(),
                         confirmation.quantityOutcome().name(),
                         confirmation.quantityNote())
                 == 1;
@@ -184,6 +192,48 @@ class JdbcHandoverRepository implements HandoverRepository {
              WHERE shipment_id = ? AND handover_type = 'DELIVERY'
                AND state IN ('COMPLETED', 'DISPUTED')
             """, UUID.class, shipmentId));
+    }
+
+    @Override
+    public Optional<DeliveryDisputeResolution> findResolution(UUID businessId, UUID shipmentId) {
+        return jdbcTemplate.query("""
+                    SELECT id, shipment_id, business_id, command_id, input_fingerprint,
+                           resolved_amount, resolved_by_user_id, resolved_at
+                      FROM handover_delivery_resolution
+                     WHERE business_id = ? AND shipment_id = ?
+                    """, this::mapResolution, businessId, shipmentId).stream()
+                .findFirst();
+    }
+
+    @Override
+    public Optional<DeliveryDisputeResolution> findResolutionByCommandId(UUID commandId) {
+        return jdbcTemplate.query("""
+                    SELECT id, shipment_id, business_id, command_id, input_fingerprint,
+                           resolved_amount, resolved_by_user_id, resolved_at
+                      FROM handover_delivery_resolution
+                     WHERE command_id = ?
+                    """, this::mapResolution, commandId).stream().findFirst();
+    }
+
+    @Override
+    public boolean saveResolution(DeliveryDisputeResolution resolution) {
+        return jdbcTemplate.update(
+                        """
+                    INSERT INTO handover_delivery_resolution (
+                        id, shipment_id, business_id, command_id, input_fingerprint,
+                        resolved_amount, resolved_by_user_id, resolved_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT DO NOTHING
+                    """,
+                        resolution.id(),
+                        resolution.shipmentId(),
+                        resolution.businessId(),
+                        resolution.commandId(),
+                        resolution.inputFingerprint(),
+                        resolution.resolvedAmount(),
+                        resolution.resolvedByUserId(),
+                        time(resolution.resolvedAt()))
+                == 1;
     }
 
     @Override
@@ -229,6 +279,8 @@ class JdbcHandoverRepository implements HandoverRepository {
                 challenge.initiatorUserId(),
                 challenge.counterpartyUserId(),
                 challenge.expectedLocation(),
+                challenge.expectedQuantity(),
+                challenge.unitOfMeasure(),
                 challenge.locationToleranceMetres(),
                 challenge.expiresAt(),
                 challenge.completedAt(),
@@ -252,6 +304,8 @@ class JdbcHandoverRepository implements HandoverRepository {
                         resultSet.getString("expected_location_label"),
                         resultSet.getDouble("expected_latitude"),
                         resultSet.getDouble("expected_longitude")),
+                resultSet.getBigDecimal("expected_quantity"),
+                resultSet.getString("expected_unit_of_measure"),
                 resultSet.getInt("location_tolerance_metres"),
                 instant(resultSet, "expires_at"),
                 nullableInstant(resultSet, "completed_at"),
@@ -273,8 +327,22 @@ class JdbcHandoverRepository implements HandoverRepository {
                 resultSet.getDouble("latitude"),
                 resultSet.getDouble("longitude"),
                 resultSet.getDouble("distance_metres"),
+                resultSet.getBigDecimal("captured_quantity"),
+                resultSet.getString("photo_url"),
                 QuantityOutcome.valueOf(resultSet.getString("quantity_outcome")),
                 resultSet.getString("quantity_note"));
+    }
+
+    private DeliveryDisputeResolution mapResolution(ResultSet resultSet, int rowNumber) throws SQLException {
+        return new DeliveryDisputeResolution(
+                resultSet.getObject("id", UUID.class),
+                resultSet.getObject("shipment_id", UUID.class),
+                resultSet.getObject("business_id", UUID.class),
+                resultSet.getObject("command_id", UUID.class),
+                resultSet.getString("input_fingerprint").strip(),
+                resultSet.getBigDecimal("resolved_amount"),
+                resultSet.getObject("resolved_by_user_id", UUID.class),
+                instant(resultSet, "resolved_at"));
     }
 
     private static OffsetDateTime time(Instant value) {

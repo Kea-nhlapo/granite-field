@@ -14,6 +14,8 @@ public interface ShipmentHandoverEvidenceCatalog {
             String type,
             UUID deliveryOrderId,
             String state,
+            java.math.BigDecimal expectedQuantity,
+            String unitOfMeasure,
             String expectedLocationLabel,
             double expectedLatitude,
             double expectedLongitude,
@@ -35,6 +37,8 @@ public interface ShipmentHandoverEvidenceCatalog {
             double latitude,
             double longitude,
             double distanceMetres,
+            java.math.BigDecimal capturedQuantity,
+            String photoUrl,
             String quantityOutcome,
             String quantityNote) {}
 }

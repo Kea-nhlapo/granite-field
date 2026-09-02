@@ -26,6 +26,13 @@ final class EscrowContracts {
             @NotNull @DecimalMin(value = "0.0001") @Digits(integer = 15, fraction = 4)
             BigDecimal resolvedAmount) {}
 
+    record ResolveEscrowRequest(
+            @NotNull UUID businessId,
+            @NotNull UUID requestId,
+
+            @NotNull @DecimalMin(value = "0.0001") @Digits(integer = 15, fraction = 4)
+            BigDecimal resolvedAmount) {}
+
     record EscrowResponse(
             UUID escrowId,
             UUID shipmentId,

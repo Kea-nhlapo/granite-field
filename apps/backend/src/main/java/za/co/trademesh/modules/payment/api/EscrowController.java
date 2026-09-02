@@ -76,4 +76,19 @@ public class EscrowController {
         return EscrowContracts.EscrowResponse.from(
                 escrows.release(request.businessId(), shipmentId, request.requestId(), request.resolvedAmount()));
     }
+
+    @PostMapping("/resolve")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'ADMINISTRATOR')")
+    EscrowContracts.EscrowResponse resolve(
+            @PathVariable UUID shipmentId,
+            @Valid @RequestBody EscrowContracts.ResolveEscrowRequest request,
+            Authentication authentication) {
+        authorization.requireBusinessAccess(authentication, request.businessId());
+        return EscrowContracts.EscrowResponse.from(escrows.resolveAndRelease(
+                request.businessId(),
+                shipmentId,
+                request.requestId(),
+                request.resolvedAmount(),
+                authorization.authenticatedUserId(authentication)));
+    }
 }
