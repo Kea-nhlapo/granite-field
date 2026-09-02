@@ -5,6 +5,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { getApiAccessToken } from "../../shared/api/client";
 import { handlers, ownerTokens } from "../../shared/api/mocks/handlers";
 import { runtimeConfig } from "../../shared/lib/runtime-config";
+import { isDevSignInBypassEnabled } from "./dev-preview-session";
 import { refreshTokenStorageKey } from "./refresh-token-storage";
 import {
     applyTokenResponse,
@@ -94,6 +95,7 @@ describe("bearer session", () => {
     });
 
     it("does not invent a session when no refresh token exists", async () => {
+        expect(isDevSignInBypassEnabled()).toBe(false);
         expect(await restoreSession()).toBeNull();
         expect(getSessionSnapshot()).toBeNull();
         expect(getApiAccessToken()).toBeUndefined();

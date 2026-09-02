@@ -1,6 +1,7 @@
 import { authLogin, authLogout, authRefresh } from "../../shared/api/app-api";
 import { setApiAccessToken } from "../../shared/api/client";
 import type { ApiProblem, TokenResponse } from "../../shared/api/generated";
+import * as devPreviewSession from "./dev-preview-session";
 import {
     clearRefreshToken,
     readRefreshToken,
@@ -136,11 +137,18 @@ export async function restoreSession(): Promise<Session | null> {
         return currentSession;
     }
 
-    if (!readRefreshToken()) {
-        return null;
+    if (readRefreshToken()) {
+        const restored = await refreshSession();
+        if (restored) {
+            return restored;
+        }
     }
 
-    return refreshSession();
+    if (devPreviewSession.isDevSignInBypassEnabled()) {
+        return applyTokenResponse(devPreviewSession.devPreviewTokens);
+    }
+
+    return null;
 }
 
 export async function logoutSession(): Promise<void> {
