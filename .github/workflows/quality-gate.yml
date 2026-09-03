@@ -268,6 +268,10 @@ jobs:
           # keeps one place for the team to add a credential - Tshego adds a secret,
           # the next release carries it to the instance, nobody edits a server.
           #
+          # Only upper-case names are secrets somebody set. GitHub injects its own
+          # per-run token into this context as lower-case "github_token", and an
+          # exclusion by name missed it: it does not spell itself GITHUB_TOKEN here.
+          #
           # The values go to Parameter Store rather than straight into the release
           # command, because SSM keeps the text of every command it runs.
           published=0
@@ -282,7 +286,8 @@ jobs:
             published=$((published + 1))
           done < <(printf '%s' "$ALL_SECRETS" | jq -r '
             to_entries[]
-            | select((.key | startswith("CI_")) or .key == "GITHUB_TOKEN" | not)
+            | select(.key | test("^[A-Z][A-Z0-9_]*$"))
+            | select(.key | startswith("CI_") | not)
             | @base64')
           echo "${published} application secrets published"
 
