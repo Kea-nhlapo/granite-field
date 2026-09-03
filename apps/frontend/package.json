@@ -28,6 +28,7 @@
     "@vis.gl/react-google-maps": "1.9.0",
     "lucide-react": "1.39.0",
     "motion": "13.2.0",
+    "pdfjs-dist": "6.3.289",
     "qrcode.react": "4.2.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",

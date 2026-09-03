@@ -155,7 +155,7 @@ function LiveMap({ apiKey }: { apiKey: string }) {
         className="absolute inset-0"
         defaultCenter={MAP_CENTER}
         defaultZoom={13}
-        mapId="DEMO_MAP_ID"
+        mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID"}
         disableDefaultUI
         gestureHandling="greedy"
         style={{ width: "100%", height: "100%" }}

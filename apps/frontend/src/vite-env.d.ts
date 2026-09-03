@@ -5,6 +5,7 @@ interface ImportMetaEnv {
     readonly VITE_API_MODE?: "live" | "mock";
     readonly VITE_TURNSTILE_SITE_KEY?: string;
     readonly VITE_GOOGLE_MAPS_API_KEY?: string;
+    readonly VITE_GOOGLE_MAPS_MAP_ID?: string;
 }
 
 interface ImportMeta {
