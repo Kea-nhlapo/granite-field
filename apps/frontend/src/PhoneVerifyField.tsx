@@ -2,17 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import { m, springs } from "./motion";
+import { validateMomoAccount } from "./shared/momoValidate";
 
 type CheckState = "idle" | "checking" | "valid" | "invalid";
 
 /** Accepts local (0…) or international (+27…) South African MSISDN shapes — good enough for a live demo check. */
 const SA_MSISDN = /^(?:\+27|0)[6-8][0-9]{8}$/;
 
-/**
- * Debounced, animated stand-in for `MomoClient.validateAccountHolder`. The real
- * backend call is a single GET once the payment module exposes it publicly —
- * swap `simulateValidate` for that fetch without touching the animation.
- */
 function simulateValidate(phone: string): Promise<boolean> {
     return new Promise((resolve) => {
         setTimeout(
@@ -20,6 +16,27 @@ function simulateValidate(phone: string): Promise<boolean> {
             750,
         );
     });
+}
+
+/**
+ * POST /api/auth/momo/validate when VITE_API_MODE=live; otherwise (and on any
+ * failure — network down, backend not running, request rejected) falls back
+ * to the local simulation so the field never breaks mid-demo.
+ */
+async function checkAccount(phone: string): Promise<boolean> {
+    const digits = phone.replace(/\s/g, "");
+    if (import.meta.env.VITE_API_MODE !== "live") {
+        return simulateValidate(digits);
+    }
+    try {
+        return await validateMomoAccount(digits);
+    } catch (error) {
+        console.warn(
+            "MoMo account validation failed, falling back to local check",
+            error,
+        );
+        return simulateValidate(digits);
+    }
 }
 
 export function PhoneVerifyField({
@@ -45,7 +62,7 @@ export function PhoneVerifyField({
         setState("checking");
         const id = ++requestId.current;
         const timer = setTimeout(async () => {
-            const valid = await simulateValidate(digits);
+            const valid = await checkAccount(digits);
             if (requestId.current !== id) return; // superseded by newer input
             setState(valid ? "valid" : "invalid");
             onVerified?.(digits, valid);

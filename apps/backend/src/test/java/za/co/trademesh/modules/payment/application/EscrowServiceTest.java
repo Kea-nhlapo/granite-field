@@ -227,6 +227,20 @@ class EscrowServiceTest {
         }
 
         @Override
+        public List<EscrowTransaction> findRecentTransactionsForBusiness(UUID businessId, int limit) {
+            List<EscrowTransaction> values = new ArrayList<>(transactions.values().stream()
+                    .filter(value -> {
+                        Escrow escrow = escrows.get(value.escrowId());
+                        return escrow != null && escrow.businessId().equals(businessId);
+                    })
+                    .toList());
+            values.sort(Comparator.comparing(EscrowTransaction::createdAt)
+                    .reversed()
+                    .thenComparing(Comparator.comparingInt(EscrowTransaction::sequence).reversed()));
+            return values.size() > limit ? values.subList(0, limit) : values;
+        }
+
+        @Override
         public int nextSequence(UUID escrowId, EscrowTransactionType type) {
             return findLatestTransaction(escrowId, type)
                     .map(value -> value.sequence() + 1)

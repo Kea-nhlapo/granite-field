@@ -9,9 +9,20 @@ import {
     Store,
     Truck,
 } from "lucide-react";
+import {
+    APIProvider,
+    AdvancedMarker,
+    Map as GoogleMap,
+    Polyline,
+} from "@vis.gl/react-google-maps";
 import { Badge, PrimaryBtn, SecondaryBtn } from "./ui";
 import { ChevronLeftIcon } from "./icons";
 import { m, springs } from "./motion";
+
+/** Soweto coordinates standing in for the matched business + supplier pair. */
+const STORE_POSITION = { lat: -26.2678, lng: 27.8585 };
+const SUPPLIER_POSITION = { lat: -26.2485, lng: 27.8912 };
+const MAP_CENTER = { lat: -26.2582, lng: 27.8749 };
 
 /**
  * Decorative, non-geographic street map. This app has no live map provider —
@@ -102,6 +113,106 @@ function MapBackdrop() {
     );
 }
 
+function PinMarker({
+    position,
+    label,
+    labelColor,
+    fill,
+    iconColor,
+    icon,
+}: {
+    position: { lat: number; lng: number };
+    label: string;
+    labelColor: string;
+    fill: string;
+    iconColor: string;
+    icon: ReactNode;
+}) {
+    return (
+        <AdvancedMarker position={position}>
+            <div className="flex flex-col items-center gap-1">
+                <span
+                    className="app-micro font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                    style={{
+                        backgroundColor: "#FFFFFF",
+                        color: labelColor,
+                        boxShadow: "var(--fluent-depth-card)",
+                    }}
+                >
+                    {label}
+                </span>
+                <span
+                    className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white"
+                    style={{
+                        backgroundColor: fill,
+                        color: iconColor,
+                        boxShadow: "var(--fluent-depth-card)",
+                    }}
+                >
+                    {icon}
+                </span>
+            </div>
+        </AdvancedMarker>
+    );
+}
+
+/**
+ * Live Google Map with the matched business and supplier plotted, connected by
+ * a dashed route preview. Requires VITE_GOOGLE_MAPS_API_KEY (browser-restricted
+ * key, separate from the backend's server-side Directions key) — see .env.example.
+ */
+function LiveMap({ apiKey }: { apiKey: string }) {
+    return (
+        <APIProvider apiKey={apiKey}>
+            <GoogleMap
+                className="absolute inset-0"
+                defaultCenter={MAP_CENTER}
+                defaultZoom={13}
+                mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || "DEMO_MAP_ID"}
+                disableDefaultUI
+                gestureHandling="greedy"
+                style={{ width: "100%", height: "100%" }}
+            >
+                <Polyline
+                    path={[STORE_POSITION, SUPPLIER_POSITION]}
+                    strokeOpacity={0}
+                    strokeColor="#003E85"
+                    icons={[
+                        {
+                            icon: {
+                                path: "M 0,-1 0,1",
+                                strokeOpacity: 1,
+                                strokeColor: "#003E85",
+                                scale: 3,
+                            },
+                            offset: "0",
+                            repeat: "14px",
+                        },
+                    ]}
+                />
+
+                <PinMarker
+                    position={STORE_POSITION}
+                    label="Your Store"
+                    labelColor="#00875A"
+                    fill="#00875A"
+                    iconColor="#FFFFFF"
+                    icon={<Store size={15} strokeWidth={2} />}
+                />
+
+                <PinMarker
+                    position={SUPPLIER_POSITION}
+                    label="Thabo Distributors"
+                    labelColor="#003E85"
+                    fill="var(--momo-navy, #002B49)"
+                    iconColor="#FFCC00"
+                    icon={<Truck size={15} strokeWidth={2} />}
+                />
+            </GoogleMap>
+        </APIProvider>
+    );
+}
+
 function FloatingIconBtn({
     children,
     onClick,
@@ -140,10 +251,11 @@ function StatTile({ label, value }: { label: string; value: string }) {
 
 export function SupplierMatchScreen({ onBack }: { onBack: () => void }) {
     const reduceMotion = useReducedMotion();
+    const mapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
     return (
         <div className="h-full flex flex-col overflow-hidden relative">
-            <MapBackdrop />
+            {mapsApiKey ? <LiveMap apiKey={mapsApiKey} /> : <MapBackdrop />}
 
             {/* Floating header, distinct from the app's yellow TopBar since this screen is map-first */}
             <div
@@ -179,125 +291,140 @@ export function SupplierMatchScreen({ onBack }: { onBack: () => void }) {
                 </FloatingIconBtn>
             </div>
 
-            {/* Route + pins overlay */}
+            {/* Route + pins overlay — only for the decorative fallback; the live map renders its own markers */}
             <div className="flex-1 relative">
-                <svg
-                    viewBox="0 0 375 500"
-                    className="absolute inset-0 w-full h-full pointer-events-none"
-                >
-                    <path
-                        d="M 90 380 C 140 300, 160 220, 250 120"
-                        fill="none"
-                        stroke="var(--momo-blue, #003E85)"
-                        strokeWidth="3"
-                        strokeDasharray="2 10"
-                        strokeLinecap="round"
-                    />
-                </svg>
+                {!mapsApiKey && (
+                    <>
+                        <svg
+                            viewBox="0 0 375 500"
+                            className="absolute inset-0 w-full h-full pointer-events-none"
+                        >
+                            <path
+                                d="M 90 380 C 140 300, 160 220, 250 120"
+                                fill="none"
+                                stroke="var(--momo-blue, #003E85)"
+                                strokeWidth="3"
+                                strokeDasharray="2 10"
+                                strokeLinecap="round"
+                            />
+                        </svg>
 
-                {/* Start pin — Your Store */}
-                <m.div
-                    className="absolute flex flex-col items-center gap-1"
-                    style={{
-                        left: "24%",
-                        top: "76%",
-                        transform: "translate(-50%, -100%)",
-                    }}
-                    initial={reduceMotion ? undefined : { y: -10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={springs.gentle}
-                >
-                    <span
-                        className="app-micro font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-                        style={{
-                            backgroundColor: "#FFFFFF",
-                            color: "#00875A",
-                            boxShadow: "var(--fluent-depth-card)",
-                        }}
-                    >
-                        Your Store
-                    </span>
-                    <span
-                        className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white"
-                        style={{
-                            backgroundColor: "#00875A",
-                            color: "#FFFFFF",
-                            boxShadow: "var(--fluent-depth-card)",
-                        }}
-                    >
-                        <Store size={15} strokeWidth={2} />
-                    </span>
-                </m.div>
-
-                {/* End pin — Supplier warehouse */}
-                <m.div
-                    className="absolute flex flex-col items-center gap-1"
-                    style={{
-                        left: "67%",
-                        top: "24%",
-                        transform: "translate(-50%, -100%)",
-                    }}
-                    initial={reduceMotion ? undefined : { y: -10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{
-                        ...springs.gentle,
-                        delay: reduceMotion ? 0 : 0.1,
-                    }}
-                >
-                    <span
-                        className="app-micro font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
-                        style={{
-                            backgroundColor: "#FFFFFF",
-                            color: "#003E85",
-                            boxShadow: "var(--fluent-depth-card)",
-                        }}
-                    >
-                        Thabo Distributors
-                    </span>
-                    <span
-                        className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white"
-                        style={{
-                            backgroundColor: "var(--momo-navy, #002B49)",
-                            color: "#FFCC00",
-                            boxShadow: "var(--fluent-depth-card)",
-                        }}
-                    >
-                        <Truck size={15} strokeWidth={2} />
-                    </span>
-                </m.div>
-
-                {/* Live match pulse, midpoint of the route */}
-                <div
-                    className="absolute"
-                    style={{
-                        left: "46%",
-                        top: "50%",
-                        transform: "translate(-50%, -50%)",
-                    }}
-                >
-                    {!reduceMotion && (
-                        <m.span
-                            className="absolute inset-0 rounded-full"
+                        {/* Start pin — Your Store */}
+                        <m.div
+                            className="absolute flex flex-col items-center gap-1"
                             style={{
-                                backgroundColor: "var(--momo-yellow, #FFCC00)",
+                                left: "24%",
+                                top: "76%",
+                                transform: "translate(-50%, -100%)",
                             }}
-                            initial={{ scale: 1, opacity: 0.6 }}
-                            animate={{ scale: 2.4, opacity: 0 }}
+                            initial={
+                                reduceMotion
+                                    ? undefined
+                                    : { y: -10, opacity: 0 }
+                            }
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={springs.gentle}
+                        >
+                            <span
+                                className="app-micro font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                                style={{
+                                    backgroundColor: "#FFFFFF",
+                                    color: "#00875A",
+                                    boxShadow: "var(--fluent-depth-card)",
+                                }}
+                            >
+                                Your Store
+                            </span>
+                            <span
+                                className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white"
+                                style={{
+                                    backgroundColor: "#00875A",
+                                    color: "#FFFFFF",
+                                    boxShadow: "var(--fluent-depth-card)",
+                                }}
+                            >
+                                <Store size={15} strokeWidth={2} />
+                            </span>
+                        </m.div>
+
+                        {/* End pin — Supplier warehouse */}
+                        <m.div
+                            className="absolute flex flex-col items-center gap-1"
+                            style={{
+                                left: "67%",
+                                top: "24%",
+                                transform: "translate(-50%, -100%)",
+                            }}
+                            initial={
+                                reduceMotion
+                                    ? undefined
+                                    : { y: -10, opacity: 0 }
+                            }
+                            animate={{ y: 0, opacity: 1 }}
                             transition={{
-                                duration: 1.6,
-                                repeat: Infinity,
-                                ease: "easeOut",
+                                ...springs.gentle,
+                                delay: reduceMotion ? 0 : 0.1,
                             }}
-                        />
-                    )}
-                    <span
-                        className="block w-3 h-3 rounded-full border-2 border-white"
-                        style={{
-                            backgroundColor: "var(--momo-yellow, #FFCC00)",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                        }}
-                    />
-                </div>
+                        >
+                            <span
+                                className="app-micro font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                                style={{
+                                    backgroundColor: "#FFFFFF",
+                                    color: "#003E85",
+                                    boxShadow: "var(--fluent-depth-card)",
+                                }}
+                            >
+                                Thabo Distributors
+                            </span>
+                            <span
+                                className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-white"
+                                style={{
+                                    backgroundColor:
+                                        "var(--momo-navy, #002B49)",
+                                    color: "#FFCC00",
+                                    boxShadow: "var(--fluent-depth-card)",
+                                }}
+                            >
+                                <Truck size={15} strokeWidth={2} />
+                            </span>
+                        </m.div>
+
+                        {/* Live match pulse, midpoint of the route */}
+                        <div
+                            className="absolute"
+                            style={{
+                                left: "46%",
+                                top: "50%",
+                                transform: "translate(-50%, -50%)",
+                            }}
+                        >
+                            {!reduceMotion && (
+                                <m.span
+                                    className="absolute inset-0 rounded-full"
+                                    style={{
+                                        backgroundColor:
+                                            "var(--momo-yellow, #FFCC00)",
+                                    }}
+                                    initial={{ scale: 1, opacity: 0.6 }}
+                                    animate={{ scale: 2.4, opacity: 0 }}
+                                    transition={{
+                                        duration: 1.6,
+                                        repeat: Infinity,
+                                        ease: "easeOut",
+                                    }}
+                                />
+                            )}
+                            <span
+                                className="block w-3 h-3 rounded-full border-2 border-white"
+                                style={{
+                                    backgroundColor:
+                                        "var(--momo-yellow, #FFCC00)",
+                                    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                                }}
+                            />
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Bottom overlay sheet */}

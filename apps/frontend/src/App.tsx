@@ -11,6 +11,7 @@ import {
     TrackScreen,
 } from "./TrackScreens";
 import { ProfileScreen, RiskScreen } from "./AccountScreens";
+import { WalletScreen } from "./WalletScreen";
 import type { Screen, Tab } from "./types";
 import { TabBar } from "./ui";
 import { useSession } from "./features/access/SessionProvider";
@@ -30,6 +31,7 @@ const TAB_FOR_SCREEN: Record<string, Tab> = {
     track: "track",
     track_qr: "track",
     risk: "home",
+    wallet: "home",
 };
 
 export default function App() {
@@ -118,7 +120,15 @@ export default function App() {
             case "risk":
                 return <RiskScreen onBack={goBack} internal={internal} />;
             case "profile":
-                return <ProfileScreen onBack={goBack} internal={internal} />;
+                return (
+                    <ProfileScreen
+                        onBack={goBack}
+                        internal={internal}
+                        navigate={navigate}
+                    />
+                );
+            case "wallet":
+                return <WalletScreen onBack={goBack} />;
             default:
                 return null;
         }
@@ -134,6 +144,7 @@ export default function App() {
         "track_qr",
         "risk",
         "profile",
+        "wallet",
     ].includes(screen.id);
 
     return (

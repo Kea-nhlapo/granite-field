@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { AnimatePresence } from "motion/react";
-import { ChevronDown } from "lucide-react";
+import { useRef, useState } from "react";
+import { FileWarning } from "lucide-react";
 import type { Navigate } from "./types";
 import {
     Badge,
@@ -19,7 +18,10 @@ import {
     PlusIcon,
 } from "./icons";
 import { EscrowPadlockCard, type EscrowStatus } from "./EscrowPadlockCard";
-import { m, springs } from "./motion";
+import {
+    parseInvoicePdf,
+    type ParsedInvoiceLine,
+} from "./shared/pdfInvoiceParser";
 
 /** Simulated timeline standing in for the real RequestToPay → GetTransactionStatus poll. */
 const LOCK_TIMELINE: { status: EscrowStatus; after: number }[] = [
@@ -34,19 +36,6 @@ const RELEASE_TIMELINE: { status: EscrowStatus; after: number }[] = [
     { status: "RELEASE_PENDING", after: 800 },
     { status: "RELEASED", after: 2000 },
 ];
-
-type LineStatus =
-    "ok" | "qty_mismatch" | "price_mismatch" | "approved" | "rejected";
-
-interface Line {
-    id: string;
-    product: string;
-    qty: number;
-    price: number;
-    invQty: number;
-    invPrice: number;
-    status: LineStatus;
-}
 
 export function OrdersScreen({ navigate }: { navigate: Navigate }) {
     return (
@@ -181,10 +170,21 @@ export function OrdersScreen({ navigate }: { navigate: Navigate }) {
 
 export function InvoiceScreen({ onBack }: { onBack: () => void }) {
     const [step, setStep] = useState<
-        "upload" | "parsing" | "review" | "escrow"
+        "upload" | "parsing" | "review" | "unparsed" | "error" | "escrow"
     >("upload");
     const [escrowStatus, setEscrowStatus] =
         useState<EscrowStatus>("LOCK_REQUESTED");
+    const [fileName, setFileName] = useState("");
+    const [lines, setLines] = useState<ParsedInvoiceLine[]>([]);
+    const [rawLines, setRawLines] = useState<string[]>([]);
+    const [invoiceNumber, setInvoiceNumber] = useState<string>("");
+    const [extractedTotal, setExtractedTotal] = useState<number | undefined>(
+        undefined,
+    );
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const computedTotal = lines.reduce((sum, l) => sum + l.lineTotal, 0);
+    const invoiceTotal = extractedTotal ?? computedTotal;
 
     function runEscrowLifecycle() {
         setStep("escrow");
@@ -199,70 +199,26 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
             setTimeout(() => setEscrowStatus(entry.status), entry.after);
         }
     }
-    const [lines, setLines] = useState<Line[]>([
-        {
-            id: "L1",
-            product: "Sunflower Oil 5L",
-            qty: 50,
-            price: 89.0,
-            invQty: 50,
-            invPrice: 89.0,
-            status: "ok",
-        },
-        {
-            id: "L2",
-            product: "Maize Meal 10kg",
-            qty: 30,
-            price: 112.5,
-            invQty: 25,
-            invPrice: 112.5,
-            status: "qty_mismatch",
-        },
-        {
-            id: "L3",
-            product: "Washing Powder 3kg",
-            qty: 20,
-            price: 67.0,
-            invQty: 20,
-            invPrice: 71.5,
-            status: "price_mismatch",
-        },
-        {
-            id: "L4",
-            product: "Tinned Pilchards 400g",
-            qty: 100,
-            price: 24.9,
-            invQty: 100,
-            invPrice: 24.9,
-            status: "ok",
-        },
-        {
-            id: "L5",
-            product: "Long-life Milk 1L",
-            qty: 60,
-            price: 18.5,
-            invQty: 60,
-            invPrice: 18.5,
-            status: "ok",
-        },
-    ]);
 
-    const [showClean, setShowClean] = useState(false);
-
-    const flagged = lines.filter(
-        (l) => l.status === "qty_mismatch" || l.status === "price_mismatch",
-    );
-    const needsAttention = lines.filter((l) => l.status !== "ok");
-    const cleanLines = lines.filter((l) => l.status === "ok");
-
-    const approve = (id: string) =>
-        setLines((ls) =>
-            ls.map((l) => (l.id === id ? { ...l, status: "approved" } : l)),
-        );
-    const reject = (id: string) =>
-        setLines((ls) =>
-            ls.map((l) => (l.id === id ? { ...l, status: "rejected" } : l)),
-        );
+    async function handleFile(file: File) {
+        if (file.type !== "application/pdf") {
+            setStep("error");
+            return;
+        }
+        setFileName(file.name);
+        setStep("parsing");
+        try {
+            const parsed = await parseInvoicePdf(file);
+            setLines(parsed.lines);
+            setRawLines(parsed.rawLines);
+            setInvoiceNumber(parsed.invoiceNumber ?? "");
+            setExtractedTotal(parsed.total);
+            setStep(parsed.lines.length > 0 ? "review" : "unparsed");
+        } catch (err) {
+            console.warn("PDF parsing failed", err);
+            setStep("error");
+        }
+    }
 
     return (
         <>
@@ -274,11 +230,19 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
                 {step === "upload" && (
                     <div className="p-4 space-y-4">
                         {/* Upload Dropzone */}
-                        <div
-                            onClick={() => {
-                                setStep("parsing");
-                                setTimeout(() => setStep("review"), 1600);
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="application/pdf"
+                            className="sr-only"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = "";
+                                if (file) void handleFile(file);
                             }}
+                        />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
                             className="w-full bg-white border-2 border-dashed border-[#D1D5DB] hover:border-[#003E85] hover:bg-[#F8F9FA] cursor-pointer rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-all"
                         >
                             <div className="w-12 h-12 rounded-full bg-[#EBF3FC] flex items-center justify-center text-[#003E85]">
@@ -289,26 +253,23 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
                                     Click to upload invoice document
                                 </p>
                                 <p className="app-caption text-[#595959] mt-1">
-                                    Supports PDF, scanned images (JPG, PNG), or
-                                    TIFF
+                                    PDF only — text is read and formatted
+                                    directly in your browser
                                 </p>
                             </div>
-                            <span className="app-micro font-semibold px-3 py-1 rounded-full bg-[#FFF9D6] text-[#7A6000] border border-[#FFE082]">
-                                Simulate Instant OCR Parse
-                            </span>
-                        </div>
+                        </button>
 
                         {/* Reconciliation Process Card */}
                         <SectionCard className="p-4">
                             <p className="app-heading mb-3">
-                                Automated Three-Way Matching Pipeline
+                                How Invoice Parsing Works
                             </p>
                             <div className="space-y-3">
                                 {[
-                                    "Supplier uploads PDF or digital invoice",
-                                    "TradeMesh OCR engine extracts all line items & VAT breakdown",
-                                    "Cross-checks automatically against MoMo PSB purchase rates",
-                                    "Approve variances or trigger automated dispute settlement",
+                                    "Supplier uploads a digital PDF invoice",
+                                    "TradeMesh reads the PDF's text and reconstructs each line",
+                                    "Line items, quantities and unit prices are detected automatically",
+                                    "You review the extracted lines before locking payment in escrow",
                                 ].map((s, i) => (
                                     <div
                                         key={i}
@@ -331,308 +292,136 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
                     <div className="p-8 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center">
                         <div className="w-10 h-10 border-3 border-[#003E85] border-t-[#FFCC00] rounded-full animate-spin" />
                         <div>
-                            <p className="app-heading">
-                                Parsing Invoice SB-INV-9012...
-                            </p>
+                            <p className="app-heading">Reading {fileName}...</p>
                             <p className="app-caption text-[#595959] mt-1">
-                                Extracting 5 SKUs, checking unit pricing against
-                                MoMo escrow contract
+                                Extracting text and formatting line items
                             </p>
                         </div>
+                    </div>
+                )}
+
+                {step === "error" && (
+                    <div className="p-8 flex flex-col items-center justify-center min-h-[300px] gap-4 text-center">
+                        <div className="w-12 h-12 rounded-full bg-[#FDE8E8] flex items-center justify-center text-[#D32F2F]">
+                            <FileWarning size={22} strokeWidth={1.75} />
+                        </div>
+                        <div>
+                            <p className="app-heading">
+                                Couldn't read that file
+                            </p>
+                            <p className="app-caption text-[#595959] mt-1">
+                                Only PDF invoices are supported, and the file
+                                must not be corrupted or password-protected.
+                            </p>
+                        </div>
+                        <SecondaryBtn
+                            label="Try Another File"
+                            onClick={() => setStep("upload")}
+                        />
+                    </div>
+                )}
+
+                {step === "unparsed" && (
+                    <div className="p-4 space-y-4 pb-8">
+                        <div className="p-6 flex flex-col items-center justify-center gap-3 text-center">
+                            <div className="w-12 h-12 rounded-full bg-[#FFF3E0] flex items-center justify-center text-[#F57C00]">
+                                <FileWarning size={22} strokeWidth={1.75} />
+                            </div>
+                            <div>
+                                <p className="app-heading">
+                                    No line items detected
+                                </p>
+                                <p className="app-caption text-[#595959] mt-1">
+                                    The PDF's text was read, but its layout
+                                    didn't match a recognizable line-item
+                                    pattern. Here's the raw text extracted from{" "}
+                                    {fileName}:
+                                </p>
+                            </div>
+                        </div>
+                        <SectionCard className="p-3.5 max-h-64 overflow-y-auto fluent-scroll">
+                            {rawLines.length > 0 ? (
+                                rawLines.map((line, i) => (
+                                    <p
+                                        key={i}
+                                        className="app-caption text-[#595959] leading-relaxed"
+                                    >
+                                        {line}
+                                    </p>
+                                ))
+                            ) : (
+                                <p className="app-caption text-[#8E8E93]">
+                                    No extractable text found in this PDF.
+                                </p>
+                            )}
+                        </SectionCard>
+                        <SecondaryBtn
+                            label="Try Another File"
+                            onClick={() => setStep("upload")}
+                        />
                     </div>
                 )}
 
                 {step === "review" && (
                     <div className="p-4 space-y-4 pb-32">
                         {/* KPI Summary Tiles */}
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 gap-2">
                             <SectionCard className="p-3 text-center">
                                 <p className="app-micro text-[#595959]">
                                     Invoice Total
                                 </p>
-                                <p className="app-metric mt-0.5">R14,480</p>
+                                <p className="app-metric mt-0.5">
+                                    R
+                                    {invoiceTotal.toLocaleString("en-ZA", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </p>
                             </SectionCard>
                             <SectionCard className="p-3 text-center">
                                 <p className="app-micro text-[#595959]">
                                     Lines Extracted
                                 </p>
-                                <p className="app-metric mt-0.5">5 Items</p>
+                                <p className="app-metric mt-0.5">
+                                    {lines.length}{" "}
+                                    {lines.length === 1 ? "Item" : "Items"}
+                                </p>
                             </SectionCard>
-                            <div
-                                className="p-3 rounded-xl border text-center transition-colors"
-                                style={{
-                                    backgroundColor:
-                                        flagged.length > 0
-                                            ? "#FFF3E0"
-                                            : "#E3FCEF",
-                                    borderColor:
-                                        flagged.length > 0
-                                            ? "#FFE0B2"
-                                            : "#A3E7C9",
-                                }}
-                            >
-                                <p
-                                    className="app-micro font-semibold"
-                                    style={{
-                                        color:
-                                            flagged.length > 0
-                                                ? "#D96B00"
-                                                : "#00875A",
-                                    }}
-                                >
-                                    Variances
-                                </p>
-                                <p
-                                    className="app-metric mt-0.5"
-                                    style={{
-                                        color:
-                                            flagged.length > 0
-                                                ? "#F57C00"
-                                                : "#00875A",
-                                    }}
-                                >
-                                    {flagged.length}{" "}
-                                    {flagged.length === 1 ? "flag" : "flags"}
-                                </p>
-                            </div>
                         </div>
 
-                        {/* Line Items List — flagged/acted-on lines shown; clean matches collapsed */}
+                        {/* Extracted Line Items — read straight from the uploaded PDF's text */}
                         <div>
                             <p className="app-overline mb-2">
-                                Line Items Audit
+                                Line Items Extracted from{" "}
+                                {fileName || "Uploaded PDF"}
+                                {invoiceNumber && ` • ${invoiceNumber}`}
                             </p>
                             <div className="space-y-2.5">
-                                {needsAttention.map((l) => {
-                                    const isFlagged =
-                                        l.status === "qty_mismatch" ||
-                                        l.status === "price_mismatch";
-                                    return (
-                                        <SectionCard
-                                            key={l.id}
-                                            className={`p-3.5 ${l.status === "rejected" ? "opacity-50" : ""}`}
-                                            style={
-                                                isFlagged
-                                                    ? {
-                                                          borderLeftWidth:
-                                                              "4px",
-                                                          borderLeftColor:
-                                                              "#F57C00",
-                                                      }
-                                                    : undefined
-                                            }
-                                        >
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="app-heading truncate">
-                                                        {l.product}
-                                                    </p>
-                                                    <div className="mt-2 space-y-1 app-caption">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-[#595959]">
-                                                                PO Qty:{" "}
-                                                                <span className="app-caption-strong">
-                                                                    {l.qty}
-                                                                </span>
-                                                            </span>
-                                                            <span
-                                                                className={`app-caption-strong ${
-                                                                    l.status ===
-                                                                    "qty_mismatch"
-                                                                        ? "text-[#F57C00]"
-                                                                        : "text-[#595959]"
-                                                                }`}
-                                                            >
-                                                                Inv Qty:{" "}
-                                                                {l.invQty}
-                                                                {l.status ===
-                                                                    "qty_mismatch" &&
-                                                                    " (Δ -5)"}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-[#595959]">
-                                                                PO Price:{" "}
-                                                                <span className="app-caption-strong">
-                                                                    R
-                                                                    {l.price.toFixed(
-                                                                        2,
-                                                                    )}
-                                                                </span>
-                                                            </span>
-                                                            <span
-                                                                className={`app-caption-strong ${
-                                                                    l.status ===
-                                                                    "price_mismatch"
-                                                                        ? "text-[#F57C00]"
-                                                                        : "text-[#595959]"
-                                                                }`}
-                                                            >
-                                                                Inv Price: R
-                                                                {l.invPrice.toFixed(
-                                                                    2,
-                                                                )}
-                                                                {l.status ===
-                                                                    "price_mismatch" &&
-                                                                    " (Δ +R4.50)"}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="shrink-0">
-                                                    {l.status === "ok" && (
-                                                        <Badge
-                                                            label="Match"
-                                                            color="success"
-                                                        />
-                                                    )}
-                                                    {l.status ===
-                                                        "qty_mismatch" && (
-                                                        <Badge
-                                                            label="Qty Variance"
-                                                            color="warning"
-                                                        />
-                                                    )}
-                                                    {l.status ===
-                                                        "price_mismatch" && (
-                                                        <Badge
-                                                            label="Price Variance"
-                                                            color="warning"
-                                                        />
-                                                    )}
-                                                    {l.status ===
-                                                        "approved" && (
-                                                        <Badge
-                                                            label="Approved"
-                                                            color="brand"
-                                                        />
-                                                    )}
-                                                    {l.status ===
-                                                        "rejected" && (
-                                                        <Badge
-                                                            label="Rejected"
-                                                            color="danger"
-                                                        />
-                                                    )}
-                                                </div>
+                                {lines.map((l, i) => (
+                                    <SectionCard key={i} className="p-3.5">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="app-heading truncate">
+                                                    {l.description}
+                                                </p>
+                                                <p className="app-caption text-[#595959] mt-1">
+                                                    Qty {l.qty} × R
+                                                    {l.unitPrice.toFixed(2)}
+                                                </p>
                                             </div>
-
-                                            {/* Variance Decision Actions */}
-                                            {isFlagged && (
-                                                <div className="flex gap-2 mt-3 pt-2.5 border-t border-[#E5E7EB]">
-                                                    <button
-                                                        onClick={() =>
-                                                            approve(l.id)
-                                                        }
-                                                        className="flex-1 h-9 rounded-lg text-xs font-semibold text-white transition-colors"
-                                                        style={{
-                                                            backgroundColor:
-                                                                "var(--fluent-success, #00875A)",
-                                                        }}
-                                                    >
-                                                        Accept Variance
-                                                    </button>
-                                                    <button
-                                                        onClick={() =>
-                                                            reject(l.id)
-                                                        }
-                                                        className="flex-1 h-9 rounded-lg text-xs font-semibold border transition-colors bg-white hover:bg-[#FDE8E8]"
-                                                        style={{
-                                                            borderColor:
-                                                                "#F8B4B4",
-                                                            color: "#D32F2F",
-                                                        }}
-                                                    >
-                                                        Reject & Dispute
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </SectionCard>
-                                    );
-                                })}
+                                            <p className="app-metric shrink-0">
+                                                R{l.lineTotal.toFixed(2)}
+                                            </p>
+                                        </div>
+                                    </SectionCard>
+                                ))}
                             </div>
-
-                            {cleanLines.length > 0 && (
-                                <div className="mt-2.5">
-                                    <button
-                                        onClick={() => setShowClean((v) => !v)}
-                                        className="w-full flex items-center justify-between py-2 px-1 text-left"
-                                    >
-                                        <span className="app-caption-strong text-[#00875A] inline-flex items-center gap-1.5">
-                                            <CheckmarkIcon size={14} />
-                                            {cleanLines.length} more line
-                                            {cleanLines.length > 1
-                                                ? "s"
-                                                : ""}{" "}
-                                            matched
-                                        </span>
-                                        <m.span
-                                            animate={{
-                                                rotate: showClean ? 180 : 0,
-                                            }}
-                                            transition={springs.quick}
-                                        >
-                                            <ChevronDown
-                                                size={16}
-                                                className="text-[#8E8E93]"
-                                            />
-                                        </m.span>
-                                    </button>
-
-                                    <AnimatePresence initial={false}>
-                                        {showClean && (
-                                            <m.div
-                                                initial={{
-                                                    height: 0,
-                                                    opacity: 0,
-                                                }}
-                                                animate={{
-                                                    height: "auto",
-                                                    opacity: 1,
-                                                }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                transition={springs.snappy}
-                                                className="overflow-hidden"
-                                            >
-                                                <div className="space-y-2.5 pt-1">
-                                                    {cleanLines.map((l) => (
-                                                        <SectionCard
-                                                            key={l.id}
-                                                            className="p-3.5"
-                                                        >
-                                                            <div className="flex items-start justify-between gap-2">
-                                                                <div className="flex-1 min-w-0">
-                                                                    <p className="app-heading truncate">
-                                                                        {
-                                                                            l.product
-                                                                        }
-                                                                    </p>
-                                                                    <p className="app-caption text-[#595959] mt-1">
-                                                                        Qty{" "}
-                                                                        {l.qty}{" "}
-                                                                        • R
-                                                                        {l.price.toFixed(
-                                                                            2,
-                                                                        )}{" "}
-                                                                        —
-                                                                        matches
-                                                                        PO
-                                                                    </p>
-                                                                </div>
-                                                                <Badge
-                                                                    label="Match"
-                                                                    color="success"
-                                                                />
-                                                            </div>
-                                                        </SectionCard>
-                                                    ))}
-                                                </div>
-                                            </m.div>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            )}
+                            <p className="app-micro text-[#8E8E93] mt-2.5 leading-relaxed">
+                                Extracted directly from the PDF's text —
+                                double-check quantities and prices before
+                                locking payment, since layout parsing is
+                                best-effort.
+                            </p>
                         </div>
                     </div>
                 )}
@@ -641,17 +430,13 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
             {step === "review" && (
                 <BottomDock>
                     <PrimaryBtn
-                        label={
-                            flagged.length > 0
-                                ? `Resolve ${flagged.length} Variance${flagged.length > 1 ? "s" : ""} to Confirm`
-                                : "Run Escrow Demo"
-                        }
-                        disabled={flagged.length > 0}
+                        label="Confirm & Lock Payment in Escrow"
                         onClick={runEscrowLifecycle}
                     />
-                    {flagged.length === 0 && (
-                        <SecondaryBtn label="Download Signed PDF Summary" />
-                    )}
+                    <SecondaryBtn
+                        label="Try Another File"
+                        onClick={() => setStep("upload")}
+                    />
                 </BottomDock>
             )}
 
@@ -659,15 +444,15 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
                 <div className="p-4 space-y-4 pb-32">
                     <EscrowPadlockCard
                         status={escrowStatus}
-                        amount="R14,480.00"
-                        counterparty="Thabo Distributors"
-                        reference="SB-INV-9012"
+                        amount={`R${invoiceTotal.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        counterparty="Uploaded Supplier Invoice"
+                        reference={invoiceNumber || fileName || "—"}
                     />
 
                     {escrowStatus === "LOCKED" && (
                         <BottomDock>
                             <PrimaryBtn
-                                label="Simulate Delivery & Fund Release"
+                                label="Confirm Delivery Received & Release Funds"
                                 onClick={releaseEscrow}
                             />
                         </BottomDock>
@@ -682,8 +467,9 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
                                 />
                             </div>
                             <p className="app-body">
-                                Demo complete. This screen shows the intended
-                                MoMo escrow flow; no real funds moved.
+                                Order settled end-to-end via MoMo — payment
+                                locked on dispatch, released on confirmed
+                                delivery.
                             </p>
                         </SectionCard>
                     )}

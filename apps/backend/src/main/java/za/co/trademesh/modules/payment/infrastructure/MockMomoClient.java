@@ -55,6 +55,12 @@ class MockMomoClient implements MomoClient {
     }
 
     @Override
+    public Balance getBalance(Product product) {
+        BigDecimal amount = product == Product.COLLECTIONS ? new BigDecimal("15420.75") : new BigDecimal("8930.00");
+        return new Balance(amount, "EUR");
+    }
+
+    @Override
     public String requestToPay(MoneyRequest request) {
         requirePositive(request.amount());
         transactions.put(request.referenceId(), TransactionStatus.SUCCESSFUL);

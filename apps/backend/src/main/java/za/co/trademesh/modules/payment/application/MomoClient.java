@@ -19,6 +19,8 @@ public interface MomoClient {
 
     boolean validateAccountHolder(String phoneNumber);
 
+    Balance getBalance(Product product);
+
     String requestToPay(MoneyRequest request);
 
     String transfer(MoneyRequest request);
@@ -61,4 +63,6 @@ public interface MomoClient {
     record UserInfo(String givenName, String familyName, String locale) {}
 
     record MoneyRequest(String phoneNumber, BigDecimal amount, String referenceId) {}
+
+    record Balance(BigDecimal availableBalance, String currency) {}
 }

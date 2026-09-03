@@ -19,6 +19,7 @@ import {
 } from "./icons";
 import { PhoneVerifyField } from "./PhoneVerifyField";
 import { m, springs } from "./motion";
+import { useCart } from "./cart";
 
 type SpeechRecognitionLike = {
     lang: string;
@@ -40,6 +41,7 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
     const inputRef = useRef<HTMLInputElement>(null);
     const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
     const reduceMotion = useReducedMotion();
+    const { cart, addItem } = useCart();
 
     useEffect(() => {
         return () => recognitionRef.current?.stop();
@@ -74,11 +76,9 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
         const recognition = new SpeechRecognitionCtor();
         recognition.lang = "en-ZA";
         recognition.interimResults = false;
-        recognition.onresult = (event) => {
-            const transcript = event.results[0]?.[0]?.transcript;
-            if (transcript) {
-                setSearch(transcript);
-            }
+        recognition.onresult = (e) => {
+            const transcript = e.results[0]?.[0]?.transcript;
+            if (transcript) setSearch(transcript);
         };
         recognition.onend = () => setListening(false);
         recognitionRef.current = recognition;
@@ -123,7 +123,7 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
             stock: "High",
         },
     ];
-    const mostPopular = products[0]!;
+    const topProduct = products[0]!;
 
     return (
         <>
@@ -268,15 +268,15 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="app-heading truncate">
-                                                    {mostPopular.name}
+                                                    {topProduct.name}
                                                 </p>
                                                 <p className="app-caption text-[#595959] mt-0.5 truncate">
-                                                    {mostPopular.supplier} •
+                                                    {topProduct.supplier} •
                                                     Ordered most this month
                                                 </p>
                                             </div>
                                             <p className="app-metric shrink-0">
-                                                {mostPopular.price}
+                                                {topProduct.price}
                                             </p>
                                         </button>
                                     </div>
@@ -398,12 +398,47 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
                                                 </div>
                                             </div>
 
-                                            <button
-                                                className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[#002B49] bg-[#FFCC00] hover:bg-[#F5C200] active:scale-95 transition-all shadow-xs"
-                                                title="Add to PO"
-                                            >
-                                                <PlusIcon size={16} />
-                                            </button>
+                                            <div className="relative shrink-0">
+                                                <button
+                                                    onClick={() =>
+                                                        addItem(p.sku)
+                                                    }
+                                                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[#002B49] bg-[#FFCC00] hover:bg-[#F5C200] active:scale-95 transition-all shadow-xs"
+                                                    title="Add to PO"
+                                                    aria-label={`Add ${p.name} to purchase order`}
+                                                >
+                                                    <PlusIcon size={16} />
+                                                </button>
+                                                <AnimatePresence>
+                                                    {!!cart[p.sku] && (
+                                                        <m.span
+                                                            key={cart[p.sku]}
+                                                            initial={
+                                                                reduceMotion
+                                                                    ? undefined
+                                                                    : {
+                                                                          scale: 0.6,
+                                                                          opacity: 0,
+                                                                      }
+                                                            }
+                                                            animate={{
+                                                                scale: 1,
+                                                                opacity: 1,
+                                                            }}
+                                                            transition={
+                                                                springs.quick
+                                                            }
+                                                            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-xs"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    "var(--momo-blue, #003E85)",
+                                                            }}
+                                                        >
+                                                            {cart[p.sku]}
+                                                        </m.span>
+                                                    )}
+                                                </AnimatePresence>
+                                            </div>
                                         </div>
                                     ))}
                                 </SectionCard>

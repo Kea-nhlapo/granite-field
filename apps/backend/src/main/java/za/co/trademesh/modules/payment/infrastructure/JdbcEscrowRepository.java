@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -104,6 +105,26 @@ class JdbcEscrowRepository implements EscrowRepository {
                         + " FROM payment_escrow_transaction WHERE escrow_id = ? ORDER BY created_at, sequence",
                 JdbcEscrowRepository::mapTransaction,
                 escrowId);
+    }
+
+    @Override
+    public List<EscrowTransaction> findRecentTransactionsForBusiness(UUID businessId, int limit) {
+        String columns = Arrays.stream(TRANSACTION_COLUMNS.split(","))
+                .map(column -> "t." + column.strip())
+                .collect(java.util.stream.Collectors.joining(", "));
+        return jdbcTemplate.query(
+                """
+                SELECT %s
+                  FROM payment_escrow_transaction t
+                  JOIN payment_escrow e ON e.id = t.escrow_id
+                 WHERE e.business_id = ?
+                 ORDER BY t.created_at DESC, t.sequence DESC
+                 LIMIT ?
+                """
+                        .formatted(columns),
+                JdbcEscrowRepository::mapTransaction,
+                businessId,
+                limit);
     }
 
     @Override

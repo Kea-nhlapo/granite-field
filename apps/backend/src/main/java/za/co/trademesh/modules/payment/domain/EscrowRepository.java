@@ -23,6 +23,8 @@ public interface EscrowRepository {
 
     List<EscrowTransaction> findTransactions(UUID escrowId);
 
+    List<EscrowTransaction> findRecentTransactionsForBusiness(UUID businessId, int limit);
+
     int nextSequence(UUID escrowId, EscrowTransactionType type);
 
     boolean addTransaction(EscrowTransaction transaction);
