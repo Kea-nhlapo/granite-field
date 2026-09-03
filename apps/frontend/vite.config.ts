@@ -1,39 +1,18 @@
-import { fileURLToPath } from "node:url";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vitest/config";
-
-const tabsterEsm = fileURLToPath(
-    new URL("./node_modules/tabster/dist/esm/index.js", import.meta.url),
-);
+import tailwindcss from "@tailwindcss/vite";
+import path from "node:path";
 
 export default defineConfig({
-    plugins: [react()],
-    resolve: {
-        alias: {
-            tabster: tabsterEsm,
-        },
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
     },
-    optimizeDeps: {
-        holdUntilCrawlEnd: false,
-        include: [
-            "scheduler",
-            "tabster",
-            "react",
-            "react-dom",
-            "@fluentui/react-components",
-        ],
-    },
-    test: {
-        environment: "jsdom",
-        setupFiles: ["./src/test/setup.ts"],
-        restoreMocks: true,
-        alias: {
-            tabster: tabsterEsm,
-        },
-        server: {
-            deps: {
-                inline: [/@fluentui\//, /@griffel\//],
-            },
-        },
-    },
+  },
+  server: {
+    host: true,
+    port: 5177,
+    strictPort: false,
+  },
 });

@@ -1,0 +1,231 @@
+@import "tailwindcss";
+
+:root {
+  /* MoMo PSB Brand Core Colors */
+  --momo-yellow: #FFCC00;
+  --momo-yellow-hover: #F5C200;
+  --momo-yellow-active: #E0B000;
+  --momo-blue: #003E85;
+  --momo-blue-hover: #00326B;
+  --momo-blue-active: #002552;
+  --momo-navy: #002B49;
+  --momo-blue-tint: #EBF3FC;
+  --momo-blue-border: #C7E0F4;
+
+  /* Fluent 2 Surfaces & Canvas (MoMo tokens) */
+  --fluent-bg-canvas: #F8F9FA;
+  --fluent-bg-surface: #FFFFFF;
+  --fluent-bg-subtle: #F8F9FA;
+  --fluent-bg-hover: #F3F4F6;
+  --fluent-bg-pressed: #E5E7EB;
+
+  /* Fluent 2 Strokes & Dividers */
+  --fluent-stroke-divider: #E5E7EB;
+  --fluent-stroke-card: #E5E7EB;
+  --fluent-stroke-default: #D1D5DB;
+  --fluent-stroke-strong: #9CA3AF;
+
+  /* Typography / Neutral Foregrounds (MoMo tokens) */
+  --fluent-text-primary: #1A1A1A;
+  --fluent-text-secondary: #595959;
+  --fluent-text-tertiary: #8E8E93;
+  --fluent-text-disabled: #8E8E93;
+
+  /* Brand Tokens (MoMo Blue & Yellow) */
+  --fluent-brand: #003E85;
+  --fluent-brand-hover: #00326B;
+  --fluent-brand-pressed: #002552;
+  --fluent-brand-tint: #EBF3FC;
+  --fluent-brand-tint-border: #C7E0F4;
+  --fluent-brand-yellow: #FFCC00;
+  --fluent-brand-yellow-hover: #F5C200;
+  --fluent-brand-navy: #002B49;
+
+  /* MoMo Functional Feedback */
+  --fluent-success: #00875A;
+  --fluent-success-tint: #E3FCEF;
+  --fluent-success-border: #A3E7C9;
+
+  --fluent-warning: #F57C00;
+  --fluent-warning-tint: #FFF3E0;
+  --fluent-warning-border: #FFE0B2;
+
+  --fluent-danger: #D32F2F;
+  --fluent-danger-tint: #FDE8E8;
+  --fluent-danger-border: #F8B4B4;
+
+  --fluent-info: #003E85;
+  --fluent-info-tint: #EBF3FC;
+  --fluent-info-border: #C7E0F4;
+
+  --fluent-inactive: #CCCCCC;
+  --fluent-inactive-text: #8E8E93;
+
+  /* Sizing & Radii per MoMo & Fluent guidelines */
+  --fluent-radius-sm: 4px;
+  --fluent-radius-md: 8px; /* MoMo button radius */
+  --fluent-radius-lg: 12px; /* MoMo card radius */
+  --fluent-radius-xl: 16px;
+
+  /* Depths */
+  --fluent-depth-card: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --fluent-depth-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --fluent-depth-flyout: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Single Unified Font Family across entire solution */
+  --font-family-unified: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+  --font-fluent: var(--font-family-unified);
+  --font-fluent-display: var(--font-family-unified);
+  --font-fluent-mono: var(--font-family-unified);
+}
+
+html,
+body,
+#root,
+button,
+input,
+select,
+textarea,
+code,
+pre {
+  font-family: var(--font-family-unified);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background: var(--fluent-bg-canvas);
+  color: var(--fluent-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fluent Stage Container */
+.fluent-stage {
+  width: min(440px, 100vw);
+  height: min(900px, 100dvh);
+  max-width: 100vw;
+  max-height: 100dvh;
+  background: var(--fluent-bg-canvas);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--fluent-stroke-divider);
+  border-radius: 12px;
+}
+
+@media (max-width: 640px) {
+  .fluent-stage {
+    width: 100vw;
+    height: 100dvh;
+    box-shadow: none;
+    border: none;
+    border-radius: 0 !important;
+  }
+}
+
+.fluent-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.fluent-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.18);
+  border-radius: 3px;
+}
+.fluent-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-family-unified);
+}
+
+.font-fluent-display {
+  font-family: var(--font-family-unified);
+}
+
+.font-fluent-mono {
+  font-family: var(--font-family-unified);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   Platform Unified Typography Ramp
+   Provides strict font-size, weight, line-height & letter-spacing consistency
+   ========================================================================== */
+
+.app-title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--momo-navy, #002B49);
+}
+
+.app-heading {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--momo-navy, #002B49);
+}
+
+.app-overline {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--momo-text-secondary, #595959);
+}
+
+.app-body {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--momo-text-primary, #1A1A1A);
+}
+
+.app-body-strong {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--momo-text-primary, #1A1A1A);
+}
+
+.app-caption {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--momo-text-secondary, #595959);
+}
+
+.app-caption-strong {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--momo-text-primary, #1A1A1A);
+}
+
+.app-micro {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--momo-text-muted, #8E8E93);
+}
+
+.app-metric {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--momo-navy, #002B49);
+}
+
+.app-metric-hero {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--momo-blue, #003E85);
+}
