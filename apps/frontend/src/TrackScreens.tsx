@@ -379,6 +379,7 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
     );
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isDemo, setIsDemo] = useState(false);
 
     const qrPayload = issued?.qrPayload;
     const challenge = issued?.challenge;
@@ -395,10 +396,29 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
         setContext((current) => ({ ...current, [field]: value.trim() }));
     }
 
+    /** Generates a real, scannable QR code from locally-made mock data — no backend required. */
+    function issueDemoCode() {
+        setError(null);
+        setIssued({
+            qrPayload: crypto.randomUUID(),
+            challenge: {
+                challengeId: crypto.randomUUID(),
+                shipmentId: crypto.randomUUID(),
+                type: "DELIVERY",
+                state: "PENDING",
+                expectedQuantity: 50,
+                unitOfMeasure: "units",
+                expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+            },
+        });
+        setIsDemo(true);
+    }
+
     async function issueCode(event: FormEvent) {
         event.preventDefault();
         setError(null);
         setIssued(null);
+        setIsDemo(false);
 
         if (Object.values(context).some((value) => !UUID_PATTERN.test(value))) {
             setError("Enter a valid UUID in every field.");
@@ -612,6 +632,13 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
                                         />
                                     </label>
                                 ))}
+                                <button
+                                    type="button"
+                                    onClick={issueDemoCode}
+                                    className="app-micro font-semibold px-3 py-1 rounded-full bg-[#FFF9D6] text-[#7A6000] border border-[#FFE082] hover:bg-[#FFF3B8] transition-colors"
+                                >
+                                    Simulate Instant QR (no backend)
+                                </button>
                             </SectionCard>
                         ) : (
                             <SectionCard className="p-5 flex flex-col items-center text-center gap-3">
@@ -626,7 +653,10 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
                                         title="Secure delivery QR code"
                                     />
                                 </div>
-                                <Badge label="Server issued" color="success" />
+                                <Badge
+                                    label={isDemo ? "Demo QR" : "Server issued"}
+                                    color={isDemo ? "warning" : "success"}
+                                />
                                 <p className="app-heading">
                                     Ask the receiving user to scan this code
                                 </p>
