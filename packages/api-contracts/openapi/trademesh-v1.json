@@ -8,6 +8,42 @@
   "servers": [{ "url": "/", "description": "Current TradeMesh API host" }],
   "security": [{ "bearerAuth": [] }],
   "paths": {
+    "/api/sandbox/wallet": {
+      "get": {
+        "tags": ["sandbox-wallet-controller"],
+        "operationId": "sandboxWalletGet",
+        "responses": {
+          "200": {
+            "description": "Current user's sandbox wallet",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SandboxWalletResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
+    "/api/sandbox/universal-suppliers": {
+      "get": {
+        "tags": ["sandbox-wallet-controller"],
+        "operationId": "sandboxUniversalSuppliersGet",
+        "responses": {
+          "200": {
+            "description": "Local universal suppliers available for handoff demos",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UniversalSuppliersResponse" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        },
+        "security": [{ "bearerAuth": [] }]
+      }
+    },
     "/api/notification-preferences/{category}": {
       "put": {
         "tags": ["notification-preference-controller"],
@@ -4066,6 +4102,86 @@
   },
   "components": {
     "schemas": {
+      "SandboxWalletEntryResponse": {
+        "type": "object",
+        "required": [
+          "entryId",
+          "type",
+          "availableDelta",
+          "heldDelta",
+          "availableBalanceAfter",
+          "heldBalanceAfter",
+          "description",
+          "createdAt"
+        ],
+        "properties": {
+          "entryId": { "type": "string", "format": "uuid" },
+          "type": {
+            "type": "string",
+            "enum": [
+              "OPENING_CREDIT",
+              "ESCROW_HELD",
+              "ESCROW_SETTLED",
+              "PAYMENT_RECEIVED"
+            ]
+          },
+          "availableDelta": { "type": "number" },
+          "heldDelta": { "type": "number" },
+          "availableBalanceAfter": { "type": "number" },
+          "heldBalanceAfter": { "type": "number" },
+          "description": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SandboxWalletResponse": {
+        "type": "object",
+        "required": [
+          "userId",
+          "displayName",
+          "currency",
+          "availableBalance",
+          "heldBalance",
+          "updatedAt",
+          "entries"
+        ],
+        "properties": {
+          "userId": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string" },
+          "currency": { "type": "string" },
+          "availableBalance": { "type": "number" },
+          "heldBalance": { "type": "number" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "entries": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/SandboxWalletEntryResponse" }
+          }
+        }
+      },
+      "UniversalSupplierResponse": {
+        "type": "object",
+        "required": [
+          "userId",
+          "supplierProfileId",
+          "displayName",
+          "loginEmail"
+        ],
+        "properties": {
+          "userId": { "type": "string", "format": "uuid" },
+          "supplierProfileId": { "type": "string", "format": "uuid" },
+          "displayName": { "type": "string" },
+          "loginEmail": { "type": "string", "format": "email" }
+        }
+      },
+      "UniversalSuppliersResponse": {
+        "type": "object",
+        "required": ["suppliers"],
+        "properties": {
+          "suppliers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/UniversalSupplierResponse" }
+          }
+        }
+      },
       "UpdatePreferenceRequest": {
         "type": "object",
         "properties": {

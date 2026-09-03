@@ -216,18 +216,42 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
     @Test
     void queuesEncryptedConsentedMobileUpdatesForOperationalEvents() throws Exception {
         Account owner = register("mobile-events@example.com");
+        Account supplier = register("mobile-supplier@example.com", RegistrationType.SUPPLIER);
         UUID businessId = createBusiness(owner, "2026/810002/07");
-        String phone = "+27821234567";
+        UUID supplierProfileId = UUID.randomUUID();
+        jdbcTemplate.update("""
+            INSERT INTO supplier_profile (
+                id, normalized_email, profile_status, claimed_user_id, business_id, created_at, converted_at
+            ) VALUES (?, ?, 'REGISTERED', ?, NULL, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            """, supplierProfileId, supplier.email(), supplier.userId());
+        String ownerPhone = "+27821234567";
+        String supplierPhone = "+27821234568";
         jdbcTemplate.update(
                 "INSERT INTO access_phone_identity (phone_number, user_id, verification_method, verified_at) VALUES (?, ?, 'OTP', CURRENT_TIMESTAMP)",
-                phone,
+                ownerPhone,
                 owner.userId());
+        jdbcTemplate.update(
+                "INSERT INTO access_phone_identity (phone_number, user_id, verification_method, verified_at) VALUES (?, ?, 'OTP', CURRENT_TIMESTAMP)",
+                supplierPhone,
+                supplier.userId());
         mockMvc.perform(put("/api/notification-contacts/phone")
                         .header(HttpHeaders.AUTHORIZATION, bearer(owner))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {"phoneNumber":"+27821234567","smsConsent":true,"whatsappConsent":true}
                             """))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/notification-contacts/phone")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(supplier))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"phoneNumber":"+27821234568","smsConsent":true,"whatsappConsent":true}
+                            """))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/notification-preferences/SHIPMENT_UPDATE")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(supplier))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"smsEnabled\":true,\"whatsappEnabled\":true}"))
                 .andExpect(status().isOk());
         mockMvc.perform(put("/api/notification-preferences/SHIPMENT_UPDATE")
                         .header(HttpHeaders.AUTHORIZATION, bearer(owner))
@@ -241,8 +265,8 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
         new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
             domainEvents.publish(new TelemetryEvent.BackhaulMatchesFound(
                     shipmentId, businessId, candidateShipmentId, 2, 3_400, new BigDecimal("0.87")));
-            domainEvents.publish(
-                    new PaymentEvent.Released(escrowId, shipmentId, businessId, new BigDecimal("8500.00"), "ZAR"));
+            domainEvents.publish(new PaymentEvent.Released(
+                    escrowId, shipmentId, businessId, supplierProfileId, new BigDecimal("8500.00"), "ZAR"));
         });
 
         var payloads = jdbcTemplate.queryForList(
@@ -250,12 +274,13 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
                 String.class);
         assertThat(payloads).hasSize(4).allSatisfy(payload -> assertThat(payload)
                 .contains("notificationId")
-                .doesNotContain(phone, "Transport matches are ready", "8500.00"));
+                .doesNotContain(ownerPhone, supplierPhone, "Transport matches are ready", "8500.00"));
 
         assertThat(outboxWorker.pollOnce()).isEqualTo(4);
-        assertThat(mobileCapture.capturedMessages()).hasSize(4).allSatisfy(message -> {
-            assertThat(message.recipientPhone()).isEqualTo(phone);
-        });
+        assertThat(mobileCapture.capturedMessages())
+                .hasSize(4)
+                .extracting(LocalMobileCapture.CapturedMessage::recipientPhone)
+                .containsExactlyInAnyOrder(ownerPhone, ownerPhone, supplierPhone, supplierPhone);
         assertThat(mobileCapture.capturedMessages())
                 .extracting(LocalMobileCapture.CapturedMessage::channel)
                 .containsExactlyInAnyOrder(
@@ -268,7 +293,11 @@ class NotificationDeliveryIntegrationTest extends PostgresIntegrationTest {
     }
 
     private Account register(String email) {
-        var tokens = authService.register(email, "correct-horse-battery", RegistrationType.BUSINESS_OWNER);
+        return register(email, RegistrationType.BUSINESS_OWNER);
+    }
+
+    private Account register(String email, RegistrationType registrationType) {
+        var tokens = authService.register(email, "correct-horse-battery", registrationType);
         return new Account(tokens.userId(), email, tokens.accessToken());
     }
 

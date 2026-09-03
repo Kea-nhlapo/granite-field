@@ -23,7 +23,10 @@ public class SupplierDirectory {
         return suppliers
                 .findProfileById(supplierProfileId)
                 .map(profile -> new SupplierReference(
-                        profile.id(), profile.status() == SupplierProfileStatus.REGISTERED, profile.businessId()));
+                        profile.id(),
+                        profile.status() == SupplierProfileStatus.REGISTERED,
+                        profile.claimedUserId(),
+                        profile.businessId()));
     }
 
     @Transactional(readOnly = true)
@@ -59,7 +62,7 @@ public class SupplierDirectory {
                 .toList();
     }
 
-    public record SupplierReference(UUID supplierProfileId, boolean registered, UUID businessId) {}
+    public record SupplierReference(UUID supplierProfileId, boolean registered, UUID claimedUserId, UUID businessId) {}
 
     public record SearchResult(
             UUID supplierProfileId,

@@ -3,6 +3,7 @@ package za.co.trademesh.modules.notification.application;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +12,10 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import za.co.trademesh.modules.access.application.BusinessNotificationRecipients;
 import za.co.trademesh.modules.handover.application.HandoverNotificationRecipients;
 import za.co.trademesh.modules.handover.events.HandoverEvent;
+import za.co.trademesh.modules.payment.application.SandboxWalletService;
+import za.co.trademesh.modules.payment.application.SandboxWalletSnapshot;
 import za.co.trademesh.modules.payment.events.PaymentEvent;
+import za.co.trademesh.modules.supplier.application.SupplierDirectory;
 import za.co.trademesh.modules.telemetry.events.TelemetryEvent;
 import za.co.trademesh.modules.transport.events.TransportEvent;
 import za.co.trademesh.shared.events.PublishedEvent;
@@ -24,14 +28,23 @@ class MobileNotificationEventListener {
     private final MobileNotificationRequests notifications;
     private final HandoverNotificationRecipients handoverRecipients;
     private final BusinessNotificationRecipients businessRecipients;
+    private final SupplierDirectory suppliers;
+    private final SandboxWalletService wallets;
+    private final boolean sandboxWalletEnabled;
 
     MobileNotificationEventListener(
             MobileNotificationRequests notifications,
             HandoverNotificationRecipients handoverRecipients,
-            BusinessNotificationRecipients businessRecipients) {
+            BusinessNotificationRecipients businessRecipients,
+            SupplierDirectory suppliers,
+            SandboxWalletService wallets,
+            @Value("${trademesh.sandbox-wallet.enabled:false}") boolean sandboxWalletEnabled) {
         this.notifications = notifications;
         this.handoverRecipients = handoverRecipients;
         this.businessRecipients = businessRecipients;
+        this.suppliers = suppliers;
+        this.wallets = wallets;
+        this.sandboxWalletEnabled = sandboxWalletEnabled;
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -98,16 +111,42 @@ class MobileNotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onEscrowReleased(PublishedEvent<PaymentEvent.Released> published) {
-        businessRecipients
-                .findActiveUserIds(published.event().businessId())
-                .forEach(userId -> request(
+        PaymentEvent.Released event = published.event();
+        Optional<UUID> supplierUserId =
+                suppliers.find(event.supplierProfileId()).map(SupplierDirectory.SupplierReference::claimedUserId);
+        if (supplierUserId.isEmpty()) {
+            return;
+        }
+
+        if (!sandboxWalletEnabled) {
+            request(published, supplierUserId.get(), NotificationTemplates.ESCROW_RELEASED, 1);
+            return;
+        }
+
+        wallets.settleAndCreditSupplier(
+                        published.envelope().eventId(),
+                        event.businessId(),
+                        event.supplierProfileId(),
+                        event.amount(),
+                        event.currency())
+                .ifPresent(wallet -> request(
                         published,
-                        userId,
+                        supplierUserId.get(),
                         NotificationTemplates.ESCROW_RELEASED,
-                        NotificationTemplates.ESCROW_RELEASED_VERSION));
+                        NotificationTemplates.ESCROW_RELEASED_VERSION,
+                        paymentData(event, wallet)));
     }
 
     private void request(PublishedEvent<?> published, UUID userId, String templateKey, int templateVersion) {
+        request(published, userId, templateKey, templateVersion, Map.of());
+    }
+
+    private void request(
+            PublishedEvent<?> published,
+            UUID userId,
+            String templateKey,
+            int templateVersion,
+            Map<String, String> templateData) {
         notifications.requestUser(new MobileNotificationRequests.UserMobileRequest(
                 published.event().type(),
                 published.envelope().eventId(),
@@ -115,7 +154,14 @@ class MobileNotificationEventListener {
                 SHIPMENT_UPDATE,
                 templateKey,
                 templateVersion,
-                Map.of()));
+                templateData));
+    }
+
+    private static Map<String, String> paymentData(PaymentEvent.Released event, SandboxWalletSnapshot wallet) {
+        return Map.of(
+                "amount", event.amount().setScale(2).toPlainString(),
+                "balance", wallet.availableBalance().setScale(2).toPlainString(),
+                "currency", event.currency());
     }
 
     private static Optional<UUID> actor(PublishedEvent<?> published) {

@@ -94,10 +94,9 @@ describe("TradeMesh replacement app", () => {
 
         await user.click(screen.getByRole("button", { name: "Sign Up" }));
         expect(
-            screen.getByText(
-                "Account registration is not available from this screen yet.",
-            ),
+            screen.getByRole("heading", { name: "Create Account" }),
         ).toBeInTheDocument();
+        expect(screen.getByLabelText("Account type")).toBeInTheDocument();
         expect(screen.queryByText("Core Operations")).not.toBeInTheDocument();
     });
 });

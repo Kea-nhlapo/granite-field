@@ -6,6 +6,7 @@ import { ChevronDown, RefreshCw } from "lucide-react";
 import { useCountUp } from "./useCountUp";
 import { EscrowPadlockCard, type EscrowStatus } from "./EscrowPadlockCard";
 import { m, springs } from "./motion";
+import { SandboxWalletCard } from "./SandboxWalletCard";
 
 const COMPLIANCE_FACTORS = [
     {
@@ -469,6 +470,7 @@ export function ProfileScreen({
                 className="flex-1 fluent-scroll overflow-y-auto p-4 space-y-4"
                 style={{ background: "var(--fluent-bg-canvas, #F8F9FA)" }}
             >
+                <SandboxWalletCard />
                 {/* Persona Header */}
                 <div className="flex flex-col items-center py-4 text-center">
                     <PersonaCoin initials="MN" size={56} status="available" />

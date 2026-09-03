@@ -398,3 +398,5 @@ trademesh:
       provider: ${MOBILE_NOTIFICATION_PROVIDER:local}
   handover:
     signing-secret: ${HANDOVER_QR_SIGNING_SECRET:local-only-handover-signing-secret-change-me}
+  sandbox-wallet:
+    enabled: ${SANDBOX_WALLET_ENABLED:false}

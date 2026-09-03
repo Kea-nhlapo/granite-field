@@ -59,6 +59,8 @@ export {
     routeScoringScore,
     routingCalculate,
     routingGet,
+    sandboxUniversalSuppliersGet,
+    sandboxWalletGet,
     shipmentChangeAssignment,
     shipmentCreate,
     shipmentGet,

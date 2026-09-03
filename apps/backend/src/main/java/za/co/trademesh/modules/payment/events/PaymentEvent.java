@@ -64,11 +64,17 @@ public sealed interface PaymentEvent extends DomainEvent
         }
     }
 
-    record Released(UUID escrowId, UUID shipmentId, UUID businessId, BigDecimal amount, String currency)
+    record Released(
+            UUID escrowId, UUID shipmentId, UUID businessId, UUID supplierProfileId, BigDecimal amount, String currency)
             implements PaymentEvent {
         @Override
         public String type() {
             return "ESCROW_RELEASED";
+        }
+
+        @Override
+        public int schemaVersion() {
+            return 2;
         }
     }
 

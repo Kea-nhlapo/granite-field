@@ -285,7 +285,12 @@ public class EscrowService {
             }
         } else if (success) {
             events.publish(new PaymentEvent.Released(
-                    escrow.id(), escrow.shipmentId(), escrow.businessId(), transaction.amount(), escrow.currency()));
+                    escrow.id(),
+                    escrow.shipmentId(),
+                    escrow.businessId(),
+                    escrow.supplierProfileId(),
+                    transaction.amount(),
+                    escrow.currency()));
         } else {
             events.publish(
                     new PaymentEvent.ReleaseFailed(escrow.id(), escrow.shipmentId(), escrow.businessId(), failureCode));

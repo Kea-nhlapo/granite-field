@@ -4,6 +4,42 @@ export type ClientOptions = {
     baseUrl: `${string}://${string}` | (string & {});
 };
 
+export type SandboxWalletEntryResponse = {
+    entryId: string;
+    type:
+        | "OPENING_CREDIT"
+        | "ESCROW_HELD"
+        | "ESCROW_SETTLED"
+        | "PAYMENT_RECEIVED";
+    availableDelta: number;
+    heldDelta: number;
+    availableBalanceAfter: number;
+    heldBalanceAfter: number;
+    description: string;
+    createdAt: string;
+};
+
+export type SandboxWalletResponse = {
+    userId: string;
+    displayName: string;
+    currency: string;
+    availableBalance: number;
+    heldBalance: number;
+    updatedAt: string;
+    entries: Array<SandboxWalletEntryResponse>;
+};
+
+export type UniversalSupplierResponse = {
+    userId: string;
+    supplierProfileId: string;
+    displayName: string;
+    loginEmail: string;
+};
+
+export type UniversalSuppliersResponse = {
+    suppliers: Array<UniversalSupplierResponse>;
+};
+
 export type UpdatePreferenceRequest = {
     emailEnabled?: boolean;
     smsEnabled?: boolean;
@@ -1648,6 +1684,60 @@ export type ApiProblem = {
     code: string;
     requestId: string;
 };
+
+export type SandboxWalletGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/api/sandbox/wallet";
+};
+
+export type SandboxWalletGetErrors = {
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+};
+
+export type SandboxWalletGetError =
+    SandboxWalletGetErrors[keyof SandboxWalletGetErrors];
+
+export type SandboxWalletGetResponses = {
+    /**
+     * Current user's sandbox wallet
+     */
+    200: SandboxWalletResponse;
+};
+
+export type SandboxWalletGetResponse =
+    SandboxWalletGetResponses[keyof SandboxWalletGetResponses];
+
+export type SandboxUniversalSuppliersGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/api/sandbox/universal-suppliers";
+};
+
+export type SandboxUniversalSuppliersGetErrors = {
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+};
+
+export type SandboxUniversalSuppliersGetError =
+    SandboxUniversalSuppliersGetErrors[keyof SandboxUniversalSuppliersGetErrors];
+
+export type SandboxUniversalSuppliersGetResponses = {
+    /**
+     * Local universal suppliers available for handoff demos
+     */
+    200: UniversalSuppliersResponse;
+};
+
+export type SandboxUniversalSuppliersGetResponse =
+    SandboxUniversalSuppliersGetResponses[keyof SandboxUniversalSuppliersGetResponses];
 
 export type NotificationPreferenceSetData = {
     body: UpdatePreferenceRequest;
