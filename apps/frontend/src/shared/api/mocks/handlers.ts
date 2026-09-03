@@ -29,7 +29,32 @@ export const analystTokens: TokenResponse = {
     roles: ["INTERNAL_RISK_ANALYST"],
 };
 
+export const supplierTokens: TokenResponse = {
+    ...ownerTokens,
+    userId: "6c756e67-696c-456d-8000-000000000001",
+    accessToken: "mock-supplier-access-token",
+    refreshToken: "mock-supplier-refresh-token",
+    roles: ["SUPPLIER"],
+};
+
 export const handlers = [
+    http.get(
+        `${runtimeConfig.apiBaseUrl}/api/sandbox/wallet`,
+        ({ request }) => {
+            const supplier = request.headers
+                .get("Authorization")
+                ?.includes("supplier");
+            return HttpResponse.json({
+                userId: supplier ? supplierTokens.userId : ownerTokens.userId,
+                displayName: supplier ? "Lungile Mooketsi" : "Demo SME",
+                currency: "ZAR",
+                availableBalance: supplier ? 628330 : 4237,
+                heldBalance: 0,
+                updatedAt: new Date().toISOString(),
+                entries: [],
+            });
+        },
+    ),
     http.get(
         `${runtimeConfig.apiBaseUrl}/api/public/businesses/:businessId/trust`,
         ({ params, request }) => {
@@ -131,7 +156,31 @@ export const handlers = [
             if (body.email === "analyst@example.com") {
                 return HttpResponse.json(analystTokens);
             }
+            if (body.email === "lungile.mooketsi@trademesh.local") {
+                return HttpResponse.json(supplierTokens);
+            }
             return HttpResponse.json(ownerTokens);
+        },
+    ),
+    http.post(
+        `${runtimeConfig.apiBaseUrl}/api/auth/register`,
+        async ({ request }) => {
+            const body = (await request.json()) as {
+                accountType?: string;
+                email?: string;
+                password?: string;
+            };
+            if (!body.accountType || !body.email || !body.password) {
+                return problem(
+                    400,
+                    "Request validation failed",
+                    "INVALID_REQUEST",
+                );
+            }
+            return HttpResponse.json(
+                body.accountType === "SUPPLIER" ? supplierTokens : ownerTokens,
+                { status: 201 },
+            );
         },
     ),
     http.post(

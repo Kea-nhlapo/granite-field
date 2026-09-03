@@ -87,9 +87,10 @@ class BusinessControllerIntegrationTest extends PostgresIntegrationTest {
     }
 
     @Test
-    void rejectsInvalidNumbersAndNonOwnerAccountTypes() throws Exception {
+    void acceptsFleetOperatorsAndRejectsSupplierOnboarding() throws Exception {
         String ownerToken = register("owner@example.com", RegistrationType.BUSINESS_OWNER);
         String supplierToken = register("supplier@example.com", RegistrationType.SUPPLIER);
+        String transporterToken = register("fleet@example.com", RegistrationType.TRANSPORTER);
 
         mockMvc.perform(post("/api/businesses/onboarding/registered")
                         .header(HttpHeaders.AUTHORIZATION, bearer(ownerToken))
@@ -99,6 +100,14 @@ class BusinessControllerIntegrationTest extends PostgresIntegrationTest {
                     """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_REGISTRATION_NUMBER"));
+
+        mockMvc.perform(post("/api/businesses/onboarding/registered")
+                        .header(HttpHeaders.AUTHORIZATION, bearer(transporterToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                    {"registrationNumber":"2024/654321/07"}
+                    """))
+                .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/businesses/onboarding/registered")
                         .header(HttpHeaders.AUTHORIZATION, bearer(supplierToken))

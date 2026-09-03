@@ -17,7 +17,7 @@ public final class NotificationTemplates {
     public static final String HANDOVER_FINALIZED_DISPUTED = "handover-finalized-disputed";
     public static final int HANDOVER_FINALIZED_DISPUTED_VERSION = 1;
     public static final String ESCROW_RELEASED = "escrow-released";
-    public static final int ESCROW_RELEASED_VERSION = 1;
+    public static final int ESCROW_RELEASED_VERSION = 2;
 
     private NotificationTemplates() {}
 }

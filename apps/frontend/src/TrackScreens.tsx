@@ -20,14 +20,23 @@ import {
 } from "./icons";
 import { m, springs } from "./motion";
 import {
-    deliveryVerificationIssue,
-    deliveryVerificationScan,
+    escrowGet,
+    escrowRelease,
+    handoverConfirm,
+    handoverGet,
+    handoverIssue,
 } from "./shared/api/app-api";
 import type {
     ApiProblem,
     ChallengeResponse,
     IssuedChallengeResponse,
 } from "./shared/api/generated";
+import { SandboxWalletCard } from "./SandboxWalletCard";
+
+const DEMO_BUSINESS_ID = "00000000-0000-4000-8000-000000000101";
+const DEMO_SHIPMENT_ID = "00000000-0000-4000-8000-000000000201";
+const DEMO_ORDER_ID = "00000000-0000-4000-8000-000000000301";
+const LUNGILE_USER_ID = "6c756e67-696c-456d-8000-000000000001";
 
 export function TrackScreen({ navigate }: { navigate: Navigate }) {
     const [showAudit, setShowAudit] = useState(false);
@@ -39,6 +48,7 @@ export function TrackScreen({ navigate }: { navigate: Navigate }) {
                 className="flex-1 fluent-scroll overflow-y-auto p-4 space-y-4"
                 style={{ background: "var(--fluent-bg-canvas, #F8F9FA)" }}
             >
+                <SandboxWalletCard />
                 {/* Active Shipment Status */}
                 <SectionCard
                     className="p-4"
@@ -361,10 +371,10 @@ function browserLocation(): Promise<{ latitude: number; longitude: number }> {
 }
 
 const emptyContext: DeliveryContext = {
-    businessId: "",
-    shipmentId: "",
-    deliveryOrderId: "",
-    counterpartyUserId: "",
+    businessId: DEMO_BUSINESS_ID,
+    shipmentId: DEMO_SHIPMENT_ID,
+    deliveryOrderId: DEMO_ORDER_ID,
+    counterpartyUserId: LUNGILE_USER_ID,
 };
 
 export function QRScreen({ onBack }: { onBack: () => void }) {
@@ -374,11 +384,9 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
     const [verification, setVerification] = useState<ChallengeResponse | null>(
         null,
     );
-    const [capturedQuantity, setCapturedQuantity] = useState(
-        scanLink?.expectedQuantity?.toString() ?? "",
-    );
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [paymentStatus, setPaymentStatus] = useState<string>();
 
     const qrPayload = issued?.qrPayload;
     const challenge = issued?.challenge;
@@ -407,12 +415,15 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
 
         setBusy(true);
         try {
-            const result = await deliveryVerificationIssue({
-                path: { shipmentId: context.shipmentId },
-                body: {
+            const result = await handoverIssue({
+                path: {
                     businessId: context.businessId,
+                    shipmentId: context.shipmentId,
+                },
+                body: {
                     deliveryOrderId: context.deliveryOrderId,
                     counterpartyUserId: context.counterpartyUserId,
+                    type: "DELIVERY",
                 },
             });
 
@@ -441,25 +452,20 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
         event.preventDefault();
         if (!scanLink) return;
 
-        const quantity = Number(capturedQuantity);
-        if (!Number.isFinite(quantity) || quantity < 0) {
-            setError("Enter the quantity received before confirming delivery.");
-            return;
-        }
-
         setBusy(true);
         setError(null);
         setVerification(null);
         try {
             const location = await browserLocation();
-            const result = await deliveryVerificationScan({
-                path: { shipmentId: scanLink.shipmentId },
+            const result = await handoverConfirm({
                 body: {
-                    requestId: crypto.randomUUID(),
-                    token: scanLink.token,
-                    capturedQty: quantity,
-                    gpsLat: location.latitude,
-                    gpsLng: location.longitude,
+                    captureMode: "ONLINE",
+                    commandId: crypto.randomUUID(),
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    observedAt: new Date().toISOString(),
+                    qrPayload: scanLink.token,
+                    quantityOutcome: "MATCHED",
                 },
             });
 
@@ -474,8 +480,9 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
             }
             if (
                 !result.data ||
-                (result.data.state !== "COMPLETED" &&
-                    result.data.state !== "DISPUTED")
+                !["PENDING", "COMPLETED", "DISPUTED"].includes(
+                    result.data.state ?? "",
+                )
             ) {
                 setError("The handover has not been verified by the backend.");
                 return;
@@ -494,6 +501,108 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
         }
     }
 
+    async function confirmSmeSide() {
+        if (!issued?.qrPayload) return;
+        setBusy(true);
+        setError(null);
+        try {
+            const location = await browserLocation();
+            const result = await handoverConfirm({
+                body: {
+                    captureMode: "ONLINE",
+                    commandId: crypto.randomUUID(),
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    observedAt: new Date().toISOString(),
+                    qrPayload: issued.qrPayload,
+                    quantityOutcome: "MATCHED",
+                },
+            });
+            if (result.error || !result.data) {
+                setError(
+                    problemDetail(
+                        result.error,
+                        "The SME signature was rejected.",
+                    ),
+                );
+                return;
+            }
+            setIssued((current) =>
+                current ? { ...current, challenge: result.data } : current,
+            );
+        } catch {
+            setError("The backend could not be reached. Please try again.");
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function refreshSignatures() {
+        const challengeId = issued?.challenge?.challengeId;
+        if (!challengeId) return;
+        setBusy(true);
+        setError(null);
+        try {
+            const result = await handoverGet({
+                path: {
+                    businessId: context.businessId,
+                    shipmentId: context.shipmentId,
+                    challengeId,
+                },
+            });
+            if (result.error || !result.data) {
+                setError(
+                    problemDetail(
+                        result.error,
+                        "The signatures could not be refreshed.",
+                    ),
+                );
+                return;
+            }
+            setIssued((current) =>
+                current ? { ...current, challenge: result.data } : current,
+            );
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function releasePayment() {
+        setBusy(true);
+        setError(null);
+        try {
+            const current = await escrowGet({
+                path: { shipmentId: context.shipmentId },
+                query: { businessId: context.businessId },
+            });
+            if (!current.data?.agreedAmount) {
+                setError("This shipment has no releasable escrow amount.");
+                return;
+            }
+            const result = await escrowRelease({
+                path: { shipmentId: context.shipmentId },
+                body: {
+                    businessId: context.businessId,
+                    requestId: crypto.randomUUID(),
+                    resolvedAmount: current.data.agreedAmount,
+                },
+            });
+            if (result.error || !result.data) {
+                setError(
+                    problemDetail(
+                        result.error,
+                        "Payment could not be released.",
+                    ),
+                );
+                return;
+            }
+            setPaymentStatus(result.data.status);
+            window.dispatchEvent(new Event("trademesh:wallet-updated"));
+        } finally {
+            setBusy(false);
+        }
+    }
+
     return (
         <>
             <TopBar
@@ -504,6 +613,7 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
                 className="flex-1 fluent-scroll overflow-y-auto p-5 space-y-4"
                 style={{ background: "var(--fluent-bg-canvas, #F8F9FA)" }}
             >
+                <SandboxWalletCard />
                 {scanLink ? (
                     <form onSubmit={confirmDelivery} className="space-y-4">
                         <MessageBar intent="info">
@@ -520,23 +630,10 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
                                     {scanLink.shipmentId}
                                 </p>
                             </div>
-                            <label className="block">
-                                <span className="app-caption-strong">
-                                    Quantity received
-                                </span>
-                                <input
-                                    aria-label="Quantity received"
-                                    type="number"
-                                    min="0"
-                                    step="any"
-                                    required
-                                    value={capturedQuantity}
-                                    onChange={(event) =>
-                                        setCapturedQuantity(event.target.value)
-                                    }
-                                    className="mt-1.5 w-full h-10 rounded-lg border border-[#D1D5DB] px-3 text-sm"
-                                />
-                            </label>
+                            <p className="app-caption text-[#595959]">
+                                Sign with your supplier account. The SME must
+                                sign separately before payment can move.
+                            </p>
                         </SectionCard>
                         {error && (
                             <MessageBar intent="error">{error}</MessageBar>
@@ -551,8 +648,8 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
                             >
                                 <strong>
                                     {verification.state === "COMPLETED"
-                                        ? "Delivery verified by TradeMesh."
-                                        : "Delivery recorded with a quantity dispute."}
+                                        ? "Both parties signed the handoff."
+                                        : "Your signature was saved. Waiting for the SME."}
                                 </strong>{" "}
                                 Evidence reference: {verification.challengeId}.
                                 Payment release remains a separate decision.
@@ -635,6 +732,10 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
                                     The code contains no business or recipient
                                     details.
                                 </p>
+                                <p className="app-caption-strong text-[#002B49]">
+                                    {challenge?.confirmations?.length ?? 0}/2
+                                    signatures · {challenge?.state ?? "PENDING"}
+                                </p>
                             </SectionCard>
                         )}
                         {error && (
@@ -649,6 +750,31 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
                                         ? "Requesting secure code…"
                                         : "Issue secure QR code"
                                 }
+                            />
+                        )}
+                        {qrLink && (
+                            <div className="grid grid-cols-2 gap-2">
+                                <SecondaryBtn
+                                    label="Sign SME side"
+                                    onClick={() => void confirmSmeSide()}
+                                    disabled={busy}
+                                />
+                                <SecondaryBtn
+                                    label="Refresh signatures"
+                                    onClick={() => void refreshSignatures()}
+                                    disabled={busy}
+                                />
+                            </div>
+                        )}
+                        {challenge?.state === "COMPLETED" && (
+                            <PrimaryBtn
+                                label={
+                                    paymentStatus === "RELEASED"
+                                        ? "Payment released"
+                                        : "Release supplier payment"
+                                }
+                                onClick={() => void releasePayment()}
+                                disabled={busy || paymentStatus === "RELEASED"}
                             />
                         )}
                     </form>

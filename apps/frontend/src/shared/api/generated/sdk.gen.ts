@@ -217,6 +217,12 @@ import type {
     RoutingGetData,
     RoutingGetErrors,
     RoutingGetResponses,
+    SandboxUniversalSuppliersGetData,
+    SandboxUniversalSuppliersGetErrors,
+    SandboxUniversalSuppliersGetResponses,
+    SandboxWalletGetData,
+    SandboxWalletGetErrors,
+    SandboxWalletGetResponses,
     ShipmentChangeAssignmentData,
     ShipmentChangeAssignmentErrors,
     ShipmentChangeAssignmentResponses,
@@ -341,6 +347,42 @@ export type Options<
         ? Record<string, unknown>
         : ClientMeta;
 };
+
+export const sandboxWalletGet = <ThrowOnError extends boolean = false>(
+    options?: Options<SandboxWalletGetData, ThrowOnError>,
+): RequestResult<
+    SandboxWalletGetResponses,
+    SandboxWalletGetErrors,
+    ThrowOnError
+> =>
+    (options?.client ?? client).get<
+        SandboxWalletGetResponses,
+        SandboxWalletGetErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/sandbox/wallet",
+        ...options,
+    });
+
+export const sandboxUniversalSuppliersGet = <
+    ThrowOnError extends boolean = false,
+>(
+    options?: Options<SandboxUniversalSuppliersGetData, ThrowOnError>,
+): RequestResult<
+    SandboxUniversalSuppliersGetResponses,
+    SandboxUniversalSuppliersGetErrors,
+    ThrowOnError
+> =>
+    (options?.client ?? client).get<
+        SandboxUniversalSuppliersGetResponses,
+        SandboxUniversalSuppliersGetErrors,
+        ThrowOnError
+    >({
+        security: [{ scheme: "bearer", type: "http" }],
+        url: "/api/sandbox/universal-suppliers",
+        ...options,
+    });
 
 export const notificationPreferenceSet = <ThrowOnError extends boolean = false>(
     options: Options<NotificationPreferenceSetData, ThrowOnError>,

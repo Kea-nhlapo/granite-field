@@ -20,7 +20,10 @@ import za.co.trademesh.modules.handover.domain.HandoverParty;
 import za.co.trademesh.modules.handover.domain.HandoverState;
 import za.co.trademesh.modules.handover.domain.HandoverType;
 import za.co.trademesh.modules.handover.events.HandoverEvent;
+import za.co.trademesh.modules.payment.application.SandboxWalletService;
+import za.co.trademesh.modules.payment.application.SandboxWalletSnapshot;
 import za.co.trademesh.modules.payment.events.PaymentEvent;
+import za.co.trademesh.modules.supplier.application.SupplierDirectory;
 import za.co.trademesh.modules.telemetry.events.TelemetryEvent;
 import za.co.trademesh.modules.transport.events.TransportEvent;
 import za.co.trademesh.shared.events.EventEnvelope;
@@ -107,28 +110,47 @@ class MobileNotificationEventListenerTest {
     }
 
     @Test
-    void sendsEscrowReleaseToEveryActiveBusinessRecipientWithoutPaymentData() {
+    void sendsEscrowReleaseOnlyToTheClaimedSupplierWithPaymentData() {
         Fixture fixture = new Fixture();
         UUID businessId = UUID.randomUUID();
-        UUID owner = UUID.randomUUID();
-        UUID member = UUID.randomUUID();
-        when(fixture.businesses.findActiveUserIds(businessId)).thenReturn(List.of(owner, member));
+        UUID supplierProfileId = UUID.randomUUID();
+        UUID supplierUserId = UUID.randomUUID();
+        when(fixture.suppliers.find(supplierProfileId))
+                .thenReturn(Optional.of(
+                        new SupplierDirectory.SupplierReference(supplierProfileId, true, supplierUserId, null)));
+        when(fixture.wallets.settleAndCreditSupplier(
+                        any(),
+                        org.mockito.ArgumentMatchers.eq(businessId),
+                        org.mockito.ArgumentMatchers.eq(supplierProfileId),
+                        org.mockito.ArgumentMatchers.eq(new BigDecimal("2500.00")),
+                        org.mockito.ArgumentMatchers.eq("ZAR")))
+                .thenReturn(Optional.of(new SandboxWalletSnapshot(
+                        supplierUserId,
+                        "Lungile Mooketsi",
+                        "ZAR",
+                        new BigDecimal("630830.0000"),
+                        BigDecimal.ZERO,
+                        Instant.now(),
+                        List.of())));
 
         fixture.listener.onEscrowReleased(published(
                 new PaymentEvent.Released(
-                        UUID.randomUUID(), UUID.randomUUID(), businessId, new BigDecimal("2500.00"), "ZAR"),
+                        UUID.randomUUID(),
+                        UUID.randomUUID(),
+                        businessId,
+                        supplierProfileId,
+                        new BigDecimal("2500.00"),
+                        "ZAR"),
                 null));
 
-        ArgumentCaptor<MobileNotificationRequests.UserMobileRequest> requests =
-                ArgumentCaptor.forClass(MobileNotificationRequests.UserMobileRequest.class);
-        verify(fixture.notifications, org.mockito.Mockito.times(2)).requestUser(requests.capture());
-        assertThat(requests.getAllValues())
-                .allSatisfy(request -> {
-                    assertThat(request.templateKey()).isEqualTo(NotificationTemplates.ESCROW_RELEASED);
-                    assertThat(request.templateData()).isEmpty();
-                })
-                .extracting(MobileNotificationRequests.UserMobileRequest::recipientUserId)
-                .containsExactly(owner, member);
+        var request = capture(fixture.notifications);
+        assertThat(request.recipientUserId()).isEqualTo(supplierUserId);
+        assertThat(request.templateKey()).isEqualTo(NotificationTemplates.ESCROW_RELEASED);
+        assertThat(request.templateVersion()).isEqualTo(2);
+        assertThat(request.templateData())
+                .containsEntry("amount", "2500.00")
+                .containsEntry("balance", "630830.00")
+                .containsEntry("currency", "ZAR");
     }
 
     private static MobileNotificationRequests.UserMobileRequest capture(MobileNotificationRequests requests) {
@@ -156,7 +178,9 @@ class MobileNotificationEventListenerTest {
         private final MobileNotificationRequests notifications = mock(MobileNotificationRequests.class);
         private final HandoverNotificationRecipients handovers = mock(HandoverNotificationRecipients.class);
         private final BusinessNotificationRecipients businesses = mock(BusinessNotificationRecipients.class);
+        private final SupplierDirectory suppliers = mock(SupplierDirectory.class);
+        private final SandboxWalletService wallets = mock(SandboxWalletService.class);
         private final MobileNotificationEventListener listener =
-                new MobileNotificationEventListener(notifications, handovers, businesses);
+                new MobileNotificationEventListener(notifications, handovers, businesses, suppliers, wallets, true);
     }
 }

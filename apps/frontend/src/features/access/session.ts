@@ -1,6 +1,15 @@
-import { authLogin, authLogout, authRefresh } from "../../shared/api/app-api";
+import {
+    authLogin,
+    authLogout,
+    authRefresh,
+    authRegister,
+} from "../../shared/api/app-api";
 import { setApiAccessToken } from "../../shared/api/client";
-import type { ApiProblem, TokenResponse } from "../../shared/api/generated";
+import type {
+    ApiProblem,
+    RegisterRequest,
+    TokenResponse,
+} from "../../shared/api/generated";
 import {
     clearRefreshToken,
     readRefreshToken,
@@ -99,6 +108,34 @@ export async function loginWithPassword(
         };
     }
 
+    return { session: applyTokenResponse(result.data) };
+}
+
+export async function registerWithPassword(
+    email: string,
+    password: string,
+    accountType: RegisterRequest["accountType"],
+): Promise<{ session: Session | null; error?: ApiProblem }> {
+    const result = await authRegister({
+        body: { accountType, email, password },
+    });
+    if (result.error) {
+        return { error: result.error as ApiProblem, session: null };
+    }
+    if (!result.data) {
+        return {
+            error: {
+                code: "REGISTRATION_FAILED",
+                detail: "The account could not be created.",
+                instance: "/api/auth/register",
+                requestId: "",
+                status: 500,
+                title: "Account creation failed",
+                type: "about:blank",
+            },
+            session: null,
+        };
+    }
     return { session: applyTokenResponse(result.data) };
 }
 

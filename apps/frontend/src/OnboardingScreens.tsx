@@ -330,14 +330,24 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
 
 export function LoginScreen({
     authenticationReady,
+    onRegistered,
     onSignedIn,
 }: {
     authenticationReady: boolean;
+    onRegistered: (
+        email: string,
+        password: string,
+        accountType: "BUSINESS_OWNER" | "SUPPLIER",
+    ) => Promise<string | undefined>;
     onSignedIn: (
         email: string,
         password: string,
     ) => Promise<string | undefined>;
 }) {
+    const [mode, setMode] = useState<"login" | "register">("login");
+    const [accountType, setAccountType] = useState<
+        "BUSINESS_OWNER" | "SUPPLIER"
+    >("BUSINESS_OWNER");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
@@ -352,7 +362,11 @@ export function LoginScreen({
         setSubmitting(true);
         setMessage(undefined);
         try {
-            setMessage(await onSignedIn(email.trim(), password));
+            setMessage(
+                mode === "login"
+                    ? await onSignedIn(email.trim(), password)
+                    : await onRegistered(email.trim(), password, accountType),
+            );
         } finally {
             setSubmitting(false);
         }
@@ -395,13 +409,15 @@ export function LoginScreen({
                     className="text-3xl font-bold mt-6 text-center"
                     style={{ color: "var(--momo-navy, #002B49)" }}
                 >
-                    Welcome Back!
+                    {mode === "login" ? "Welcome Back!" : "Create Account"}
                 </h1>
                 <p
                     className="text-sm mt-2 text-center"
                     style={{ color: "var(--fluent-text-secondary, #595959)" }}
                 >
-                    Your trade journey continues
+                    {mode === "login"
+                        ? "Your trade journey continues"
+                        : "New accounts start with R50 in the sandbox wallet"}
                 </p>
 
                 <div
@@ -416,6 +432,18 @@ export function LoginScreen({
                 </div>
 
                 <form className="flex flex-col gap-3 mt-8" onSubmit={submit}>
+                    {mode === "login" && (
+                        <button
+                            type="button"
+                            className="h-10 w-full rounded-lg border border-[#003E85] text-sm font-semibold text-[#003E85] hover:bg-[#EBF3FC]"
+                            onClick={() => {
+                                setEmail("lungile.mooketsi@trademesh.local");
+                                setMessage(undefined);
+                            }}
+                        >
+                            Use Lungile's supplier account
+                        </button>
+                    )}
                     <input
                         type="email"
                         aria-label="Email address"
@@ -430,7 +458,11 @@ export function LoginScreen({
                         <input
                             type={showPassword ? "text" : "password"}
                             aria-label="Password"
-                            autoComplete="current-password"
+                            autoComplete={
+                                mode === "login"
+                                    ? "current-password"
+                                    : "new-password"
+                            }
                             placeholder="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -453,9 +485,34 @@ export function LoginScreen({
                             )}
                         </button>
                     </div>
+                    {mode === "register" && (
+                        <select
+                            aria-label="Account type"
+                            value={accountType}
+                            onChange={(event) =>
+                                setAccountType(
+                                    event.target.value as
+                                        "BUSINESS_OWNER" | "SUPPLIER",
+                                )
+                            }
+                            className="w-full px-4 border text-sm bg-white"
+                            style={inputStyle}
+                        >
+                            <option value="BUSINESS_OWNER">SME buyer</option>
+                            <option value="SUPPLIER">Supplier</option>
+                        </select>
+                    )}
                     <div className="mt-3 w-[56%] mx-auto">
                         <PrimaryBtn
-                            label={submitting ? "Signing in…" : "Continue"}
+                            label={
+                                submitting
+                                    ? mode === "login"
+                                        ? "Signing in…"
+                                        : "Creating account…"
+                                    : mode === "login"
+                                      ? "Continue"
+                                      : "Create account"
+                            }
                             type="submit"
                             disabled={
                                 !authenticationReady ||
@@ -582,15 +639,16 @@ export function LoginScreen({
                 </div>
                 <button
                     type="button"
-                    onClick={() =>
-                        setMessage(
-                            "Account registration is not available from this screen yet.",
-                        )
-                    }
+                    onClick={() => {
+                        setMode((current) =>
+                            current === "login" ? "register" : "login",
+                        );
+                        setMessage(undefined);
+                    }}
                     className="text-center text-sm font-semibold mt-2"
                     style={{ color: "var(--momo-blue, #003E85)" }}
                 >
-                    Sign Up
+                    {mode === "login" ? "Sign Up" : "Back to sign in"}
                 </button>
             </m.div>
         </div>

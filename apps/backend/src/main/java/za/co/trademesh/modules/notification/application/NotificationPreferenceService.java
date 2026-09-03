@@ -67,4 +67,9 @@ public class NotificationPreferenceService {
                 whatsappEnabled == null ? current.whatsappEnabled() : whatsappEnabled,
                 clock.instant()));
     }
+
+    @Transactional
+    public void enableShipmentSms(UUID userId) {
+        set(userId, NotificationCategory.SHIPMENT_UPDATE, true, true, false);
+    }
 }

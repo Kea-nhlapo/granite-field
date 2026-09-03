@@ -9,11 +9,13 @@ import {
 } from "react";
 
 import type { ApiProblem } from "../../shared/api/generated";
+import type { RegisterRequest } from "../../shared/api/generated";
 import { installSessionRefreshInterceptor } from "./session-interceptor";
 import {
     getSessionSnapshot,
     loginWithPassword,
     logoutSession,
+    registerWithPassword,
     restoreSession,
     subscribeSession,
     type Session,
@@ -27,6 +29,11 @@ type SessionContextValue = {
         password: string,
     ) => Promise<{ session: Session | null; error?: ApiProblem }>;
     logout: () => Promise<void>;
+    register: (
+        email: string,
+        password: string,
+        accountType: RegisterRequest["accountType"],
+    ) => Promise<{ session: Session | null; error?: ApiProblem }>;
     session: Session | null;
     status: SessionStatus;
 };
@@ -56,6 +63,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
         () => ({
             login: loginWithPassword,
             logout: logoutSession,
+            register: registerWithPassword,
             session,
             status: !bootstrapped
                 ? "loading"

@@ -29,7 +29,7 @@ public class BusinessController {
     }
 
     @PostMapping("/onboarding/registered")
-    @PreAuthorize("hasRole('BUSINESS_OWNER')")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'TRANSPORTER')")
     ResponseEntity<BusinessContracts.RegisteredOnboardingResponse> startRegisteredOnboarding(
             @Valid @RequestBody BusinessContracts.StartRegisteredOnboardingRequest request,
             Authentication authentication) {
@@ -40,7 +40,7 @@ public class BusinessController {
     }
 
     @GetMapping("/onboarding/registered/{onboardingId}")
-    @PreAuthorize("hasRole('BUSINESS_OWNER')")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'TRANSPORTER')")
     BusinessContracts.RegisteredOnboardingResponse getRegisteredOnboarding(
             @PathVariable UUID onboardingId, Authentication authentication) {
         UUID userId = authorizationService.authenticatedUserId(authentication);
@@ -49,7 +49,7 @@ public class BusinessController {
     }
 
     @PostMapping("/onboarding/registered/{onboardingId}/confirmation")
-    @PreAuthorize("hasRole('BUSINESS_OWNER')")
+    @PreAuthorize("hasAnyRole('BUSINESS_OWNER', 'TRANSPORTER')")
     BusinessContracts.BusinessProfileResponse confirmRegisteredOnboarding(
             @PathVariable UUID onboardingId, Authentication authentication) {
         UUID userId = authorizationService.authenticatedUserId(authentication);

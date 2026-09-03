@@ -35,7 +35,7 @@ const TAB_FOR_SCREEN: Record<string, Tab> = {
 export default function App() {
     const [screen, setScreen] = useState<Screen>({ id: "onboarding" });
     const [history, setHistory] = useState<Screen[]>([]);
-    const { login, session, status } = useSession();
+    const { login, register, session, status } = useSession();
     const internal =
         session?.roles.has("INTERNAL_RISK_ANALYST") === true ||
         session?.roles.has("ADMINISTRATOR") === true;
@@ -76,6 +76,23 @@ export default function App() {
         return undefined;
     }
 
+    async function createAccount(
+        email: string,
+        password: string,
+        accountType: "BUSINESS_OWNER" | "SUPPLIER",
+    ) {
+        const result = await register(email, password, accountType);
+        if (!result.session) {
+            return (
+                result.error?.detail ??
+                "Account creation failed. Please try again."
+            );
+        }
+        setHistory([]);
+        setScreen({ id: "home" });
+        return undefined;
+    }
+
     const activeTab = TAB_FOR_SCREEN[screen.id] ?? "home";
 
     const screenEl = (() => {
@@ -90,6 +107,7 @@ export default function App() {
                 return (
                     <LoginScreen
                         authenticationReady={status !== "loading"}
+                        onRegistered={createAccount}
                         onSignedIn={signIn}
                     />
                 );
