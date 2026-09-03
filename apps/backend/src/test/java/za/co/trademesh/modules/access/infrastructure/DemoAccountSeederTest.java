@@ -42,7 +42,7 @@ class DemoAccountSeederTest {
         new DemoAccountSeeder(accounts, passwordEncoder, Clock.fixed(NOW, ZoneOffset.UTC), DEMO_PASSWORD).run(null);
 
         ArgumentCaptor<UserAccount> saved = ArgumentCaptor.forClass(UserAccount.class);
-        verify(accounts, times(5)).save(saved.capture());
+        verify(accounts, times(3)).save(saved.capture());
         verify(passwordEncoder).encode(DEMO_PASSWORD);
 
         assertThat(saved.getAllValues())
@@ -50,9 +50,7 @@ class DemoAccountSeederTest {
                 .containsExactly(
                         "owner@demo.trademesh.test",
                         "transporter@demo.trademesh.test",
-                        "driver@demo.trademesh.test",
-                        "risk@demo.trademesh.test",
-                        "insurer@demo.trademesh.test");
+                        "driver@demo.trademesh.test");
         assertThat(saved.getAllValues()).allSatisfy(account -> {
             assertThat(account.passwordHash()).isEqualTo("{bcrypt}demo-hash");
             assertThat(account.enabled()).isTrue();
@@ -63,9 +61,7 @@ class DemoAccountSeederTest {
                 .containsExactly(
                         AccountRole.BUSINESS_OWNER,
                         AccountRole.TRANSPORTER,
-                        AccountRole.DRIVER,
-                        AccountRole.INTERNAL_RISK_ANALYST,
-                        AccountRole.INSURER);
+                        AccountRole.DRIVER);
     }
 
     @Test

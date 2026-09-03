@@ -365,6 +365,8 @@ spring:
     username: ${DATABASE_USERNAME:trademesh}
     password: ${DATABASE_PASSWORD:trademesh}
 trademesh:
+  demo-accounts:
+    enabled: true
   access:
     turnstile:
       provider: ${TURNSTILE_PROVIDER:local}
