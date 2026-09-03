@@ -104,6 +104,8 @@ function parseLines(rawLines: string[]): ParsedInvoiceLine[] {
         if (!match) continue;
 
         const [, description, qtyStr, priceStr] = match;
+        if (!description || !qtyStr || !priceStr) continue;
+
         const qty = parseInt(qtyStr, 10);
         const unitPrice = toNumber(priceStr);
         if (qty <= 0 || unitPrice <= 0) continue;
@@ -137,6 +139,6 @@ export async function parseInvoicePdf(file: File): Promise<ParsedInvoice> {
         rawLines,
         lines: parseLines(rawLines),
         invoiceNumber: invoiceNumberMatch?.[1],
-        total: lastTotal ? toNumber(lastTotal[1]) : undefined,
+        total: lastTotal?.[1] ? toNumber(lastTotal[1]) : undefined,
     };
 }

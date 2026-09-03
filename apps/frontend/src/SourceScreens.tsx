@@ -76,7 +76,10 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
         const recognition = new SpeechRecognitionCtor();
         recognition.lang = "en-ZA";
         recognition.interimResults = false;
-        recognition.onresult = (e) => setSearch(e.results[0][0].transcript);
+        recognition.onresult = (e) => {
+            const transcript = e.results[0]?.[0]?.transcript;
+            if (transcript) setSearch(transcript);
+        };
         recognition.onend = () => setListening(false);
         recognitionRef.current = recognition;
         recognition.start();
@@ -120,6 +123,7 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
             stock: "High",
         },
     ];
+    const topProduct = products[0]!;
 
     return (
         <>
@@ -264,15 +268,15 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="app-heading truncate">
-                                                    {products[0].name}
+                                                    {topProduct.name}
                                                 </p>
                                                 <p className="app-caption text-[#595959] mt-0.5 truncate">
-                                                    {products[0].supplier} •
+                                                    {topProduct.supplier} •
                                                     Ordered most this month
                                                 </p>
                                             </div>
                                             <p className="app-metric shrink-0">
-                                                {products[0].price}
+                                                {topProduct.price}
                                             </p>
                                         </button>
                                     </div>
