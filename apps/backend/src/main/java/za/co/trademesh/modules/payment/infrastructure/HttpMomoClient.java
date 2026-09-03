@@ -150,6 +150,25 @@ class HttpMomoClient implements MomoClient {
     }
 
     @Override
+    public Balance getBalance(Product product) {
+        try {
+            BalanceResponse response = client.get()
+                    .uri("/{product}/v1_0/account/balance", product.path())
+                    .headers(headers -> authorize(headers, product))
+                    .retrieve()
+                    .body(BalanceResponse.class);
+            if (response == null || blank(response.availableBalance())) {
+                throw new MomoException("MOMO_BALANCE_INVALID", "MTN returned no balance", true);
+            }
+            return new Balance(new java.math.BigDecimal(response.availableBalance()), response.currency());
+        } catch (RestClientResponseException failure) {
+            throw responseFailure("MOMO_BALANCE", failure);
+        } catch (ResourceAccessException failure) {
+            throw unavailable("MOMO_BALANCE_UNAVAILABLE");
+        }
+    }
+
+    @Override
     public String requestToPay(MoneyRequest request) {
         submitMoneyRequest(request, Product.COLLECTIONS, "requesttopay", "payer");
         return request.referenceId();
@@ -297,6 +316,8 @@ class HttpMomoClient implements MomoClient {
     private record AccountHolderResponse(boolean result) {}
 
     private record StatusResponse(String status) {}
+
+    private record BalanceResponse(String availableBalance, String currency) {}
 
     private record Party(String partyIdType, String partyId) {}
 
