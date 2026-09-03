@@ -1,4 +1,23 @@
-const defaultApiBaseUrl = "http://localhost:8080";
+const localApiBaseUrl = "http://localhost:8080";
+
+type BrowserLocation = Pick<Location, "hostname" | "origin">;
+
+export function resolveDefaultApiBaseUrl(
+    location: BrowserLocation | undefined,
+): string {
+    if (!location) {
+        return localApiBaseUrl;
+    }
+
+    const isLocal =
+        location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+    return isLocal ? localApiBaseUrl : location.origin;
+}
+
+const defaultApiBaseUrl = resolveDefaultApiBaseUrl(
+    typeof window === "undefined" ? undefined : window.location,
+);
 
 export type ApiMode = "live" | "mock";
 

@@ -32,9 +32,7 @@ class DemoAccountSeeder implements ApplicationRunner {
             new DemoAccount("owner@demo.trademesh.test", AccountRole.BUSINESS_OWNER),
             new DemoAccount("supplier@demo.trademesh.test", AccountRole.SUPPLIER),
             new DemoAccount("transporter@demo.trademesh.test", AccountRole.TRANSPORTER),
-            new DemoAccount("driver@demo.trademesh.test", AccountRole.DRIVER),
-            new DemoAccount("risk@demo.trademesh.test", AccountRole.INTERNAL_RISK_ANALYST),
-            new DemoAccount("insurer@demo.trademesh.test", AccountRole.INSURER));
+            new DemoAccount("driver@demo.trademesh.test", AccountRole.DRIVER));
 
     private final UserAccountRepository accounts;
     private final PasswordEncoder passwordEncoder;
