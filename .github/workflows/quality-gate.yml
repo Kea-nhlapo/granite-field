@@ -184,8 +184,6 @@ jobs:
           sed -i "s|^OBJECT_STORAGE_SECRET_KEY=.*|OBJECT_STORAGE_SECRET_KEY=${CI_OBJECT_STORAGE_SECRET_KEY}|" .env
           # 32 raw bytes, base64: the notification key is decoded, not read as text.
           sed -i "s|^NOTIFICATION_DATA_ENCRYPTION_KEY=$|NOTIFICATION_DATA_ENCRYPTION_KEY=$(openssl rand -base64 32)|" .env
-          # The local OTP adapter intentionally accepts only 4-10 digits.
-          sed -i "s|^OTP_LOCAL_CODE=$|OTP_LOCAL_CODE=000000|" .env
           # Anything still blank gets a value long enough for the strictest check.
           while IFS= read -r key; do
             sed -i "s|^${key}=$|${key}=ci-only-$(openssl rand -hex 24)|" .env
