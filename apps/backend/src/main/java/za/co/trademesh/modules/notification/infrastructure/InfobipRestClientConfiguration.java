@@ -1,6 +1,6 @@
 package za.co.trademesh.modules.notification.infrastructure;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -9,7 +9,8 @@ import org.springframework.web.client.RestClient;
 import za.co.trademesh.modules.notification.application.InfobipNotificationProperties;
 
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnProperty(prefix = "trademesh.notifications.mobile", name = "provider", havingValue = "infobip")
+@ConditionalOnExpression(
+        "'${TRADEMESH_CI_READINESS:false}' != 'true' and '${trademesh.notifications.mobile.provider:local}' == 'infobip'")
 class InfobipRestClientConfiguration {
 
     @Bean

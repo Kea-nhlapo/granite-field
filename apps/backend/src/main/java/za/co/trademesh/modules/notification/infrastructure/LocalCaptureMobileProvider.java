@@ -4,18 +4,15 @@ import java.time.Clock;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import za.co.trademesh.modules.notification.application.LocalMobileCapture;
 import za.co.trademesh.modules.notification.application.MobileDeliveryProvider;
 import za.co.trademesh.modules.notification.domain.MobileNotificationStatus;
 
 @Component
-@ConditionalOnProperty(
-        prefix = "trademesh.notifications.mobile",
-        name = "provider",
-        havingValue = "local",
-        matchIfMissing = true)
+@ConditionalOnExpression(
+        "'${TRADEMESH_CI_READINESS:false}' == 'true' or '${trademesh.notifications.mobile.provider:local}' == 'local'")
 class LocalCaptureMobileProvider implements MobileDeliveryProvider, LocalMobileCapture {
 
     private final ConcurrentHashMap<String, CapturedMessage> captured = new ConcurrentHashMap<>();
