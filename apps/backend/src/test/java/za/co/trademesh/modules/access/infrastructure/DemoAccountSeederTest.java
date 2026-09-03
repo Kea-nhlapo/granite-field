@@ -48,9 +48,7 @@ class DemoAccountSeederTest {
         assertThat(saved.getAllValues())
                 .extracting(UserAccount::email)
                 .containsExactly(
-                        "owner@demo.trademesh.test",
-                        "transporter@demo.trademesh.test",
-                        "driver@demo.trademesh.test");
+                        "owner@demo.trademesh.test", "transporter@demo.trademesh.test", "driver@demo.trademesh.test");
         assertThat(saved.getAllValues()).allSatisfy(account -> {
             assertThat(account.passwordHash()).isEqualTo("{bcrypt}demo-hash");
             assertThat(account.enabled()).isTrue();
@@ -58,10 +56,7 @@ class DemoAccountSeederTest {
         });
         assertThat(saved.getAllValues())
                 .flatExtracting(UserAccount::roles)
-                .containsExactly(
-                        AccountRole.BUSINESS_OWNER,
-                        AccountRole.TRANSPORTER,
-                        AccountRole.DRIVER);
+                .containsExactly(AccountRole.BUSINESS_OWNER, AccountRole.TRANSPORTER, AccountRole.DRIVER);
     }
 
     @Test
