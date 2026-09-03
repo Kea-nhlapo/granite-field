@@ -342,6 +342,8 @@ jobs:
 
       - name: Build the frontend
         working-directory: apps/frontend
+        env:
+          VITE_API_BASE_URL: https://dbhptzazg1vi1.cloudfront.net
         run: |
           npm ci
           npm run build
@@ -352,4 +354,3 @@ jobs:
           aws s3 sync dist/ "s3://$SITE_BUCKET/" --delete
           aws cloudfront create-invalidation \
             --distribution-id "$DISTRIBUTION_ID" --paths "/*" >/dev/null
-
