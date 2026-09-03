@@ -413,20 +413,42 @@ export function PlusIcon({ className = "", size = 16, style }: IconProps) {
 }
 
 export function MenuIcon({ className = "", size = 20, style }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="currentColor" className={className} style={style}>
-      <path fillRule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-    </svg>
-  );
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className={className}
+            style={style}
+        >
+            <path
+                fillRule="evenodd"
+                d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                clipRule="evenodd"
+            />
+        </svg>
+    );
 }
 
 export function MailIcon({ className = "", size = 20, style }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
-      <rect x="2.5" y="4.5" width="15" height="11" rx="1.5" />
-      <path d="M3 5.5l7 5.5 7-5.5" />
-    </svg>
-  );
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={className}
+            style={style}
+        >
+            <rect x="2.5" y="4.5" width="15" height="11" rx="1.5" />
+            <path d="M3 5.5l7 5.5 7-5.5" />
+        </svg>
+    );
 }
 
 export function SparkleIcon({ className = "", size = 18, style }: IconProps) {

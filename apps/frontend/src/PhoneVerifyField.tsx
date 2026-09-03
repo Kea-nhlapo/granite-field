@@ -24,16 +24,19 @@ function simulateValidate(phone: string): Promise<boolean> {
  * to the local simulation so the field never breaks mid-demo.
  */
 async function checkAccount(phone: string): Promise<boolean> {
-  const digits = phone.replace(/\s/g, "");
-  if (import.meta.env.VITE_API_MODE !== "live") {
-    return simulateValidate(digits);
-  }
-  try {
-    return await validateMomoAccount(digits);
-  } catch (error) {
-    console.warn("MoMo account validation failed, falling back to local check", error);
-    return simulateValidate(digits);
-  }
+    const digits = phone.replace(/\s/g, "");
+    if (import.meta.env.VITE_API_MODE !== "live") {
+        return simulateValidate(digits);
+    }
+    try {
+        return await validateMomoAccount(digits);
+    } catch (error) {
+        console.warn(
+            "MoMo account validation failed, falling back to local check",
+            error,
+        );
+        return simulateValidate(digits);
+    }
 }
 
 export function PhoneVerifyField({
