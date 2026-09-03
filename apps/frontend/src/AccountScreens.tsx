@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { Badge, PersonaCoin, SectionCard, TopBar } from "./ui";
-import { AlertTriangleIcon, CheckmarkIcon } from "./icons";
-import { ChevronDown, RefreshCw } from "lucide-react";
+import { AlertTriangleIcon, CheckmarkIcon, ChevronRightIcon } from "./icons";
+import { ChevronDown, RefreshCw, Wallet } from "lucide-react";
 import { useCountUp } from "./useCountUp";
 import { EscrowPadlockCard, type EscrowStatus } from "./EscrowPadlockCard";
 import { m, springs } from "./motion";
+import type { Navigate } from "./types";
 
 const COMPLIANCE_FACTORS = [
     {
@@ -458,9 +459,11 @@ function RiskOpsBody() {
 export function ProfileScreen({
     onBack,
     internal,
+    navigate,
 }: {
     onBack: () => void;
     internal: boolean;
+    navigate: Navigate;
 }) {
     return (
         <>
@@ -483,6 +486,22 @@ export function ProfileScreen({
                         />
                     </div>
                 </div>
+
+                <SectionCard onClick={() => navigate({ id: "wallet" })}>
+                    <div className="flex items-center gap-3 p-3.5">
+                        <div className="w-9 h-9 rounded-lg bg-[#EBF3FC] text-[#003E85] flex items-center justify-center shrink-0">
+                            <Wallet size={18} strokeWidth={1.75} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="app-heading">Wallet</p>
+                            <p className="app-caption text-[#595959]">
+                                Collections & Disbursements balance, recent
+                                activity
+                            </p>
+                        </div>
+                        <ChevronRightIcon size={16} className="text-[#8E8E93]" />
+                    </div>
+                </SectionCard>
 
                 {/* Internal access is derived from the authenticated role, never a UI toggle. */}
                 <SectionCard>

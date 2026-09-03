@@ -15,6 +15,7 @@ export type Screen =
     | { id: "track" }
     | { id: "track_qr" }
     | { id: "risk" }
-    | { id: "profile" };
+    | { id: "profile" }
+    | { id: "wallet" };
 
 export type Navigate = (s: Screen) => void;
