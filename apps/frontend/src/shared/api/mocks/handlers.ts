@@ -2,7 +2,9 @@ import { http, HttpResponse } from "msw";
 
 import type {
     ApiProblem,
+    ChallengeResponse,
     GuestInvitationResponse,
+    IssuedChallengeResponse,
     PublicSummaryResponse,
     TokenResponse,
 } from "../generated";
@@ -180,6 +182,39 @@ export const handlers = [
         }
         return new HttpResponse(null, { status: 204 });
     }),
+    http.post(
+        `${runtimeConfig.apiBaseUrl}/api/delivery/:shipmentId/qr`,
+        ({ params }) => {
+            const challenge: IssuedChallengeResponse = {
+                challenge: {
+                    challengeId: "00000000-0000-4000-8000-000000000041",
+                    shipmentId: String(params.shipmentId),
+                    type: "DELIVERY",
+                    state: "PENDING",
+                    expectedQuantity: 20,
+                    unitOfMeasure: "CASE",
+                    expiresAt: "2026-09-03T15:30:00Z",
+                },
+                qrPayload: "tmh1.mock-signed-one-time-token",
+            };
+            return HttpResponse.json(challenge);
+        },
+    ),
+    http.post(
+        `${runtimeConfig.apiBaseUrl}/api/delivery/:shipmentId/scan`,
+        ({ params }) => {
+            const challenge: ChallengeResponse = {
+                challengeId: "00000000-0000-4000-8000-000000000041",
+                shipmentId: String(params.shipmentId),
+                type: "DELIVERY",
+                state: "COMPLETED",
+                expectedQuantity: 20,
+                unitOfMeasure: "CASE",
+                completedAt: "2026-09-03T15:10:00Z",
+            };
+            return HttpResponse.json(challenge);
+        },
+    ),
 ];
 
 function scenarioOf(request: Request) {

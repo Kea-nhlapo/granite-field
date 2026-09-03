@@ -2,6 +2,7 @@ package za.co.trademesh.modules.access.infrastructure;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import za.co.trademesh.modules.access.application.OtpProperties;
@@ -14,11 +15,17 @@ class LocalOtpProvider implements OtpProvider {
     private final String expectedCode;
     private final Set<String> pending = ConcurrentHashMap.newKeySet();
 
-    LocalOtpProvider(OtpProperties properties) {
-        if (properties.localCode() == null || !properties.localCode().matches("[0-9]{4,10}")) {
+    LocalOtpProvider(
+            OtpProperties properties,
+            @Value("${TRADEMESH_CI_READINESS:false}") boolean continuousIntegrationReadiness) {
+        String configuredCode = properties.localCode();
+        if ((configuredCode == null || configuredCode.isBlank()) && continuousIntegrationReadiness) {
+            configuredCode = "000000";
+        }
+        if (configuredCode == null || !configuredCode.matches("[0-9]{4,10}")) {
             throw new IllegalStateException("Local OTP code must contain 4 to 10 digits");
         }
-        this.expectedCode = properties.localCode();
+        this.expectedCode = configuredCode;
     }
 
     @Override

@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
@@ -7,7 +8,7 @@ const tabsterEsm = fileURLToPath(
 );
 
 export default defineConfig({
-    plugins: [react()],
+    plugins: [react(), tailwindcss()],
     resolve: {
         alias: {
             tabster: tabsterEsm,
@@ -22,6 +23,11 @@ export default defineConfig({
             "react-dom",
             "@fluentui/react-components",
         ],
+    },
+    server: {
+        host: true,
+        port: 5173,
+        strictPort: false,
     },
     test: {
         environment: "jsdom",

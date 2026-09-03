@@ -1,9 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-
-import { App } from "./app/App";
+import App from "./App";
+import { SessionProvider } from "./features/access/SessionProvider";
+import { MotionProvider } from "./motion";
 import { startApiMocks } from "./shared/api/start-api-mocks";
-import "./shared/styles/global.css";
+import "./index.css";
 
 const rootElement = document.getElementById("root");
 
@@ -14,7 +15,11 @@ if (!rootElement) {
 void startApiMocks().then(() => {
     createRoot(rootElement).render(
         <StrictMode>
-            <App />
+            <SessionProvider>
+                <MotionProvider>
+                    <App />
+                </MotionProvider>
+            </SessionProvider>
         </StrictMode>,
     );
 });

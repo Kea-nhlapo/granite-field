@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
@@ -24,7 +24,8 @@ import za.co.trademesh.modules.notification.domain.MobileChannel;
 import za.co.trademesh.modules.notification.domain.MobileNotificationStatus;
 
 @Component
-@ConditionalOnProperty(prefix = "trademesh.notifications.mobile", name = "provider", havingValue = "infobip")
+@ConditionalOnExpression(
+        "'${TRADEMESH_CI_READINESS:false}' != 'true' and '${trademesh.notifications.mobile.provider:local}' == 'infobip'")
 class InfobipMobileDeliveryProvider implements MobileDeliveryProvider {
 
     private static final Set<String> REQUIRED_TEMPLATES = Set.of(
