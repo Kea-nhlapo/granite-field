@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { AnimatePresence } from "motion/react";
+import { ChevronDown } from "lucide-react";
 import type { Navigate } from "./types";
 import {
   Badge,
@@ -17,6 +19,22 @@ import {
   DocumentTextIcon,
   PlusIcon,
 } from "./icons";
+import { EscrowPadlockCard, type EscrowStatus } from "./EscrowPadlockCard";
+import { m, springs } from "./motion";
+
+/** Simulated timeline standing in for the real RequestToPay → GetTransactionStatus poll. */
+const LOCK_TIMELINE: { status: EscrowStatus; after: number }[] = [
+  { status: "LOCK_REQUESTED", after: 0 },
+  { status: "LOCK_PENDING", after: 900 },
+  { status: "LOCKED", after: 2400 },
+];
+
+/** Simulated timeline standing in for the real Transfer → GetTransactionStatus poll. */
+const RELEASE_TIMELINE: { status: EscrowStatus; after: number }[] = [
+  { status: "RELEASE_REQUESTED", after: 0 },
+  { status: "RELEASE_PENDING", after: 800 },
+  { status: "RELEASED", after: 2000 },
+];
 
 type LineStatus = "ok" | "qty_mismatch" | "price_mismatch" | "approved" | "rejected";
 
@@ -149,7 +167,22 @@ export function OrdersScreen({ navigate }: { navigate: Navigate }) {
 }
 
 export function InvoiceScreen({ onBack }: { onBack: () => void }) {
-  const [step, setStep] = useState<"upload" | "parsing" | "review">("upload");
+  const [step, setStep] = useState<"upload" | "parsing" | "review" | "escrow">("upload");
+  const [escrowStatus, setEscrowStatus] = useState<EscrowStatus>("LOCK_REQUESTED");
+
+  function runEscrowLifecycle() {
+    setStep("escrow");
+    setEscrowStatus("LOCK_REQUESTED");
+    for (const entry of LOCK_TIMELINE) {
+      setTimeout(() => setEscrowStatus(entry.status), entry.after);
+    }
+  }
+
+  function releaseEscrow() {
+    for (const entry of RELEASE_TIMELINE) {
+      setTimeout(() => setEscrowStatus(entry.status), entry.after);
+    }
+  }
   const [lines, setLines] = useState<Line[]>([
     {
       id: "L1",
@@ -198,9 +231,13 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
     },
   ]);
 
+  const [showClean, setShowClean] = useState(false);
+
   const flagged = lines.filter(
     (l) => l.status === "qty_mismatch" || l.status === "price_mismatch"
   );
+  const needsAttention = lines.filter((l) => l.status !== "ok");
+  const cleanLines = lines.filter((l) => l.status === "ok");
 
   const approve = (id: string) =>
     setLines((ls) =>
@@ -322,13 +359,13 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
               </div>
             </div>
 
-            {/* Line Items List */}
+            {/* Line Items List — flagged/acted-on lines shown; clean matches collapsed */}
             <div>
               <p className="app-overline mb-2">
                 Line Items Audit
               </p>
               <div className="space-y-2.5">
-                {lines.map((l) => {
+                {needsAttention.map((l) => {
                   const isFlagged =
                     l.status === "qty_mismatch" || l.status === "price_mismatch";
                   return (
@@ -423,6 +460,51 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
                   );
                 })}
               </div>
+
+              {cleanLines.length > 0 && (
+                <div className="mt-2.5">
+                  <button
+                    onClick={() => setShowClean((v) => !v)}
+                    className="w-full flex items-center justify-between py-2 px-1 text-left"
+                  >
+                    <span className="app-caption-strong text-[#00875A] inline-flex items-center gap-1.5">
+                      <CheckmarkIcon size={14} />
+                      {cleanLines.length} more line{cleanLines.length > 1 ? "s" : ""} matched
+                    </span>
+                    <m.span animate={{ rotate: showClean ? 180 : 0 }} transition={springs.quick}>
+                      <ChevronDown size={16} className="text-[#8E8E93]" />
+                    </m.span>
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {showClean && (
+                      <m.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={springs.snappy}
+                        className="overflow-hidden"
+                      >
+                        <div className="space-y-2.5 pt-1">
+                          {cleanLines.map((l) => (
+                            <SectionCard key={l.id} className="p-3.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="app-heading truncate">{l.product}</p>
+                                  <p className="app-caption text-[#595959] mt-1">
+                                    Qty {l.qty} • R{l.price.toFixed(2)} — matches PO
+                                  </p>
+                                </div>
+                                <Badge label="Match" color="success" />
+                              </div>
+                            </SectionCard>
+                          ))}
+                        </div>
+                      </m.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -434,14 +516,46 @@ export function InvoiceScreen({ onBack }: { onBack: () => void }) {
             label={
               flagged.length > 0
                 ? `Resolve ${flagged.length} Variance${flagged.length > 1 ? "s" : ""} to Confirm`
-                : "Confirm & Post Purchase Order"
+                : "Confirm & Lock Payment in Escrow"
             }
             disabled={flagged.length > 0}
+            onClick={runEscrowLifecycle}
           />
           {flagged.length === 0 && (
             <SecondaryBtn label="Download Signed PDF Summary" />
           )}
         </BottomDock>
+      )}
+
+      {step === "escrow" && (
+        <div className="p-4 space-y-4 pb-32">
+          <EscrowPadlockCard
+            status={escrowStatus}
+            amount="R14,480.00"
+            counterparty="Thabo Distributors"
+            reference="SB-INV-9012"
+          />
+
+          {escrowStatus === "LOCKED" && (
+            <BottomDock>
+              <PrimaryBtn
+                label="Confirm Delivery Received & Release Funds"
+                onClick={releaseEscrow}
+              />
+            </BottomDock>
+          )}
+
+          {escrowStatus === "RELEASED" && (
+            <SectionCard className="p-4 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#E3FCEF] flex items-center justify-center shrink-0">
+                <CheckmarkIcon size={18} className="text-[#00875A]" />
+              </div>
+              <p className="app-body">
+                Order settled end-to-end via MoMo — payment locked on dispatch, released on confirmed delivery.
+              </p>
+            </SectionCard>
+          )}
+        </div>
       )}
     </>
   );

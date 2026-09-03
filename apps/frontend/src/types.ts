@@ -1,9 +1,12 @@
 export type Tab = "home" | "source" | "orders" | "routes" | "track";
 
 export type Screen =
+  | { id: "onboarding" }
+  | { id: "login" }
   | { id: "home" }
   | { id: "source" }
   | { id: "source_invite" }
+  | { id: "source_match" }
   | { id: "orders" }
   | { id: "orders_invoice" }
   | { id: "routes" }

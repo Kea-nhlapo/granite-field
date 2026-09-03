@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
+import { Mic } from "lucide-react";
 import type { Navigate } from "./types";
 import {
   Badge,
@@ -15,9 +17,58 @@ import {
   SearchIcon,
   ShieldCheckmarkIcon,
 } from "./icons";
+import { PhoneVerifyField } from "./PhoneVerifyField";
+import { m, springs } from "./motion";
+
+type SpeechRecognitionLike = {
+  lang: string;
+  interimResults: boolean;
+  onresult: ((e: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
 
 export function SourceScreen({ navigate }: { navigate: Navigate }) {
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [listening, setListening] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    return () => recognitionRef.current?.stop();
+  }, []);
+
+  function closeSearch() {
+    setSearchOpen(false);
+    setSearch("");
+    recognitionRef.current?.stop();
+    inputRef.current?.blur();
+  }
+
+  function toggleVoice() {
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      return;
+    }
+    const SpeechRecognitionCtor =
+      (window as unknown as { SpeechRecognition?: new () => SpeechRecognitionLike }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognitionLike }).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) return;
+
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = "en-ZA";
+    recognition.interimResults = false;
+    recognition.onresult = (e) => setSearch(e.results[0][0].transcript);
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setListening(true);
+  }
+
   const products = [
     {
       name: "Sunflower Cooking Oil 5L",
@@ -65,20 +116,114 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
       >
         <div className="p-4 space-y-4">
           {/* Search Box */}
-          <div className="relative flex items-center">
-            <SearchIcon
-              size={16}
-              className="absolute left-3 text-[#595959] pointer-events-none"
-            />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search verified products or suppliers..."
-              className="w-full app-caption bg-white border border-[#D1D5DB] rounded-lg h-10 pl-9 pr-3 text-[#1A1A1A] placeholder-[#8E8E93] outline-none transition-all focus:border-[#003E85] focus:ring-1 focus:ring-[#003E85]"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 flex items-center">
+              <SearchIcon
+                size={16}
+                className="absolute left-3 text-[#595959] pointer-events-none"
+              />
+              <input
+                ref={inputRef}
+                value={search}
+                onFocus={() => setSearchOpen(true)}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Escape" && closeSearch()}
+                placeholder="Search verified products or suppliers..."
+                className="w-full app-caption bg-white border border-[#D1D5DB] rounded-lg h-10 pl-9 pr-10 text-[#1A1A1A] placeholder-[#8E8E93] outline-none transition-all focus:border-[#003E85] focus:ring-1 focus:ring-[#003E85]"
+              />
+              <button
+                onClick={toggleVoice}
+                aria-label={listening ? "Stop voice search" : "Search by voice"}
+                className="absolute right-1.5 w-7 h-7 rounded-full flex items-center justify-center transition-colors shrink-0"
+                style={{
+                  backgroundColor: listening ? "#FDE8E8" : "transparent",
+                  color: listening ? "#D32F2F" : "#8E8E93",
+                }}
+              >
+                {!reduceMotion && listening && (
+                  <m.span
+                    className="absolute inset-0 rounded-full"
+                    style={{ backgroundColor: "#D32F2F" }}
+                    initial={{ scale: 1, opacity: 0.4 }}
+                    animate={{ scale: 1.8, opacity: 0 }}
+                    transition={{ duration: 1.1, repeat: Infinity, ease: "easeOut" }}
+                  />
+                )}
+                <Mic size={15} strokeWidth={2} />
+              </button>
+            </div>
+
+            {searchOpen && (
+              <button
+                onClick={closeSearch}
+                className="app-caption-strong text-[#003E85] shrink-0 hover:underline"
+              >
+                Cancel
+              </button>
+            )}
           </div>
 
+          <AnimatePresence>
+            {searchOpen && (
+              <m.div
+                initial={reduceMotion ? undefined : { height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
+                transition={springs.snappy}
+                className="overflow-hidden"
+              >
+                {search.trim() ? (
+                  <div>
+                    <p className="app-overline mb-2">Results</p>
+                    <SectionCard>
+                      {products
+                        .filter(
+                          (p) =>
+                            p.name.toLowerCase().includes(search.toLowerCase()) ||
+                            p.supplier.toLowerCase().includes(search.toLowerCase())
+                        )
+                        .map((p, i, arr) => (
+                          <div
+                            key={p.sku}
+                            className={`flex items-center gap-3 px-4 py-3 ${i < arr.length - 1 ? "border-b" : ""}`}
+                            style={{ borderColor: "var(--fluent-stroke-divider, #E5E7EB)" }}
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="app-heading truncate">{p.name}</p>
+                              <p className="app-caption text-[#595959] mt-0.5 truncate">{p.supplier}</p>
+                            </div>
+                            <p className="app-metric shrink-0">{p.price}</p>
+                          </div>
+                        ))}
+                    </SectionCard>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="app-overline mb-2">Most Popular</p>
+                    <button
+                      onClick={closeSearch}
+                      className="w-full flex items-center gap-3 bg-white rounded-xl p-3.5 border border-[#E5E7EB] hover:border-[#003E85] hover:shadow-xs active:bg-[#F8F9FA] transition-all text-left"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-[#EBF3FC] text-[#003E85] flex items-center justify-center shrink-0 border border-[#C7E0F4]">
+                        <PlusIcon size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="app-heading truncate">{products[0].name}</p>
+                        <p className="app-caption text-[#595959] mt-0.5 truncate">
+                          {products[0].supplier} • Ordered most this month
+                        </p>
+                      </div>
+                      <p className="app-metric shrink-0">{products[0].price}</p>
+                    </button>
+                  </div>
+                )}
+              </m.div>
+            )}
+          </AnimatePresence>
+
           {/* Trusted Suppliers */}
+          {!searchOpen && (
+          <>
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="app-overline">
@@ -110,7 +255,7 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
                   </div>
 
                   <button
-                    onClick={() => navigate({ id: "source_invite" })}
+                    onClick={() => navigate({ id: "source_match" })}
                     className="mt-3 w-full app-micro font-semibold h-7 rounded-lg border border-[#003E85] bg-transparent text-[#003E85] hover:bg-[#EBF3FC] active:bg-[#D9EAFB] transition-colors"
                   >
                     Direct Connect
@@ -126,14 +271,7 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
               Available Product Catalog
             </p>
             <SectionCard>
-              {products
-                .filter(
-                  (p) =>
-                    !search ||
-                    p.name.toLowerCase().includes(search.toLowerCase()) ||
-                    p.supplier.toLowerCase().includes(search.toLowerCase())
-                )
-                .map((p, i, arr) => (
+              {products.map((p, i, arr) => (
                   <div
                     key={p.sku}
                     className={`flex items-center gap-3 px-4 py-3 ${i < arr.length - 1 ? "border-b" : ""}`}
@@ -182,6 +320,8 @@ export function SourceScreen({ navigate }: { navigate: Navigate }) {
                 ))}
             </SectionCard>
           </div>
+          </>
+          )}
         </div>
       </div>
 
@@ -238,6 +378,10 @@ export function SupplierInviteScreen({ onBack }: { onBack: () => void }) {
               placeholder="+27 (0)82 000 0000 or orders@supplier.co.za"
             />
           </div>
+          <PhoneVerifyField
+            label="Supplier MoMo Number (for escrow payouts)"
+            placeholder="+27 (0)82 000 0000"
+          />
         </SectionCard>
 
         {generated && (

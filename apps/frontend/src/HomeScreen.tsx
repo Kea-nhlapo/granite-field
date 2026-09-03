@@ -95,44 +95,22 @@ export function HomeScreen({ navigate }: { navigate: Navigate }) {
               </button>
             </div>
 
-            <div className="bg-[#F8F9FA] p-3 rounded-xl border border-[#E5E7EB]">
-              <div className="flex items-center justify-between">
-                <span className="app-caption text-[#595959]">
-                  SB-2026-9901
-                </span>
-                <Badge label="In Transit" color="brand" />
-              </div>
+            <div className="flex items-center justify-between">
+              <p className="app-heading">Germiston Hub → Soweto CBD</p>
+              <Badge label="In Transit" color="brand" />
+            </div>
+            <p className="app-caption text-[#595959] mt-0.5">
+              ETA 14:30 • 67 km left
+            </p>
 
-              <p className="app-heading mt-1">
-                Germiston Hub → Soweto CBD
-              </p>
-              <p className="app-caption text-[#595959] mt-0.5">
-                4 businesses • Driver Sipho M. • ETA 14:30
-              </p>
-
-              {/* Progress bar in MoMo Blue */}
-              <div className="mt-3">
-                <div className="flex justify-between app-caption mb-1">
-                  <span className="text-[#595959]">Consolidation Progress</span>
-                  <span className="app-caption-strong text-[#003E85]">
-                    68%
-                  </span>
-                </div>
-                <div className="w-full bg-[#E5E7EB] rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className="h-1.5 rounded-full transition-all"
-                    style={{
-                      width: "68%",
-                      backgroundColor: "var(--momo-blue, #003E85)",
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2 mt-2.5">
-                <Badge label="67 km left" color="neutral" />
-                <Badge label="Route A (Fastest)" color="yellow" />
-              </div>
+            <div className="mt-3 w-full bg-[#E5E7EB] rounded-full h-1.5 overflow-hidden">
+              <div
+                className="h-1.5 rounded-full transition-all"
+                style={{
+                  width: "68%",
+                  backgroundColor: "var(--momo-blue, #003E85)",
+                }}
+              />
             </div>
           </SectionCard>
 
@@ -190,51 +168,26 @@ export function HomeScreen({ navigate }: { navigate: Navigate }) {
             </div>
           </div>
 
-          {/* Audit Stream */}
+          {/* Audit Stream — most recent item only; rest is one tap away */}
           <SectionCard className="p-4">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB]">
-              <span className="app-heading">
-                Audit & Event Stream
-              </span>
-              <span className="app-micro text-[#8E8E93]">MoMo SCM Verified</span>
+            <div className="flex items-center justify-between mb-2">
+              <span className="app-heading">Latest Event</span>
+              <button className="app-caption-strong text-[#003E85] inline-flex items-center gap-1 hover:underline">
+                View all <ChevronRightIcon size={14} />
+              </button>
             </div>
 
-            <div className="divide-y divide-[#E5E7EB]">
-              {[
-                {
-                  time: "09:14",
-                  event: "Invoice from Nkosi Foods flagged with 3 variances",
-                  severity: "warning" as const,
-                },
-                {
-                  time: "08:52",
-                  event: "Carrier T-JHB-0047 verified for Soweto cluster",
-                  severity: "success" as const,
-                },
-                {
-                  time: "08:30",
-                  event: "Supplier Thabo Distributors accepted network invite",
-                  severity: "success" as const,
-                },
-              ].map((item, idx) => (
-                <div key={idx} className="flex gap-2.5 py-2.5 items-start">
-                  <div
-                    className="w-2 h-2 rounded-full mt-1.5 shrink-0"
-                    style={{
-                      backgroundColor:
-                        item.severity === "warning" ? "#F57C00" : "#00875A",
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="app-caption leading-snug text-[#1A1A1A]">
-                      {item.event}
-                    </p>
-                    <p className="app-micro text-[#8E8E93] mt-0.5">
-                      {item.time} SAST
-                    </p>
-                  </div>
-                </div>
-              ))}
+            <div className="flex gap-2.5 items-start">
+              <div
+                className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                style={{ backgroundColor: "#F57C00" }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="app-caption leading-snug text-[#1A1A1A]">
+                  Invoice from Nkosi Foods flagged with 3 variances
+                </p>
+                <p className="app-micro text-[#8E8E93] mt-0.5">09:14 SAST</p>
+              </div>
             </div>
           </SectionCard>
         </div>

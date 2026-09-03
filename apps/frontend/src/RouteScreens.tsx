@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { AnimatePresence } from "motion/react";
+import { ChevronDown } from "lucide-react";
 import type { Navigate } from "./types";
 import {
   Badge,
@@ -9,6 +12,7 @@ import {
   TopBar,
 } from "./ui";
 import { ChevronRightIcon, RouteIcon, TruckIcon } from "./icons";
+import { m, springs } from "./motion";
 
 export function RoutesScreen({ navigate }: { navigate: Navigate }) {
   return (
@@ -18,51 +22,6 @@ export function RoutesScreen({ navigate }: { navigate: Navigate }) {
         className="flex-1 fluent-scroll overflow-y-auto p-4 space-y-4"
         style={{ background: "var(--fluent-bg-canvas, #F8F9FA)" }}
       >
-        {/* Consignment Cluster */}
-        <SectionCard className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <p className="app-heading">
-                Soweto Consignment Cluster
-              </p>
-              <p className="app-caption text-[#595959]">
-                Consolidated freight pool
-              </p>
-            </div>
-            <Badge label="4 Businesses" color="brand" />
-          </div>
-
-          <div className="divide-y divide-[#E5E7EB]">
-            {[
-              { name: "Mama Nkosi Spaza Supply", weight: "710 kg" },
-              { name: "Phindile's Spaza", weight: "240 kg" },
-              { name: "Vusi Hardware Store", weight: "400 kg" },
-              { name: "Mama D Salon Supplies", weight: "60 kg" },
-            ].map((b) => (
-              <div key={b.name} className="flex items-center justify-between py-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#FFCC00]" />
-                  <span className="app-caption-strong">{b.name}</span>
-                </div>
-                <span className="app-caption text-[#595959]">{b.weight}</span>
-              </div>
-            ))}
-          </div>
-
-          <div
-            className="mt-3 pt-3 border-t flex items-center justify-between"
-            style={{ borderColor: "var(--fluent-stroke-divider, #E5E7EB)" }}
-          >
-            <span className="app-caption text-[#595959]">
-              Aggregated Load:{" "}
-              <strong className="app-caption-strong text-[#002B49]">1,410 kg</strong>
-            </span>
-            <span className="app-caption-strong text-[#00875A]">
-              Pooled Savings: R420–R680
-            </span>
-          </div>
-        </SectionCard>
-
         {/* Matched Carrier */}
         <div>
           <p className="app-overline mb-2">
@@ -108,6 +67,51 @@ export function RoutesScreen({ navigate }: { navigate: Navigate }) {
             </div>
           </SectionCard>
         </div>
+
+        {/* Consignment Cluster */}
+        <SectionCard className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="app-heading">
+                Soweto Consignment Cluster
+              </p>
+              <p className="app-caption text-[#595959]">
+                Consolidated freight pool
+              </p>
+            </div>
+            <Badge label="4 Businesses" color="brand" />
+          </div>
+
+          <div className="divide-y divide-[#E5E7EB]">
+            {[
+              { name: "Mama Nkosi Spaza Supply", weight: "710 kg" },
+              { name: "Phindile's Spaza", weight: "240 kg" },
+              { name: "Vusi Hardware Store", weight: "400 kg" },
+              { name: "Mama D Salon Supplies", weight: "60 kg" },
+            ].map((b) => (
+              <div key={b.name} className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#FFCC00]" />
+                  <span className="app-caption-strong">{b.name}</span>
+                </div>
+                <span className="app-caption text-[#595959]">{b.weight}</span>
+              </div>
+            ))}
+          </div>
+
+          <div
+            className="mt-3 pt-3 border-t flex items-center justify-between"
+            style={{ borderColor: "var(--fluent-stroke-divider, #E5E7EB)" }}
+          >
+            <span className="app-caption text-[#595959]">
+              Aggregated Load:{" "}
+              <strong className="app-caption-strong text-[#002B49]">1,410 kg</strong>
+            </span>
+            <span className="app-caption-strong text-[#00875A]">
+              Pooled Savings: R420–R680
+            </span>
+          </div>
+        </SectionCard>
 
         {/* Corridor Options */}
         <div>
@@ -273,6 +277,14 @@ export function RouteDetailScreen({
     },
   }[route];
 
+  const [expanded, setExpanded] = useState(false);
+  const riskVerdict =
+    data.hijack <= 30
+      ? { label: "Low incident risk on this corridor", color: "#00875A" }
+      : data.hijack <= 55
+      ? { label: "Moderate incident risk — standard precautions apply", color: "#F57C00" }
+      : { label: "Elevated incident risk on this corridor", color: "#D32F2F" };
+
   return (
     <>
       <TopBar title={`Route ${route} Intelligence`} onBack={onBack} />
@@ -280,7 +292,7 @@ export function RouteDetailScreen({
         className="flex-1 fluent-scroll overflow-y-auto p-4 space-y-4 pb-32"
         style={{ background: "var(--fluent-bg-canvas, #F8F9FA)" }}
       >
-        {/* Route Overview Card */}
+        {/* Route Overview Card — critical info only: score, duration, fuel, one-line verdict */}
         <SectionCard className="p-4">
           <div className="flex items-center justify-between mb-1">
             <p className="app-heading">{data.name}</p>
@@ -301,43 +313,69 @@ export function RouteDetailScreen({
           <p className="app-caption text-[#595959]">
             Est. Duration: {data.time} • Projected Fuel: {data.fuel}
           </p>
-          <p className="app-body mt-3 leading-relaxed bg-[#F8F9FA] p-3 rounded-lg border border-[#E5E7EB]">
-            {data.desc}
-          </p>
+          <div className="flex items-center gap-1.5 mt-2">
+            <span
+              className="w-1.5 h-1.5 rounded-full shrink-0"
+              style={{ backgroundColor: riskVerdict.color }}
+            />
+            <p className="app-caption-strong" style={{ color: riskVerdict.color }}>
+              {riskVerdict.label}
+            </p>
+          </div>
         </SectionCard>
 
-        {/* Factors */}
-        <SectionCard className="p-4">
-          <p className="app-heading mb-2">
-            Safety & Logistics Factor Breakdown
-          </p>
-          <FactorRow
-            label="Incident / Hijack Risk (lower is better)"
-            score={data.hijack}
-            invert
-          />
-          <FactorRow
-            label="Traffic Congestion (lower is better)"
-            score={data.traffic}
-            invert
-          />
-          <FactorRow label="MTN Telematics Coverage" score={data.coverage} />
-          <FactorRow label="Pavement Quality" score={data.road} />
-          <FactorRow
-            label="Fuel Efficiency Index"
-            score={Math.round(100 - (parseInt(data.fuel, 10) - 60) * 3)}
-          />
-        </SectionCard>
+        {/* Full breakdown — collapsed by default; the numbers above are enough to decide */}
+        <SectionCard className="overflow-hidden">
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="w-full flex items-center justify-between p-4 text-left"
+          >
+            <span className="app-heading">Full Safety & Cargo Breakdown</span>
+            <m.span animate={{ rotate: expanded ? 180 : 0 }} transition={springs.quick}>
+              <ChevronDown size={18} className="text-[#8E8E93]" />
+            </m.span>
+          </button>
 
-        {/* Cargo Specification */}
-        <SectionCard className="p-4">
-          <p className="app-heading mb-2">
-            Consignment Specification
-          </p>
-          <Row label="Cargo Classification" value="FMCG & Dry Groceries" />
-          <Row label="Cold Chain Compliance" value="Not required" />
-          <Row label="Insurance Underwriting" value="Standard MoMo GIT Escrow" />
-          <Row label="Scheduled Dispatch" value="Today 16:00 SAST" />
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <m.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={springs.snappy}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4">
+                  <p className="app-body leading-relaxed bg-[#F8F9FA] p-3 rounded-lg border border-[#E5E7EB] mb-3">
+                    {data.desc}
+                  </p>
+
+                  <FactorRow
+                    label="Incident / Hijack Risk (lower is better)"
+                    score={data.hijack}
+                    invert
+                  />
+                  <FactorRow
+                    label="Traffic Congestion (lower is better)"
+                    score={data.traffic}
+                    invert
+                  />
+                  <FactorRow label="MTN Telematics Coverage" score={data.coverage} />
+                  <FactorRow label="Pavement Quality" score={data.road} />
+                  <FactorRow
+                    label="Fuel Efficiency Index"
+                    score={Math.round(100 - (parseInt(data.fuel, 10) - 60) * 3)}
+                  />
+
+                  <p className="app-overline mt-3 mb-1">Consignment Specification</p>
+                  <Row label="Cargo Classification" value="FMCG & Dry Groceries" />
+                  <Row label="Cold Chain Compliance" value="Not required" />
+                  <Row label="Insurance Underwriting" value="Standard MoMo GIT Escrow" />
+                  <Row label="Scheduled Dispatch" value="Today 16:00 SAST" />
+                </div>
+              </m.div>
+            )}
+          </AnimatePresence>
         </SectionCard>
       </div>
 

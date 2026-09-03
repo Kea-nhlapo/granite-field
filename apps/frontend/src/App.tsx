@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { OnboardingScreen, LoginScreen } from "./OnboardingScreens";
 import { HomeScreen } from "./HomeScreen";
 import { InvoiceScreen, OrdersScreen } from "./OrderScreens";
 import { SourceScreen, SupplierInviteScreen } from "./SourceScreens";
+import { SupplierMatchScreen } from "./SupplierMatchScreen";
 import { RouteDetailScreen, RoutesScreen } from "./RouteScreens";
 import { QRScreen, TrackScreen } from "./TrackScreens";
 import { ProfileScreen, RiskScreen } from "./AccountScreens";
@@ -9,10 +11,13 @@ import type { Screen, Tab } from "./types";
 import { TabBar } from "./ui";
 
 const TAB_FOR_SCREEN: Record<string, Tab> = {
+  onboarding: "home",
+  login: "home",
   home: "home",
   profile: "home",
   source: "source",
   source_invite: "source",
+  source_match: "source",
   orders: "orders",
   orders_invoice: "orders",
   routes: "routes",
@@ -23,7 +28,7 @@ const TAB_FOR_SCREEN: Record<string, Tab> = {
 };
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>({ id: "home" });
+  const [screen, setScreen] = useState<Screen>({ id: "onboarding" });
   const [internal, setInternal] = useState(false);
   const [history, setHistory] = useState<Screen[]>([]);
 
@@ -47,12 +52,18 @@ export default function App() {
 
   const screenEl = (() => {
     switch (screen.id) {
+      case "onboarding":
+        return <OnboardingScreen onDone={() => navigate({ id: "login" })} />;
+      case "login":
+        return <LoginScreen onSignedIn={() => navigate({ id: "home" })} />;
       case "home":
         return <HomeScreen navigate={navigate} />;
       case "source":
         return <SourceScreen navigate={navigate} />;
       case "source_invite":
         return <SupplierInviteScreen onBack={goBack} />;
+      case "source_match":
+        return <SupplierMatchScreen onBack={goBack} />;
       case "orders":
         return <OrdersScreen navigate={navigate} />;
       case "orders_invoice":
@@ -76,7 +87,7 @@ export default function App() {
     }
   })();
 
-  const showTabBar = !["source_invite", "orders_invoice", "routes_detail", "track_qr", "risk", "profile"].includes(screen.id);
+  const showTabBar = !["onboarding", "login", "source_invite", "source_match", "orders_invoice", "routes_detail", "track_qr", "risk", "profile"].includes(screen.id);
 
   return (
     <div

@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { AnimatePresence } from "motion/react";
+import { ChevronDown } from "lucide-react";
 import type { Navigate } from "./types";
 import {
   Badge,
@@ -16,8 +18,12 @@ import {
   RadarIcon,
   ShieldCheckmarkIcon,
 } from "./icons";
+import { DriverPayoutCard } from "./DriverPayoutCard";
+import { m, springs } from "./motion";
 
 export function TrackScreen({ navigate }: { navigate: Navigate }) {
+  const [showAudit, setShowAudit] = useState(false);
+
   return (
     <>
       <TopBar title="Consignment Radar" />
@@ -137,35 +143,52 @@ export function TrackScreen({ navigate }: { navigate: Navigate }) {
           <ChevronRightIcon size={18} className="text-[#8E8E93]" />
         </button>
 
-        {/* Telematics Audit */}
-        <SectionCard className="p-4">
-          <div className="flex items-center gap-1.5 mb-2.5">
-            <ShieldCheckmarkIcon size={16} className="text-[#003E85]" />
-            <p className="app-heading">
-              Cryptographic Trip Telematics Log
-            </p>
-          </div>
-          <div className="divide-y divide-[#E5E7EB]">
-            {[
-              { event: "Departure QR cryptographic seal signed", time: "07:31", ok: true },
-              { event: "Minor corridor speed variance logged (N12)", time: "08:02", ok: false },
-              { event: "Telemetry re-aligned: authorized refuel stop", time: "08:08", ok: true },
-            ].map((r, i) => (
-              <div key={i} className="py-2 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  {r.ok ? (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00875A] shrink-0" />
-                  ) : (
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#F57C00] shrink-0" />
-                  )}
-                  <span className="app-caption text-[#595959] truncate">{r.event}</span>
+        {/* Telematics Audit — collapsed by default, only needed if something looks off */}
+        <SectionCard className="overflow-hidden">
+          <button
+            onClick={() => setShowAudit((v) => !v)}
+            className="w-full flex items-center justify-between p-4 text-left"
+          >
+            <div className="flex items-center gap-1.5">
+              <ShieldCheckmarkIcon size={16} className="text-[#003E85]" />
+              <span className="app-heading">Cryptographic Trip Telematics Log</span>
+            </div>
+            <m.span animate={{ rotate: showAudit ? 180 : 0 }} transition={springs.quick}>
+              <ChevronDown size={18} className="text-[#8E8E93]" />
+            </m.span>
+          </button>
+
+          <AnimatePresence initial={false}>
+            {showAudit && (
+              <m.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={springs.snappy}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4 divide-y divide-[#E5E7EB]">
+                  {[
+                    { event: "Departure QR cryptographic seal signed", time: "07:31", ok: true },
+                    { event: "Minor corridor speed variance logged (N12)", time: "08:02", ok: false },
+                    { event: "Telemetry re-aligned: authorized refuel stop", time: "08:08", ok: true },
+                  ].map((r, i) => (
+                    <div key={i} className="py-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {r.ok ? (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#00875A] shrink-0" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#F57C00] shrink-0" />
+                        )}
+                        <span className="app-caption text-[#595959] truncate">{r.event}</span>
+                      </div>
+                      <span className="app-micro shrink-0">{r.time}</span>
+                    </div>
+                  ))}
                 </div>
-                <span className="app-micro shrink-0">
-                  {r.time}
-                </span>
-              </div>
-            ))}
-          </div>
+              </m.div>
+            )}
+          </AnimatePresence>
         </SectionCard>
       </div>
     </>
@@ -246,6 +269,12 @@ export function QRScreen({ onBack }: { onBack: () => void }) {
             <p className="app-micro text-[#00875A] mt-0.5">
               15:02:44 SAST • Hash verified: REF-F9K2-901 • Escrow released
             </p>
+          </div>
+        )}
+
+        {verified && (
+          <div className="w-full">
+            <DriverPayoutCard driverName="Sipho Mthembu • T-JHB-0047" amount="R120.00" />
           </div>
         )}
       </div>
