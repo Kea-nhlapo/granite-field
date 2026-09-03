@@ -19,7 +19,7 @@ class UnconfiguredMobileDeliveryProvider implements MobileDeliveryProvider {
     }
 
     @Override
-    public String deliver(MobileMessage message) {
+    public SubmissionResult deliver(MobileMessage message) {
         throw new IllegalStateException(
                 "No mobile notification provider is configured; set trademesh.notifications.mobile.provider");
     }

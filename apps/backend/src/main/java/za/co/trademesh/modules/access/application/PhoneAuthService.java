@@ -69,7 +69,7 @@ public class PhoneAuthService {
         if (!otpProvider.verify(phoneNumber, code)) {
             throw AccessException.otpInvalid();
         }
-        UUID userId = externalAccounts.resolve(phoneNumber, VerificationMethod.TWILIO_OTP);
+        UUID userId = externalAccounts.resolve(phoneNumber, VerificationMethod.OTP);
         return authService.authenticateExternal(userId);
     }
 

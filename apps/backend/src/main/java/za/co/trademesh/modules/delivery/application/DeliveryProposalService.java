@@ -111,12 +111,14 @@ public class DeliveryProposalService {
                 NotificationTemplates.DELIVERY_CONFIRMATION_VERSION,
                 Map.of("confirmationUrl", confirmationUrl),
                 true));
-        mobileNotifications.requestMobile(new MobileNotificationRequests.MobileRequest(
+        mobileNotifications.requestDirect(new MobileNotificationRequests.DirectMobileRequest(
                 "delivery-confirmation-mobile:" + proposal.id(),
                 proposal.recipientPhone(),
-                MobileNotificationRequests.MobileChannel.valueOf(
-                        proposal.mobileChannel().name()),
-                "A delivery is waiting for your confirmation: " + confirmationUrl));
+                proposal.mobileChannel().name(),
+                "SHIPMENT_UPDATE",
+                NotificationTemplates.DELIVERY_CONFIRMATION,
+                NotificationTemplates.DELIVERY_CONFIRMATION_VERSION,
+                Map.of("confirmationUrl", confirmationUrl)));
         events.publish(new DeliveryEvent.ProposalCreated(proposal.id(), shipment, owner), actor.toString());
         return new CreatedProposal(proposal, true);
     }

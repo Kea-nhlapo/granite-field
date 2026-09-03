@@ -70,7 +70,7 @@ class DeliveryProposalServiceTest {
         assertThat(service.confirm(token).status()).isEqualTo(DeliveryProposalStatus.ACCEPTED);
         assertThat(service.confirm(token).status()).isEqualTo(DeliveryProposalStatus.ACCEPTED);
         assertThat(created.newlyCreated()).isTrue();
-        verify(mobile, times(1)).requestMobile(any());
+        verify(mobile, times(1)).requestDirect(any());
         verify(events, times(1)).publish(any(DeliveryEvent.DeliveryAccepted.class), eq("delivery-confirmation-link"));
     }
 

@@ -16,7 +16,9 @@ import za.co.trademesh.modules.notification.domain.EmailDeliveryAttempt;
 import za.co.trademesh.modules.notification.domain.EmailDeliveryAttemptStatus;
 import za.co.trademesh.modules.notification.domain.EmailNotification;
 import za.co.trademesh.modules.notification.domain.EmailNotificationStatus;
+import za.co.trademesh.modules.notification.domain.MobileChannel;
 import za.co.trademesh.modules.notification.domain.NotificationCategory;
+import za.co.trademesh.modules.notification.domain.NotificationContactPoint;
 import za.co.trademesh.modules.notification.domain.NotificationPreference;
 import za.co.trademesh.modules.notification.domain.NotificationRepository;
 
@@ -178,17 +180,38 @@ class JdbcNotificationRepository implements NotificationRepository {
     }
 
     @Override
+    public boolean mobileEnabled(UUID userId, NotificationCategory category, MobileChannel channel) {
+        String column =
+                switch (channel) {
+                    case SMS -> "sms_enabled";
+                    case WHATSAPP -> "whatsapp_enabled";
+                };
+        Boolean enabled = jdbcTemplate.queryForObject("""
+            SELECT COALESCE(
+                (SELECT %s FROM notification_preference WHERE user_id = ? AND category = ?),
+                FALSE)
+            """.formatted(column), Boolean.class, userId, category.name());
+        return Boolean.TRUE.equals(enabled);
+    }
+
+    @Override
     public NotificationPreference savePreference(NotificationPreference preference) {
         jdbcTemplate.update(
                 """
-            INSERT INTO notification_preference (user_id, category, email_enabled, updated_at)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO notification_preference (
+                user_id, category, email_enabled, sms_enabled, whatsapp_enabled, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT (user_id, category) DO UPDATE
-                SET email_enabled = EXCLUDED.email_enabled, updated_at = EXCLUDED.updated_at
+                SET email_enabled = EXCLUDED.email_enabled,
+                    sms_enabled = EXCLUDED.sms_enabled,
+                    whatsapp_enabled = EXCLUDED.whatsapp_enabled,
+                    updated_at = EXCLUDED.updated_at
             """,
                 preference.userId(),
                 preference.category().name(),
                 preference.emailEnabled(),
+                preference.smsEnabled(),
+                preference.whatsappEnabled(),
                 time(preference.updatedAt()));
         return preference;
     }
@@ -197,7 +220,7 @@ class JdbcNotificationRepository implements NotificationRepository {
     public List<NotificationPreference> findPreferences(UUID userId) {
         return jdbcTemplate.query(
                 """
-            SELECT user_id, category, email_enabled, updated_at
+            SELECT user_id, category, email_enabled, sms_enabled, whatsapp_enabled, updated_at
               FROM notification_preference
              WHERE user_id = ?
              ORDER BY category
@@ -206,8 +229,76 @@ class JdbcNotificationRepository implements NotificationRepository {
                         resultSet.getObject("user_id", UUID.class),
                         NotificationCategory.valueOf(resultSet.getString("category")),
                         resultSet.getBoolean("email_enabled"),
+                        resultSet.getBoolean("sms_enabled"),
+                        resultSet.getBoolean("whatsapp_enabled"),
                         instant(resultSet, "updated_at")),
                 userId);
+    }
+
+    @Override
+    public Optional<NotificationContactPoint> findContact(UUID userId) {
+        return jdbcTemplate
+                .query(
+                        """
+            SELECT user_id, protected_phone, phone_fingerprint, phone_last_four,
+                   sms_consented_at, whatsapp_consented_at, created_at, updated_at
+              FROM notification_contact_point
+             WHERE user_id = ?
+            """,
+                        (resultSet, rowNumber) -> new NotificationContactPoint(
+                                resultSet.getObject("user_id", UUID.class),
+                                dataProtector.unprotect(resultSet.getString("protected_phone")),
+                                resultSet.getString("phone_fingerprint"),
+                                resultSet.getString("phone_last_four"),
+                                nullableInstant(resultSet, "sms_consented_at"),
+                                nullableInstant(resultSet, "whatsapp_consented_at"),
+                                instant(resultSet, "created_at"),
+                                instant(resultSet, "updated_at")),
+                        userId)
+                .stream()
+                .findFirst();
+    }
+
+    @Override
+    public NotificationContactPoint saveContact(NotificationContactPoint contact) {
+        jdbcTemplate.update(
+                """
+            INSERT INTO notification_contact_point (
+                user_id, protected_phone, phone_fingerprint, phone_last_four,
+                sms_consented_at, whatsapp_consented_at, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (user_id) DO UPDATE
+                SET protected_phone = EXCLUDED.protected_phone,
+                    phone_fingerprint = EXCLUDED.phone_fingerprint,
+                    phone_last_four = EXCLUDED.phone_last_four,
+                    sms_consented_at = EXCLUDED.sms_consented_at,
+                    whatsapp_consented_at = EXCLUDED.whatsapp_consented_at,
+                    updated_at = EXCLUDED.updated_at
+            """,
+                contact.userId(),
+                dataProtector.protect(contact.phoneNumber()),
+                contact.phoneFingerprint(),
+                contact.phoneLastFour(),
+                nullableTime(contact.smsConsentedAt()),
+                nullableTime(contact.whatsappConsentedAt()),
+                time(contact.createdAt()),
+                time(contact.updatedAt()));
+        return findContact(contact.userId())
+                .orElseThrow(() -> new IllegalStateException("Notification contact persistence failed"));
+    }
+
+    @Override
+    public void deleteContact(UUID userId) {
+        jdbcTemplate.update("DELETE FROM notification_contact_point WHERE user_id = ?", userId);
+    }
+
+    @Override
+    public void disableMobilePreferences(UUID userId, Instant updatedAt) {
+        jdbcTemplate.update("""
+            UPDATE notification_preference
+               SET sms_enabled = FALSE, whatsapp_enabled = FALSE, updated_at = ?
+             WHERE user_id = ? AND (sms_enabled OR whatsapp_enabled)
+            """, time(updatedAt), userId);
     }
 
     private Optional<EmailNotification> one(String sql, Object... parameters) {

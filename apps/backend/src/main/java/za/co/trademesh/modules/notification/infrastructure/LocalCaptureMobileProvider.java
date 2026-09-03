@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import za.co.trademesh.modules.notification.application.LocalMobileCapture;
 import za.co.trademesh.modules.notification.application.MobileDeliveryProvider;
+import za.co.trademesh.modules.notification.domain.MobileNotificationStatus;
 
 @Component
 @ConditionalOnProperty(prefix = "trademesh.notifications.mobile", name = "provider", havingValue = "local")
@@ -26,7 +27,7 @@ class LocalCaptureMobileProvider implements MobileDeliveryProvider, LocalMobileC
     }
 
     @Override
-    public String deliver(MobileMessage message) {
+    public SubmissionResult deliver(MobileMessage message) {
         CapturedMessage saved = captured.computeIfAbsent(
                 message.idempotencyKey(),
                 key -> new CapturedMessage(
@@ -34,9 +35,9 @@ class LocalCaptureMobileProvider implements MobileDeliveryProvider, LocalMobileC
                         key,
                         message.recipientPhone(),
                         message.channel(),
-                        message.body(),
+                        message.text(),
                         clock.instant()));
-        return saved.providerMessageId();
+        return new SubmissionResult(saved.providerMessageId(), MobileNotificationStatus.SENT);
     }
 
     @Override

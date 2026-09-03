@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 import za.co.trademesh.modules.notification.application.MobileDeliveryProvider;
-import za.co.trademesh.modules.notification.application.MobileNotificationRequests;
+import za.co.trademesh.modules.notification.domain.MobileChannel;
+import za.co.trademesh.modules.notification.domain.MobileNotificationStatus;
 
 @Component
 @ConditionalOnProperty(prefix = "trademesh.notifications.mobile", name = "provider", havingValue = "twilio")
@@ -39,8 +40,8 @@ class TwilioMobileDeliveryProvider implements MobileDeliveryProvider {
     }
 
     @Override
-    public String deliver(MobileMessage message) {
-        boolean whatsApp = message.channel() == MobileNotificationRequests.MobileChannel.WHATSAPP;
+    public SubmissionResult deliver(MobileMessage message) {
+        boolean whatsApp = message.channel() == MobileChannel.WHATSAPP;
         String sender = whatsApp ? properties.whatsAppFrom() : properties.smsFrom();
         if (sender.isBlank()) {
             throw new IllegalStateException("The selected Twilio channel has no configured sender");
@@ -48,7 +49,7 @@ class TwilioMobileDeliveryProvider implements MobileDeliveryProvider {
         LinkedMultiValueMap<String, String> form = new LinkedMultiValueMap<>();
         form.add("To", channelAddress(message.recipientPhone(), whatsApp));
         form.add("From", channelAddress(sender, whatsApp));
-        form.add("Body", message.body());
+        form.add("Body", message.text());
         ProviderResponse response = client.post()
                 .uri("/2010-04-01/Accounts/{accountSid}/Messages.json", properties.accountSid())
                 .header(HttpHeaders.AUTHORIZATION, authorization)
@@ -59,7 +60,7 @@ class TwilioMobileDeliveryProvider implements MobileDeliveryProvider {
         if (response == null || response.sid() == null || response.sid().isBlank()) {
             throw new IllegalStateException("Twilio returned no message ID");
         }
-        return response.sid();
+        return new SubmissionResult(response.sid(), MobileNotificationStatus.ACCEPTED);
     }
 
     private static String channelAddress(String phone, boolean whatsApp) {

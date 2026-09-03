@@ -59,6 +59,148 @@
         }
       }
     },
+    "/api/notification-contacts/phone": {
+      "get": {
+        "tags": ["notification-contact-controller"],
+        "operationId": "notificationContactGet",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/PhoneResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      },
+      "put": {
+        "tags": ["notification-contact-controller"],
+        "operationId": "notificationContactSave",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SavePhoneRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": { "$ref": "#/components/schemas/PhoneResponse" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      },
+      "delete": {
+        "tags": ["notification-contact-controller"],
+        "operationId": "notificationContactDelete",
+        "responses": {
+          "204": { "description": "No Content" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        }
+      }
+    },
+    "/api/notification-provider/infobip/seen": {
+      "post": {
+        "tags": ["infobip-webhook-controller"],
+        "operationId": "infobipWebhookSeen",
+        "parameters": [
+          {
+            "name": "X-Hub-Signature",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "type": "string", "format": "byte" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
+    "/api/notification-provider/infobip/delivery": {
+      "post": {
+        "tags": ["infobip-webhook-controller"],
+        "operationId": "infobipWebhookDelivery",
+        "parameters": [
+          {
+            "name": "X-Hub-Signature",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "type": "string", "format": "byte" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": { "description": "OK" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/Conflict" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "500": { "$ref": "#/components/responses/ServerError" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" }
+        },
+        "security": []
+      }
+    },
     "/api/tracking/{shipmentId}/position": {
       "post": {
         "tags": ["telemetry-controller"],
@@ -3926,8 +4068,11 @@
     "schemas": {
       "UpdatePreferenceRequest": {
         "type": "object",
-        "properties": { "emailEnabled": { "type": "boolean" } },
-        "required": ["emailEnabled"]
+        "properties": {
+          "emailEnabled": { "type": "boolean" },
+          "smsEnabled": { "type": "boolean" },
+          "whatsappEnabled": { "type": "boolean" }
+        }
       },
       "PreferenceResponse": {
         "type": "object",
@@ -3943,6 +4088,27 @@
             ]
           },
           "emailEnabled": { "type": "boolean" },
+          "smsEnabled": { "type": "boolean" },
+          "whatsappEnabled": { "type": "boolean" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "SavePhoneRequest": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": { "type": "string", "minLength": 1 },
+          "smsConsent": { "type": "boolean" },
+          "whatsappConsent": { "type": "boolean" }
+        },
+        "required": ["phoneNumber", "smsConsent", "whatsappConsent"]
+      },
+      "PhoneResponse": {
+        "type": "object",
+        "properties": {
+          "configured": { "type": "boolean" },
+          "maskedPhone": { "type": "string" },
+          "smsConsentedAt": { "type": "string", "format": "date-time" },
+          "whatsappConsentedAt": { "type": "string", "format": "date-time" },
           "updatedAt": { "type": "string", "format": "date-time" }
         }
       },

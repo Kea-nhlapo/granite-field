@@ -1,21 +1,40 @@
 package za.co.trademesh.modules.notification.application;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 public interface MobileNotificationRequests {
 
-    void requestMobile(MobileRequest request);
+    List<UUID> requestUser(UserMobileRequest request);
 
-    default void sendSms(String idempotencyKey, String phoneNumber, String message) {
-        requestMobile(new MobileRequest(idempotencyKey, phoneNumber, MobileChannel.SMS, message));
+    UUID requestDirect(DirectMobileRequest request);
+
+    record UserMobileRequest(
+            String eventType,
+            UUID eventId,
+            UUID recipientUserId,
+            String category,
+            String templateKey,
+            int templateVersion,
+            Map<String, String> templateData) {
+
+        public UserMobileRequest {
+            templateData = templateData == null ? Map.of() : Map.copyOf(templateData);
+        }
     }
 
-    default void sendWhatsApp(String idempotencyKey, String phoneNumber, String message) {
-        requestMobile(new MobileRequest(idempotencyKey, phoneNumber, MobileChannel.WHATSAPP, message));
-    }
+    record DirectMobileRequest(
+            String idempotencyKey,
+            String recipientPhone,
+            String channel,
+            String category,
+            String templateKey,
+            int templateVersion,
+            Map<String, String> templateData) {
 
-    record MobileRequest(String idempotencyKey, String recipientPhone, MobileChannel channel, String message) {}
-
-    enum MobileChannel {
-        SMS,
-        WHATSAPP
+        public DirectMobileRequest {
+            templateData = templateData == null ? Map.of() : Map.copyOf(templateData);
+        }
     }
 }

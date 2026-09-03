@@ -37,6 +37,10 @@ public sealed interface HandoverEvent extends DomainEvent
         public String type() {
             return "HANDOVER_FINALIZED";
         }
+
+        public boolean completedCleanly() {
+            return "COMPLETED".equals(outcome);
+        }
     }
 
     record DisputeResolved(UUID resolutionId, UUID shipmentId, UUID businessId, BigDecimal resolvedAmount)

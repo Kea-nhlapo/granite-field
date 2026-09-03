@@ -5,7 +5,9 @@ export type ClientOptions = {
 };
 
 export type UpdatePreferenceRequest = {
-    emailEnabled: boolean;
+    emailEnabled?: boolean;
+    smsEnabled?: boolean;
+    whatsappEnabled?: boolean;
 };
 
 export type PreferenceResponse = {
@@ -16,6 +18,22 @@ export type PreferenceResponse = {
         | "SHIPMENT_UPDATE"
         | "SECURITY_ALERT";
     emailEnabled?: boolean;
+    smsEnabled?: boolean;
+    whatsappEnabled?: boolean;
+    updatedAt?: string;
+};
+
+export type SavePhoneRequest = {
+    phoneNumber: string;
+    smsConsent: boolean;
+    whatsappConsent: boolean;
+};
+
+export type PhoneResponse = {
+    configured?: boolean;
+    maskedPhone?: string;
+    smsConsentedAt?: string;
+    whatsappConsentedAt?: string;
     updatedAt?: string;
 };
 
@@ -1695,6 +1713,301 @@ export type NotificationPreferenceSetResponses = {
 
 export type NotificationPreferenceSetResponse =
     NotificationPreferenceSetResponses[keyof NotificationPreferenceSetResponses];
+
+export type NotificationContactDeleteData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/api/notification-contacts/phone";
+};
+
+export type NotificationContactDeleteErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type NotificationContactDeleteError =
+    NotificationContactDeleteErrors[keyof NotificationContactDeleteErrors];
+
+export type NotificationContactDeleteResponses = {
+    /**
+     * No Content
+     */
+    204: void;
+};
+
+export type NotificationContactDeleteResponse =
+    NotificationContactDeleteResponses[keyof NotificationContactDeleteResponses];
+
+export type NotificationContactGetData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: "/api/notification-contacts/phone";
+};
+
+export type NotificationContactGetErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type NotificationContactGetError =
+    NotificationContactGetErrors[keyof NotificationContactGetErrors];
+
+export type NotificationContactGetResponses = {
+    /**
+     * OK
+     */
+    200: PhoneResponse;
+};
+
+export type NotificationContactGetResponse =
+    NotificationContactGetResponses[keyof NotificationContactGetResponses];
+
+export type NotificationContactSaveData = {
+    body: SavePhoneRequest;
+    path?: never;
+    query?: never;
+    url: "/api/notification-contacts/phone";
+};
+
+export type NotificationContactSaveErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type NotificationContactSaveError =
+    NotificationContactSaveErrors[keyof NotificationContactSaveErrors];
+
+export type NotificationContactSaveResponses = {
+    /**
+     * OK
+     */
+    200: PhoneResponse;
+};
+
+export type NotificationContactSaveResponse =
+    NotificationContactSaveResponses[keyof NotificationContactSaveResponses];
+
+export type InfobipWebhookSeenData = {
+    body: string;
+    headers?: {
+        "X-Hub-Signature"?: string;
+    };
+    path?: never;
+    query?: never;
+    url: "/api/notification-provider/infobip/seen";
+};
+
+export type InfobipWebhookSeenErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type InfobipWebhookSeenError =
+    InfobipWebhookSeenErrors[keyof InfobipWebhookSeenErrors];
+
+export type InfobipWebhookSeenResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type InfobipWebhookDeliveryData = {
+    body: string;
+    headers?: {
+        "X-Hub-Signature"?: string;
+    };
+    path?: never;
+    query?: never;
+    url: "/api/notification-provider/infobip/delivery";
+};
+
+export type InfobipWebhookDeliveryErrors = {
+    /**
+     * The request is invalid
+     */
+    400: ApiProblem;
+    /**
+     * Authentication is required
+     */
+    401: ApiProblem;
+    /**
+     * The caller is not allowed to perform this action
+     */
+    403: ApiProblem;
+    /**
+     * The requested resource was not found
+     */
+    404: ApiProblem;
+    /**
+     * The request conflicts with current state
+     */
+    409: ApiProblem;
+    /**
+     * The request limit was exceeded
+     */
+    429: ApiProblem;
+    /**
+     * The server could not complete the request
+     */
+    500: ApiProblem;
+    /**
+     * An external provider rejected the request
+     */
+    502: ApiProblem;
+    /**
+     * An external provider is temporarily unavailable
+     */
+    503: ApiProblem;
+};
+
+export type InfobipWebhookDeliveryError =
+    InfobipWebhookDeliveryErrors[keyof InfobipWebhookDeliveryErrors];
+
+export type InfobipWebhookDeliveryResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type TelemetryPositionData = {
     body: PositionRequest;

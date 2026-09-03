@@ -1,6 +1,5 @@
 package za.co.trademesh.modules.notification.api;
 
-import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -11,14 +10,24 @@ public final class NotificationPreferenceContracts {
 
     private NotificationPreferenceContracts() {}
 
-    public record UpdatePreferenceRequest(@NotNull Boolean emailEnabled) {}
+    public record UpdatePreferenceRequest(Boolean emailEnabled, Boolean smsEnabled, Boolean whatsappEnabled) {}
 
     public record PreferenceResponse(
-            UUID userId, NotificationCategory category, boolean emailEnabled, Instant updatedAt) {
+            UUID userId,
+            NotificationCategory category,
+            boolean emailEnabled,
+            boolean smsEnabled,
+            boolean whatsappEnabled,
+            Instant updatedAt) {
 
         static PreferenceResponse from(NotificationPreference preference) {
             return new PreferenceResponse(
-                    preference.userId(), preference.category(), preference.emailEnabled(), preference.updatedAt());
+                    preference.userId(),
+                    preference.category(),
+                    preference.emailEnabled(),
+                    preference.smsEnabled(),
+                    preference.whatsappEnabled(),
+                    preference.updatedAt());
         }
     }
 

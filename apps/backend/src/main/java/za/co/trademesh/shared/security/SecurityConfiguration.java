@@ -73,6 +73,8 @@ public class SecurityConfiguration {
                         .permitAll()
                         .requestMatchers("/api/delivery/confirm/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/notification-provider/infobip/**")
+                        .permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/supplier-invitations/guest/**",

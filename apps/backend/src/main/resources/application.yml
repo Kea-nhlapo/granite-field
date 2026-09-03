@@ -173,6 +173,7 @@ trademesh:
       from-address: ${EMAIL_FROM_ADDRESS:no-reply@trademesh.local}
     mobile:
       provider: ${MOBILE_NOTIFICATION_PROVIDER:unconfigured}
+      max-delivery-attempts: ${MOBILE_NOTIFICATION_MAX_DELIVERY_ATTEMPTS:3}
       providers:
         twilio:
           base-url: ${TWILIO_API_BASE_URL:https://api.twilio.com}
@@ -180,6 +181,21 @@ trademesh:
           auth-token: ${TWILIO_AUTH_TOKEN:}
           sms-from: ${TWILIO_SMS_NUMBER:}
           whats-app-from: ${TWILIO_WHATSAPP_NUMBER:}
+        infobip:
+          base-url: ${INFOBIP_BASE_URL:}
+          api-key: ${INFOBIP_API_KEY:}
+          sms-sender: ${INFOBIP_SMS_SENDER:}
+          whatsapp-sender: ${INFOBIP_WHATSAPP_SENDER:}
+          webhook-hmac-secret: ${INFOBIP_WEBHOOK_HMAC_SECRET:}
+          connect-timeout: ${INFOBIP_CONNECT_TIMEOUT:PT5S}
+          read-timeout: ${INFOBIP_READ_TIMEOUT:PT15S}
+          whatsapp-templates:
+            capacity-match-found.v1: ${INFOBIP_WHATSAPP_TEMPLATE_CAPACITY_MATCH_V1:}
+            handover-confirmation-accepted.v1: ${INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_ACCEPTED_V1:}
+            handover-finalized-clean.v1: ${INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_CLEAN_V1:}
+            handover-finalized-disputed.v1: ${INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_DISPUTED_V1:}
+            escrow-released.v1: ${INFOBIP_WHATSAPP_TEMPLATE_ESCROW_RELEASED_V1:}
+            delivery-confirmation.v1: ${INFOBIP_WHATSAPP_TEMPLATE_DELIVERY_CONFIRMATION_V1:}
   storage:
     endpoint: ${OBJECT_STORAGE_ENDPOINT}
     access-key: ${OBJECT_STORAGE_ACCESS_KEY}

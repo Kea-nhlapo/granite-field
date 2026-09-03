@@ -1,11 +1,9 @@
 package za.co.trademesh.modules.notification.application;
 
-public record MobileDeliveryRequested(
-        String idempotencyKey,
-        String protectedRecipient,
-        String protectedMessage,
-        MobileNotificationRequests.MobileChannel channel) {
+import java.util.UUID;
+
+public record MobileDeliveryRequested(UUID notificationId) {
 
     public static final String TYPE = "MOBILE_NOTIFICATION_DELIVERY_REQUESTED";
-    public static final int SCHEMA_VERSION = 1;
+    public static final int SCHEMA_VERSION = 2;
 }

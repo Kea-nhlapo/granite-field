@@ -192,6 +192,7 @@ public class OpenApiConfiguration {
         String controller = handlerMethod.getBeanType().getSimpleName();
         String method = handlerMethod.getMethod().getName();
         return controller.equals("AuthController")
+                || controller.equals("InfobipWebhookController")
                 || (controller.equals("SupplierController")
                         && (method.equals("viewGuest") || method.equals("submitResponse")))
                 || (controller.equals("DeliveryController") && (method.equals("preview") || method.equals("confirm")))
