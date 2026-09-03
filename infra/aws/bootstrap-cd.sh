@@ -103,7 +103,13 @@ cat > /tmp/perms.json <<JSON
   "Action":["s3:PutObject","s3:DeleteObject","s3:ListBucket","s3:GetObject"],
   "Resource":["arn:aws:s3:::${SITE_BUCKET}","arn:aws:s3:::${SITE_BUCKET}/*"]},
  {"Sid":"RefreshCdn","Effect":"Allow","Action":"cloudfront:CreateInvalidation",
-  "Resource":"arn:aws:cloudfront::${ACCOUNT_ID}:distribution/*"}]}
+  "Resource":"arn:aws:cloudfront::${ACCOUNT_ID}:distribution/*"},
+ {"Sid":"PublishAppSecrets","Effect":"Allow",
+  "Action":["ssm:PutParameter","ssm:AddTagsToResource"],
+  "Resource":"arn:aws:ssm:${REGION}:${ACCOUNT_ID}:parameter/trademesh/*"},
+ {"Sid":"EncryptAppSecrets","Effect":"Allow",
+  "Action":["kms:Encrypt","kms:Decrypt","kms:GenerateDataKey"],"Resource":"*",
+  "Condition":{"StringEquals":{"kms:ViaService":"ssm.${REGION}.amazonaws.com"}}}]}
 JSON
 
 aws iam put-role-policy --role-name "$ROLE_NAME" \
@@ -113,7 +119,24 @@ say "Let the instance pull from ECR"
 aws iam attach-role-policy --role-name "$INSTANCE_ROLE" \
   --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
 
-rm -f /tmp/trust.json /tmp/perms.json
+say "Let the instance read its own secrets"
+# The release script reads these into .env. The instance can read the parameters
+# and decrypt them through SSM; it cannot write them, and it cannot use the key
+# for anything else.
+cat > /tmp/instance-perms.json <<JSON
+{"Version":"2012-10-17","Statement":[
+ {"Sid":"ReadAppSecrets","Effect":"Allow",
+  "Action":["ssm:GetParametersByPath","ssm:GetParameter","ssm:GetParameters"],
+  "Resource":"arn:aws:ssm:${REGION}:${ACCOUNT_ID}:parameter/trademesh/*"},
+ {"Sid":"DecryptAppSecrets","Effect":"Allow","Action":"kms:Decrypt","Resource":"*",
+  "Condition":{"StringEquals":{"kms:ViaService":"ssm.${REGION}.amazonaws.com"}}}]}
+JSON
+
+aws iam put-role-policy --role-name "$INSTANCE_ROLE" \
+  --policy-name trademesh-instance-secrets \
+  --policy-document file:///tmp/instance-perms.json
+
+rm -f /tmp/trust.json /tmp/perms.json /tmp/instance-perms.json
 
 cat <<SUMMARY
 

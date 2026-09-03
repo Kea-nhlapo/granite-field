@@ -15,6 +15,13 @@ services:
     # release does not put a Maven build on a host already running the JVM,
     # PostgreSQL and clamd, and rolling back is redeploying an earlier tag.
     image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE in infra/containers/.env}
+    # Every key in .env reaches the application. Naming credentials one by one is
+    # how MoMo's keys sat on the host for weeks without the container ever seeing
+    # them: the value was present, the pass-through was not, and nothing said so.
+    # A new integration now needs its secret added in GitHub and nothing else.
+    # Settings below still win, because they rename or compute what they set.
+    env_file:
+      - .env
     container_name: trademesh-backend
     restart: unless-stopped
     depends_on:

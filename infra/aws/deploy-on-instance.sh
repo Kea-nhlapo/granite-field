@@ -62,6 +62,54 @@ while IFS= read -r line; do
   fi
 done < .env.aws.example
 
+# Application credentials - MoMo, messaging, anything the team integrates - are
+# published to Parameter Store by the pipeline from the repository secrets. Pull
+# them in here so adding an integration key never means somebody logging in to
+# edit a file on a server. Parameter Store owns every key it holds; everything
+# else in .env, including the generated secrets below and the provider choices,
+# is left exactly as it is.
+if aws ssm get-parameters-by-path --path /trademesh --recursive --with-decryption \
+     --region af-south-1 --output json > /tmp/trademesh-params.json 2>/dev/null; then
+  python3 - <<'SYNC'
+import json
+
+with open('/tmp/trademesh-params.json', encoding='utf-8') as handle:
+    parameters = json.load(handle).get('Parameters', [])
+
+with open('.env', encoding='utf-8') as handle:
+    lines = handle.read().splitlines()
+
+applied, skipped = [], []
+for parameter in parameters:
+    key = parameter['Name'].rsplit('/', 1)[-1]
+    value = parameter['Value']
+    # .env is one setting per line and has no continuation syntax, so a value
+    # with a newline in it would silently truncate and take the next line with it.
+    if '\n' in value or '\r' in value:
+        skipped.append(key)
+        continue
+    line = f'{key}={value}'
+    for index, existing in enumerate(lines):
+        if existing.startswith(f'{key}='):
+            lines[index] = line
+            break
+    else:
+        lines.append(line)
+    applied.append(key)
+
+with open('.env', 'w', encoding='utf-8') as handle:
+    handle.write('\n'.join(lines) + '\n')
+
+# Names only. The values are the whole point of keeping them out of the log.
+print('parameter store supplied: ' + (', '.join(sorted(applied)) or 'nothing'))
+if skipped:
+    print('SKIPPED, value spans multiple lines: ' + ', '.join(sorted(skipped)))
+SYNC
+  rm -f /tmp/trademesh-params.json
+else
+  echo "no parameters under /trademesh, or this host cannot read them"
+fi
+
 # A secret the example ships blank cannot arrive by being copied, and waiting for
 # somebody to log in and paste one is how a release stays down for an hour. These
 # belong to the host and nothing outside it needs to know them, so generate them

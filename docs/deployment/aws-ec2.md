@@ -189,6 +189,46 @@ Because the backend is verified before the CDN is touched, that failure mode now
 fails the workflow without leaving any doubt about whether the release is
 serving.
 
+### Where credentials live
+
+There are two stores and they do not overlap.
+
+**GitHub repository secrets** are handed to the workflow runner, which exists for
+about three minutes per release. They are never baked into the image.
+
+**`infra/containers/.env` on the instance** is what the running application reads.
+It is not in git and it survives releases.
+
+A repository secret is treated as application configuration unless it is named
+`CI_*`, which marks it as belonging to the pipeline. Everything else is published
+to AWS Parameter Store under `/trademesh/` as a SecureString during the release,
+and `deploy-on-instance.sh` writes those into `.env` before starting the new
+image. Parameter Store owns the keys it holds and overwrites them every release;
+every other key in `.env` - the generated secrets, the provider choices - is left
+alone. Adding an integration credential is therefore a GitHub change and nothing
+else.
+
+The values go through Parameter Store rather than straight into the release
+command because Systems Manager retains the text of every command it runs.
+
+Two things this does **not** do, both of which have bitten this project already:
+
+* **Credentials do not switch a feature on.** `MOMO_PROVIDER` and
+  `MOBILE_NOTIFICATION_PROVIDER` select the stand-ins by default and keep doing so
+  no matter what keys arrive. Set them to `http` and `twilio` deliberately, and
+  expect real messages and real sandbox transactions from that moment.
+
+The backend service passes the whole `.env` through with `env_file` rather than
+naming variables one at a time. That was not always true, and it is why every
+`MOMO_*` and `TWILIO_*` credential could have sat on the host without the
+container ever seeing it: the value was present, the pass-through was not, and
+nothing reported it. A new integration now needs its repository secret and
+nothing else - no compose change, no entry in the example.
+
+A secret whose name nothing reads is carried to the host and harmlessly ignored,
+which is the useful case for work in progress: `INFOBIP_*` is already on its way
+to the instance, waiting for the provider that will read it.
+
 ### Storage is checked, not assumed
 
 The object storage client is lazy: it connects on the first upload, not at

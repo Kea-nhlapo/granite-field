@@ -258,6 +258,34 @@ jobs:
           docker push "$REGISTRY/$ECR_REPOSITORY:$SHA"
           docker push "$REGISTRY/$ECR_REPOSITORY:latest"
 
+      - name: Publish application secrets to Parameter Store
+        env:
+          # Every repository secret, as JSON. GitHub masks these in the log.
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+        run: |
+          # The rule: a repository secret is application configuration, unless it is
+          # named CI_*, which means it belongs to this pipeline and stays here. That
+          # keeps one place for the team to add a credential - Tshego adds a secret,
+          # the next release carries it to the instance, nobody edits a server.
+          #
+          # The values go to Parameter Store rather than straight into the release
+          # command, because SSM keeps the text of every command it runs.
+          published=0
+          while read -r row; do
+            entry=$(printf '%s' "$row" | base64 -d)
+            name=$(printf '%s' "$entry" | jq -r '.key')
+            # -j, not -r: a trailing newline would become part of the credential.
+            value=$(printf '%s' "$entry" | jq -j '.value')
+            aws ssm put-parameter --name "/trademesh/${name}" --type SecureString \
+              --value "$value" --overwrite --region "$AWS_REGION" >/dev/null
+            echo "published ${name}"
+            published=$((published + 1))
+          done < <(printf '%s' "$ALL_SECRETS" | jq -r '
+            to_entries[]
+            | select((.key | startswith("CI_")) or .key == "GITHUB_TOKEN" | not)
+            | @base64')
+          echo "${published} application secrets published"
+
       - name: Release on the instance, with rollback
         env:
           SHA: ${{ steps.tag.outputs.sha }}
