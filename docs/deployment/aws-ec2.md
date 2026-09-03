@@ -213,17 +213,21 @@ command because Systems Manager retains the text of every command it runs.
 
 Two things this does **not** do, both of which have bitten this project already:
 
-* **Compose forwards only the variables it names.** A value can sit in `.env` and
-  never reach the application because `docker-compose.aws.yml` does not list it.
-  Every `MOMO_*` and `TWILIO_*` credential was in exactly this state.
 * **Credentials do not switch a feature on.** `MOMO_PROVIDER` and
   `MOBILE_NOTIFICATION_PROVIDER` select the stand-ins by default and keep doing so
   no matter what keys arrive. Set them to `http` and `twilio` deliberately, and
   expect real messages and real sandbox transactions from that moment.
 
-A secret whose name nothing reads is carried all the way to the host and then
-ignored. `INFOBIP_*` is the current example: the application implements Twilio,
-and has no Infobip provider at all.
+The backend service passes the whole `.env` through with `env_file` rather than
+naming variables one at a time. That was not always true, and it is why every
+`MOMO_*` and `TWILIO_*` credential could have sat on the host without the
+container ever seeing it: the value was present, the pass-through was not, and
+nothing reported it. A new integration now needs its repository secret and
+nothing else - no compose change, no entry in the example.
+
+A secret whose name nothing reads is carried to the host and harmlessly ignored,
+which is the useful case for work in progress: `INFOBIP_*` is already on its way
+to the instance, waiting for the provider that will read it.
 
 ### Storage is checked, not assumed
 
