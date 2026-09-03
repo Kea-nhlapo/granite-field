@@ -83,6 +83,15 @@ class S3CompatibleObjectStorage implements ObjectStorage {
         }
     }
 
+    /**
+     * Whether the configured bucket answers with the configured credentials. Used by the health
+     * indicator, so it must not create anything and must not be cached.
+     */
+    boolean bucketReachable() throws Exception {
+        return client().bucketExists(
+                        BucketExistsArgs.builder().bucket(properties.bucket()).build());
+    }
+
     private void ensureBucket() throws Exception {
         if (bucketReady) {
             return;

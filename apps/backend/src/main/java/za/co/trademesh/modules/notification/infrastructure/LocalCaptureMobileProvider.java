@@ -4,15 +4,13 @@ import java.time.Clock;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import za.co.trademesh.modules.notification.application.LocalMobileCapture;
 import za.co.trademesh.modules.notification.application.MobileDeliveryProvider;
-import za.co.trademesh.modules.notification.domain.MobileNotificationStatus;
 
 @Component
-@ConditionalOnExpression(
-        "'${TRADEMESH_CI_READINESS:false}' == 'true' or '${trademesh.notifications.mobile.provider:local}' == 'local'")
+@ConditionalOnProperty(prefix = "trademesh.notifications.mobile", name = "provider", havingValue = "local")
 class LocalCaptureMobileProvider implements MobileDeliveryProvider, LocalMobileCapture {
 
     private final ConcurrentHashMap<String, CapturedMessage> captured = new ConcurrentHashMap<>();
@@ -28,7 +26,7 @@ class LocalCaptureMobileProvider implements MobileDeliveryProvider, LocalMobileC
     }
 
     @Override
-    public SubmissionResult deliver(MobileMessage message) {
+    public String deliver(MobileMessage message) {
         CapturedMessage saved = captured.computeIfAbsent(
                 message.idempotencyKey(),
                 key -> new CapturedMessage(
@@ -36,9 +34,9 @@ class LocalCaptureMobileProvider implements MobileDeliveryProvider, LocalMobileC
                         key,
                         message.recipientPhone(),
                         message.channel(),
-                        message.text(),
+                        message.body(),
                         clock.instant()));
-        return new SubmissionResult(saved.providerMessageId(), MobileNotificationStatus.SENT);
+        return saved.providerMessageId();
     }
 
     @Override

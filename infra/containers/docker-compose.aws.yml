@@ -2,7 +2,7 @@
 #
 # Differences from the local stack in docker-compose.yml:
 #   * object storage is real Amazon S3, so no MinIO container runs here;
-#   * clamd scans uploads, because the cloud profile is not allowed the mock scanner;
+#   * clamd scans uploads, because a real deployment must not accept unscanned files;
 #   * every service declares a memory limit, because an unbounded JVM on a shared
 #     host starves PostgreSQL and clamd and is then killed by the kernel; and
 #   * every service restarts on boot, so a host reboot brings the whole stack back
@@ -15,6 +15,13 @@ services:
     # release does not put a Maven build on a host already running the JVM,
     # PostgreSQL and clamd, and rolling back is redeploying an earlier tag.
     image: ${BACKEND_IMAGE:?Set BACKEND_IMAGE in infra/containers/.env}
+    # Every key in .env reaches the application. Naming credentials one by one is
+    # how MoMo's keys sat on the host for weeks without the container ever seeing
+    # them: the value was present, the pass-through was not, and nothing said so.
+    # A new integration now needs its secret added in GitHub and nothing else.
+    # Settings below still win, because they rename or compute what they set.
+    env_file:
+      - .env
     container_name: trademesh-backend
     restart: unless-stopped
     depends_on:
@@ -23,9 +30,8 @@ services:
       clamav:
         condition: service_healthy
     environment:
-      SPRING_PROFILES_DEFAULT: ${SPRING_PROFILES_DEFAULT:?Set SPRING_PROFILES_DEFAULT in .env}
+      SPRING_PROFILES_DEFAULT: ${SPRING_PROFILES_DEFAULT:-aws}
       TRADEMESH_RUNTIME_ENVIRONMENT: ${TRADEMESH_RUNTIME_ENVIRONMENT:-aws-ec2}
-      TRADEMESH_CI_READINESS: ${CI:-false}
       LOG_LEVEL_ROOT: ${LOG_LEVEL_ROOT:-INFO}
       MANAGEMENT_HEALTH_SHOW_DETAILS: never
       SERVER_PORT: 8080
@@ -33,55 +39,43 @@ services:
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?Set AUTH_JWT_SECRET in .env}
       AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:?Set AUTH_JWT_ISSUER in .env}
-      HANDOVER_QR_SIGNING_SECRET: ${HANDOVER_QR_SIGNING_SECRET:?Set HANDOVER_QR_SIGNING_SECRET in .env}
       NOTIFICATION_DATA_ENCRYPTION_KEY: ${NOTIFICATION_DATA_ENCRYPTION_KEY:?Set NOTIFICATION_DATA_ENCRYPTION_KEY in .env}
+      # Signs handover QR tokens. Validated at startup: 32 characters or more.
+      HANDOVER_QR_SIGNING_SECRET: ${HANDOVER_QR_SIGNING_SECRET:?Set HANDOVER_QR_SIGNING_SECRET in .env}
       DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-trademesh}
       DATABASE_USERNAME: ${POSTGRES_USER:-trademesh}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-      DELIVERY_CONFIRMATION_BASE_URL: ${DELIVERY_CONFIRMATION_BASE_URL:?Set DELIVERY_CONFIRMATION_BASE_URL in .env}
       # Real S3. Presigned download URLs generated here resolve for remote clients,
       # which the MinIO-on-loopback topology could not do.
-      OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:?Set OBJECT_STORAGE_ENDPOINT in .env}
-      OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:?Set OBJECT_STORAGE_REGION in .env}
+      OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:-https://s3.af-south-1.amazonaws.com}
+      OBJECT_STORAGE_REGION: ${OBJECT_STORAGE_REGION:-af-south-1}
       OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:?Set OBJECT_STORAGE_BUCKET in .env}
       OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY in .env}
       OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY in .env}
-      FILE_SCANNER_PROVIDER: ${FILE_SCANNER_PROVIDER:?Set FILE_SCANNER_PROVIDER in .env}
+      FILE_SCANNER_PROVIDER: ${FILE_SCANNER_PROVIDER:-fail-closed}
       CLAMAV_HOST: clamav
       CLAMAV_PORT: 3310
-      COMPANY_REGISTRY_PROVIDER: ${COMPANY_REGISTRY_PROVIDER:?Set COMPANY_REGISTRY_PROVIDER in .env}
+      COMPANY_REGISTRY_PROVIDER: ${COMPANY_REGISTRY_PROVIDER:-mock}
       DOCUMENT_EXTRACTION_PROVIDER: ${DOCUMENT_EXTRACTION_PROVIDER:-mock}
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-local}
-      # Every provider below has no bean registered for "unconfigured", which is
-      # the base configuration's default. Leaving any of them unset stops the
-      # application from starting at all, so each is chosen explicitly here.
-      TURNSTILE_PROVIDER: ${TURNSTILE_PROVIDER:?Set TURNSTILE_PROVIDER in .env}
-      OTP_PROVIDER: ${OTP_PROVIDER:?Set OTP_PROVIDER in .env}
-      MOMO_PROVIDER: ${MOMO_PROVIDER:?Set MOMO_PROVIDER in .env}
-      DELIVERY_SPEECH_PROVIDER: ${DELIVERY_SPEECH_PROVIDER:?Set DELIVERY_SPEECH_PROVIDER in .env}
-      DELIVERY_DISTANCE_PROVIDER: ${DELIVERY_DISTANCE_PROVIDER:?Set DELIVERY_DISTANCE_PROVIDER in .env}
-      MOBILE_NOTIFICATION_PROVIDER: ${MOBILE_NOTIFICATION_PROVIDER:?Set MOBILE_NOTIFICATION_PROVIDER in .env}
-      MOBILE_NOTIFICATION_MAX_DELIVERY_ATTEMPTS: ${MOBILE_NOTIFICATION_MAX_DELIVERY_ATTEMPTS:-3}
-      INFOBIP_BASE_URL: ${INFOBIP_BASE_URL:-}
-      INFOBIP_API_KEY: ${INFOBIP_API_KEY:-}
-      INFOBIP_SMS_SENDER: ${INFOBIP_SMS_SENDER:-}
-      INFOBIP_WHATSAPP_SENDER: ${INFOBIP_WHATSAPP_SENDER:-}
-      INFOBIP_WEBHOOK_HMAC_SECRET: ${INFOBIP_WEBHOOK_HMAC_SECRET:-}
-      INFOBIP_CONNECT_TIMEOUT: ${INFOBIP_CONNECT_TIMEOUT:-PT5S}
-      INFOBIP_READ_TIMEOUT: ${INFOBIP_READ_TIMEOUT:-PT15S}
-      INFOBIP_WHATSAPP_TEMPLATE_CAPACITY_MATCH_V1: ${INFOBIP_WHATSAPP_TEMPLATE_CAPACITY_MATCH_V1:-}
-      INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_ACCEPTED_V1: ${INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_ACCEPTED_V1:-}
-      INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_CLEAN_V1: ${INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_CLEAN_V1:-}
-      INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_DISPUTED_V1: ${INFOBIP_WHATSAPP_TEMPLATE_HANDOVER_DISPUTED_V1:-}
-      INFOBIP_WHATSAPP_TEMPLATE_ESCROW_RELEASED_V1: ${INFOBIP_WHATSAPP_TEMPLATE_ESCROW_RELEASED_V1:-}
-      INFOBIP_WHATSAPP_TEMPLATE_DELIVERY_CONFIRMATION_V1: ${INFOBIP_WHATSAPP_TEMPLATE_DELIVERY_CONFIRMATION_V1:-}
+      # Providers are chosen here so the deployment is deliberate, but none of them
+      # is mandatory: every one has an "unconfigured" bean that boots fine and fails
+      # only if that feature is actually used. A setting nobody has wired yet costs
+      # one feature, never the whole service.
+      TURNSTILE_PROVIDER: ${TURNSTILE_PROVIDER:-unconfigured}
+      OTP_PROVIDER: ${OTP_PROVIDER:-unconfigured}
+      OTP_LOCAL_CODE: ${OTP_LOCAL_CODE:-}
+      MOMO_PROVIDER: ${MOMO_PROVIDER:-unconfigured}
+      DELIVERY_SPEECH_PROVIDER: ${DELIVERY_SPEECH_PROVIDER:-local}
+      DELIVERY_DISTANCE_PROVIDER: ${DELIVERY_DISTANCE_PROVIDER:-local}
+      MOBILE_NOTIFICATION_PROVIDER: ${MOBILE_NOTIFICATION_PROVIDER:-local}
     ports:
       # Reachable only from the CloudFront prefix list; see the security group.
       - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:${BACKEND_PORT:-8080}:8080"
     mem_limit: 3g
     memswap_limit: 3g
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health/liveness || exit 1"]
       interval: 30s
       timeout: 5s
       start_period: 90s

@@ -48,7 +48,7 @@ management:
         liveness:
           include: livenessState,ping
         readiness:
-          include: readinessState,diskSpace,postgis
+          include: readinessState,diskSpace,postgis,objectStorage
   metrics:
     tags:
       application: ${spring.application.name}
