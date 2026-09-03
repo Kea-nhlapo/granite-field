@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { OnboardingScreen, LoginScreen } from "./OnboardingScreens";
 import { HomeScreen } from "./HomeScreen";
 import { InvoiceScreen, OrdersScreen } from "./OrderScreens";
 import { SourceScreen, SupplierInviteScreen } from "./SourceScreens";
 import { SupplierMatchScreen } from "./SupplierMatchScreen";
 import { RouteDetailScreen, RoutesScreen } from "./RouteScreens";
-import { QRScreen, TrackScreen } from "./TrackScreens";
+import {
+    QRScreen,
+    readDeliveryHandoverLink,
+    TrackScreen,
+} from "./TrackScreens";
 import { ProfileScreen, RiskScreen } from "./AccountScreens";
 import type { Screen, Tab } from "./types";
 import { TabBar } from "./ui";
@@ -36,6 +40,13 @@ export default function App() {
         session?.roles.has("INTERNAL_RISK_ANALYST") === true ||
         session?.roles.has("ADMINISTRATOR") === true;
 
+    useEffect(() => {
+        if (status === "authenticated" && readDeliveryHandoverLink()) {
+            setHistory([]);
+            setScreen({ id: "track_qr" });
+        }
+    }, [status]);
+
     function navigate(s: Screen) {
         setHistory((h) => [...h, screen]);
         setScreen(s);
@@ -59,7 +70,9 @@ export default function App() {
             return result.error?.detail ?? "Sign-in failed. Please try again.";
         }
         setHistory([]);
-        setScreen({ id: "home" });
+        setScreen(
+            readDeliveryHandoverLink() ? { id: "track_qr" } : { id: "home" },
+        );
         return undefined;
     }
 

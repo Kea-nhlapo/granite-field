@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { AnimatePresence } from "motion/react";
 import { ChevronDown } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import type { Navigate } from "./types";
 import {
     Badge,
     BottomDock,
+    MessageBar,
     PrimaryBtn,
     SecondaryBtn,
     SectionCard,
@@ -16,8 +18,16 @@ import {
     QrCodeIcon,
     ShieldCheckmarkIcon,
 } from "./icons";
-import { DriverPayoutCard } from "./DriverPayoutCard";
 import { m, springs } from "./motion";
+import {
+    deliveryVerificationIssue,
+    deliveryVerificationScan,
+} from "./shared/api/app-api";
+import type {
+    ApiProblem,
+    ChallengeResponse,
+    IssuedChallengeResponse,
+} from "./shared/api/generated";
 
 export function TrackScreen({ navigate }: { navigate: Navigate }) {
     const [showAudit, setShowAudit] = useState(false);
@@ -174,8 +184,8 @@ export function TrackScreen({ navigate }: { navigate: Navigate }) {
                             Delivery Verification QR Token
                         </p>
                         <p className="app-caption text-[#595959] mt-0.5">
-                            Present to driver to confirm custody handover &
-                            release MoMo escrow
+                            Issue an expiring code for the receiving party to
+                            confirm the handover
                         </p>
                     </div>
                     <ChevronRightIcon size={18} className="text-[#8E8E93]" />
@@ -260,114 +270,396 @@ export function TrackScreen({ navigate }: { navigate: Navigate }) {
     );
 }
 
+type DeliveryContext = {
+    businessId: string;
+    shipmentId: string;
+    deliveryOrderId: string;
+    counterpartyUserId: string;
+};
+
+type DeliveryHandoverLink = {
+    shipmentId: string;
+    token: string;
+    expectedQuantity?: number;
+};
+
+const UUID_PATTERN =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function readDeliveryHandoverLink(
+    fragment = window.location.hash,
+): DeliveryHandoverLink | null {
+    const params = new URLSearchParams(fragment.replace(/^#/, ""));
+    const shipmentId = params.get("handoverShipmentId")?.trim();
+    const token = params.get("handoverToken")?.trim();
+    const expectedQuantityValue = params.get("expectedQuantity");
+    const expectedQuantity = expectedQuantityValue
+        ? Number(expectedQuantityValue)
+        : undefined;
+
+    if (!shipmentId || !token || !UUID_PATTERN.test(shipmentId)) {
+        return null;
+    }
+
+    return {
+        shipmentId,
+        token,
+        expectedQuantity:
+            expectedQuantity !== undefined &&
+            Number.isFinite(expectedQuantity) &&
+            expectedQuantity >= 0
+                ? expectedQuantity
+                : undefined,
+    };
+}
+
+export function buildDeliveryHandoverLink(
+    shipmentId: string,
+    token: string,
+    expectedQuantity?: number,
+) {
+    const link = new URL(
+        window.location.pathname || "/",
+        window.location.origin,
+    );
+    const fragment = new URLSearchParams();
+    fragment.set("handoverShipmentId", shipmentId);
+    fragment.set("handoverToken", token);
+    if (expectedQuantity !== undefined) {
+        fragment.set("expectedQuantity", String(expectedQuantity));
+    }
+    link.hash = fragment.toString();
+    return link.toString();
+}
+
+function problemDetail(error: unknown, fallback: string) {
+    const problem = error as Partial<ApiProblem> | undefined;
+    return problem?.detail?.trim() || fallback;
+}
+
+function browserLocation(): Promise<{ latitude: number; longitude: number }> {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error("Location is not available on this device."));
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            ({ coords }) =>
+                resolve({
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                }),
+            () =>
+                reject(
+                    new Error(
+                        "Location permission is required to verify this handover.",
+                    ),
+                ),
+            { enableHighAccuracy: true, maximumAge: 15_000, timeout: 10_000 },
+        );
+    });
+}
+
+const emptyContext: DeliveryContext = {
+    businessId: "",
+    shipmentId: "",
+    deliveryOrderId: "",
+    counterpartyUserId: "",
+};
+
 export function QRScreen({ onBack }: { onBack: () => void }) {
-    const [verified, setVerified] = useState(false);
-    const pattern = [
-        0, 1, 3, 5, 6, 7, 8, 10, 12, 14, 15, 16, 18, 20, 21, 22, 24, 26, 28, 29,
-        30, 32, 34, 35, 36, 37, 40, 42, 43, 45, 47, 48,
-    ];
+    const [scanLink] = useState(() => readDeliveryHandoverLink());
+    const [context, setContext] = useState<DeliveryContext>(emptyContext);
+    const [issued, setIssued] = useState<IssuedChallengeResponse | null>(null);
+    const [verification, setVerification] = useState<ChallengeResponse | null>(
+        null,
+    );
+    const [capturedQuantity, setCapturedQuantity] = useState(
+        scanLink?.expectedQuantity?.toString() ?? "",
+    );
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const qrPayload = issued?.qrPayload;
+    const challenge = issued?.challenge;
+    const qrLink =
+        qrPayload && challenge?.shipmentId
+            ? buildDeliveryHandoverLink(
+                  challenge.shipmentId,
+                  qrPayload,
+                  challenge.expectedQuantity,
+              )
+            : null;
+
+    function updateContext(field: keyof DeliveryContext, value: string) {
+        setContext((current) => ({ ...current, [field]: value.trim() }));
+    }
+
+    async function issueCode(event: FormEvent) {
+        event.preventDefault();
+        setError(null);
+        setIssued(null);
+
+        if (Object.values(context).some((value) => !UUID_PATTERN.test(value))) {
+            setError("Enter a valid UUID in every field.");
+            return;
+        }
+
+        setBusy(true);
+        try {
+            const result = await deliveryVerificationIssue({
+                path: { shipmentId: context.shipmentId },
+                body: {
+                    businessId: context.businessId,
+                    deliveryOrderId: context.deliveryOrderId,
+                    counterpartyUserId: context.counterpartyUserId,
+                },
+            });
+
+            if (result.error) {
+                setError(
+                    problemDetail(
+                        result.error,
+                        "The delivery QR code could not be issued.",
+                    ),
+                );
+                return;
+            }
+            if (!result.data?.qrPayload || !result.data.challenge?.shipmentId) {
+                setError("The server returned an incomplete QR challenge.");
+                return;
+            }
+            setIssued(result.data);
+        } catch {
+            setError("The backend could not be reached. Please try again.");
+        } finally {
+            setBusy(false);
+        }
+    }
+
+    async function confirmDelivery(event: FormEvent) {
+        event.preventDefault();
+        if (!scanLink) return;
+
+        const quantity = Number(capturedQuantity);
+        if (!Number.isFinite(quantity) || quantity < 0) {
+            setError("Enter the quantity received before confirming delivery.");
+            return;
+        }
+
+        setBusy(true);
+        setError(null);
+        setVerification(null);
+        try {
+            const location = await browserLocation();
+            const result = await deliveryVerificationScan({
+                path: { shipmentId: scanLink.shipmentId },
+                body: {
+                    requestId: crypto.randomUUID(),
+                    token: scanLink.token,
+                    capturedQty: quantity,
+                    gpsLat: location.latitude,
+                    gpsLng: location.longitude,
+                },
+            });
+
+            if (result.error) {
+                setError(
+                    problemDetail(
+                        result.error,
+                        "The backend rejected this handover confirmation.",
+                    ),
+                );
+                return;
+            }
+            if (
+                !result.data ||
+                (result.data.state !== "COMPLETED" &&
+                    result.data.state !== "DISPUTED")
+            ) {
+                setError("The handover has not been verified by the backend.");
+                return;
+            }
+
+            setVerification(result.data);
+            window.history.replaceState(null, "", window.location.pathname);
+        } catch (caught) {
+            setError(
+                caught instanceof Error
+                    ? caught.message
+                    : "The backend could not be reached. Please try again.",
+            );
+        } finally {
+            setBusy(false);
+        }
+    }
 
     return (
         <>
-            <TopBar title="Custody Verification QR" onBack={onBack} />
+            <TopBar
+                title={scanLink ? "Confirm Delivery" : "Delivery QR"}
+                onBack={onBack}
+            />
             <div
-                className="flex-1 fluent-scroll overflow-y-auto flex flex-col items-center justify-center p-6 gap-5"
+                className="flex-1 fluent-scroll overflow-y-auto p-5 space-y-4"
                 style={{ background: "var(--fluent-bg-canvas, #F8F9FA)" }}
             >
-                <Badge label="Demo simulation" color="neutral" />
-                {/* QR Code Container */}
-                <div className="bg-white p-6 rounded-2xl border border-[#E5E7EB] shadow-sm flex flex-col items-center">
-                    <div
-                        className="grid gap-1 p-2 bg-white"
-                        style={{ gridTemplateColumns: "repeat(7, 1fr)" }}
-                    >
-                        {Array.from({ length: 49 }).map((_, i) => {
-                            const isEdge =
-                                i < 7 || i > 41 || i % 7 === 0 || i % 7 === 6;
-                            const isCornerFinder =
-                                i <= 2 ||
-                                (i >= 4 && i <= 6) ||
-                                i === 7 ||
-                                i === 13 ||
-                                i === 14 ||
-                                i === 20 ||
-                                (i >= 35 && i <= 37) ||
-                                (i >= 42 && i <= 44);
-                            return (
-                                <div
-                                    key={i}
-                                    className="w-7 h-7 rounded-xs transition-colors"
-                                    style={{
-                                        backgroundColor: isCornerFinder
-                                            ? "#FFCC00"
-                                            : isEdge || pattern.includes(i)
-                                              ? "#002B49"
-                                              : "#FFFFFF",
-                                    }}
+                {scanLink ? (
+                    <form onSubmit={confirmDelivery} className="space-y-4">
+                        <MessageBar intent="info">
+                            Confirm the physical delivery only after checking
+                            the goods. Your account and current location are
+                            sent to the server as evidence.
+                        </MessageBar>
+                        <SectionCard className="p-4 space-y-3">
+                            <div>
+                                <p className="app-caption text-[#595959]">
+                                    Shipment
+                                </p>
+                                <p className="app-caption-strong break-all">
+                                    {scanLink.shipmentId}
+                                </p>
+                            </div>
+                            <label className="block">
+                                <span className="app-caption-strong">
+                                    Quantity received
+                                </span>
+                                <input
+                                    aria-label="Quantity received"
+                                    type="number"
+                                    min="0"
+                                    step="any"
+                                    required
+                                    value={capturedQuantity}
+                                    onChange={(event) =>
+                                        setCapturedQuantity(event.target.value)
+                                    }
+                                    className="mt-1.5 w-full h-10 rounded-lg border border-[#D1D5DB] px-3 text-sm"
                                 />
-                            );
-                        })}
-                    </div>
-
-                    <p className="text-center app-caption-strong text-[#003E85] mt-3">
-                        SB-2026-9901 • MOMO-TOKEN #4812-7X
-                    </p>
-                </div>
-
-                <div className="w-full space-y-1 text-center">
-                    <p className="app-heading">
-                        Present this code to the fleet driver upon arrival
-                    </p>
-                    <p className="app-caption text-[#595959]">
-                        14 Mofolo Crescent, Soweto Node • Consignment
-                        SB-2026-9901
-                    </p>
-                    <p className="app-micro mt-1">
-                        Demo-only token • No real handover or payment is created
-                    </p>
-                </div>
-
-                {verified && (
-                    <div
-                        className="w-full p-3.5 rounded-xl border text-center transition-all animate-fade-in"
-                        style={{
-                            backgroundColor: "#E3FCEF",
-                            borderColor: "#A3E7C9",
-                        }}
-                    >
-                        <div className="flex items-center justify-center gap-1.5 app-caption-strong text-[#00875A]">
-                            <CheckmarkIcon size={16} />
-                            <span>Consignment Custody Handover Confirmed</span>
-                        </div>
-                        <p className="app-micro text-[#00875A] mt-0.5">
-                            Demo scan complete • No server verification or fund
-                            release occurred
-                        </p>
-                    </div>
-                )}
-
-                {verified && (
-                    <div className="w-full">
-                        <DriverPayoutCard
-                            driverName="Sipho Mthembu • T-JHB-0047"
-                            amount="R120.00"
-                        />
-                    </div>
+                            </label>
+                        </SectionCard>
+                        {error && (
+                            <MessageBar intent="error">{error}</MessageBar>
+                        )}
+                        {verification && (
+                            <MessageBar
+                                intent={
+                                    verification.state === "COMPLETED"
+                                        ? "success"
+                                        : "warning"
+                                }
+                            >
+                                <strong>
+                                    {verification.state === "COMPLETED"
+                                        ? "Delivery verified by TradeMesh."
+                                        : "Delivery recorded with a quantity dispute."}
+                                </strong>{" "}
+                                Evidence reference: {verification.challengeId}.
+                                Payment release remains a separate decision.
+                            </MessageBar>
+                        )}
+                        {!verification && (
+                            <PrimaryBtn
+                                type="submit"
+                                disabled={busy}
+                                label={
+                                    busy
+                                        ? "Checking location and confirming…"
+                                        : "Confirm delivery"
+                                }
+                            />
+                        )}
+                    </form>
+                ) : (
+                    <form onSubmit={issueCode} className="space-y-4">
+                        <MessageBar intent="info">
+                            Connect an active delivery. TradeMesh will issue a
+                            signed, expiring code tied to this shipment and the
+                            intended receiving user.
+                        </MessageBar>
+                        {!qrLink ? (
+                            <SectionCard className="p-4 space-y-3">
+                                {(
+                                    [
+                                        ["businessId", "Business ID"],
+                                        ["shipmentId", "Shipment ID"],
+                                        [
+                                            "deliveryOrderId",
+                                            "Delivery order ID",
+                                        ],
+                                        [
+                                            "counterpartyUserId",
+                                            "Receiving user ID",
+                                        ],
+                                    ] as const
+                                ).map(([field, label]) => (
+                                    <label key={field} className="block">
+                                        <span className="app-caption-strong">
+                                            {label}
+                                        </span>
+                                        <input
+                                            aria-label={label}
+                                            required
+                                            value={context[field]}
+                                            onChange={(event) =>
+                                                updateContext(
+                                                    field,
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="00000000-0000-0000-0000-000000000000"
+                                            className="mt-1.5 w-full h-10 rounded-lg border border-[#D1D5DB] px-3 text-sm font-mono"
+                                        />
+                                    </label>
+                                ))}
+                            </SectionCard>
+                        ) : (
+                            <SectionCard className="p-5 flex flex-col items-center text-center gap-3">
+                                <div className="bg-white p-3 border border-[#E5E7EB] rounded-xl">
+                                    <QRCodeSVG
+                                        value={qrLink}
+                                        size={224}
+                                        level="M"
+                                        marginSize={2}
+                                        bgColor="#FFFFFF"
+                                        fgColor="#002B49"
+                                        title="Secure delivery QR code"
+                                    />
+                                </div>
+                                <Badge label="Server issued" color="success" />
+                                <p className="app-heading">
+                                    Ask the receiving user to scan this code
+                                </p>
+                                <p className="app-caption text-[#595959]">
+                                    Expires {challenge?.expiresAt ?? "soon"}.
+                                    The code contains no business or recipient
+                                    details.
+                                </p>
+                            </SectionCard>
+                        )}
+                        {error && (
+                            <MessageBar intent="error">{error}</MessageBar>
+                        )}
+                        {!qrLink && (
+                            <PrimaryBtn
+                                type="submit"
+                                disabled={busy}
+                                label={
+                                    busy
+                                        ? "Requesting secure code…"
+                                        : "Issue secure QR code"
+                                }
+                            />
+                        )}
+                    </form>
                 )}
             </div>
 
             <BottomDock>
-                {!verified ? (
-                    <PrimaryBtn
-                        label="Simulate Driver Terminal Scan"
-                        onClick={() => setVerified(true)}
-                    />
-                ) : (
-                    <SecondaryBtn
-                        label="Return to Live Tracking"
-                        onClick={onBack}
-                    />
-                )}
+                <SecondaryBtn
+                    label="Return to Live Tracking"
+                    onClick={onBack}
+                />
             </BottomDock>
         </>
     );
