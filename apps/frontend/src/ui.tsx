@@ -303,42 +303,45 @@ export function BottomDock({ children }: { children: ReactNode }) {
 }
 
 export function TopBar({
-    title: _title,
-    onBack,
-    action,
+  title,
+  onBack,
+  action,
 }: {
     title?: string;
     onBack?: () => void;
     action?: ReactNode;
 }) {
-    return (
-        <div
-            className="shrink-0 flex items-center justify-between px-4 z-20"
-            style={{
-                backgroundColor: "var(--momo-yellow, #FFCC00)",
-                borderBottom: "1px solid #E6B800",
-                minHeight: 68,
-                height: 68,
-            }}
-        >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-                {onBack ? (
-                    <button
-                        onClick={onBack}
-                        className="w-9 h-9 -ml-1 rounded-lg flex items-center justify-center text-[#002B49] hover:bg-[#F5C200] active:bg-[#E0B000] transition-colors shrink-0"
-                        aria-label="Back"
-                    >
-                        <ChevronLeftIcon size={20} />
-                    </button>
-                ) : null}
+  return (
+    <div
+      className="shrink-0 flex items-center justify-between gap-2 px-4 z-20 bg-white border-b"
+      style={{
+        borderColor: "var(--fluent-stroke-divider, #E5E7EB)",
+        minHeight: 56,
+        height: 56,
+      }}
+    >
+      <div className="flex items-center gap-2 min-w-0 flex-1">
+        {onBack ? (
+          <button
+            onClick={onBack}
+            className="w-9 h-9 -ml-1 rounded-lg flex items-center justify-center text-[#FFCC00] hover:bg-[#FFF9D6] active:bg-[#FFE082] transition-colors shrink-0"
+            aria-label="Back"
+          >
+            <ChevronLeftIcon size={22} />
+          </button>
+        ) : null}
 
-                <img
-                    src="/trademesh-logo.png"
-                    alt="TradeMesh"
-                    className="h-14 w-auto object-contain shrink-0"
-                    style={{ height: 56 }}
-                />
-            </div>
+        {title ? (
+          <h1 className="text-[17px] font-bold text-[#1A1A1A] truncate">{title}</h1>
+        ) : (
+          <img
+            src="/trademesh-logo.png"
+            alt="TradeMesh"
+            className="h-11 w-auto object-contain shrink-0"
+            style={{ height: 44 }}
+          />
+        )}
+      </div>
 
             {action && (
                 <div className="shrink-0 flex items-center gap-2">{action}</div>
@@ -537,63 +540,47 @@ const TABS: {
     { id: "track", label: "Track", icon: (p) => <RadarIcon {...p} /> },
 ];
 
-export function TabBar({
-    active,
-    onTab,
-}: {
-    active: Tab;
-    onTab: (t: Tab) => void;
-}) {
-    return (
-        <div
-            className="shrink-0 flex items-center justify-around select-none z-20"
-            style={{
-                backgroundColor: "var(--momo-yellow, #FFCC00)",
-                borderTop: "1px solid #E6B800",
-                paddingBottom: "env(safe-area-inset-bottom, 0px)",
-                height: 56,
-            }}
-        >
-            {TABS.map((t) => {
-                const isActive = active === t.id;
-                return (
-                    <button
-                        key={t.id}
-                        onClick={() => onTab(t.id)}
-                        className="relative flex flex-col items-center gap-1 flex-1 h-full justify-center transition-all group"
-                        style={{
-                            color: isActive
-                                ? "var(--momo-navy, #002B49)"
-                                : "rgba(0, 43, 73, 0.65)",
-                        }}
-                    >
-                        {/* Active Pill in MTN Deep Navy */}
-                        {isActive && (
-                            <span
-                                className="absolute top-0 w-8 h-1 rounded-b-sm"
-                                style={{
-                                    backgroundColor:
-                                        "var(--momo-navy, #002B49)",
-                                }}
-                            />
-                        )}
-                        <span className="transition-transform group-active:scale-95">
-                            {t.icon({ size: 19 })}
-                        </span>
-                        <span
-                            className="text-[11px] leading-none"
-                            style={{
-                                fontWeight: isActive ? 700 : 500,
-                                color: isActive
-                                    ? "var(--momo-navy, #002B49)"
-                                    : "rgba(0, 43, 73, 0.65)",
-                            }}
-                        >
-                            {t.label}
-                        </span>
-                    </button>
-                );
-            })}
-        </div>
-    );
+export function TabBar({ active, onTab }: { active: Tab; onTab: (t: Tab) => void }) {
+  return (
+    <div
+      className="shrink-0 flex items-center justify-around select-none z-20 bg-white border-t"
+      style={{
+        borderColor: "var(--fluent-stroke-divider, #E5E7EB)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        paddingTop: 6,
+        height: 60,
+      }}
+    >
+      {TABS.map((t) => {
+        const isActive = active === t.id;
+        return (
+          <button
+            key={t.id}
+            onClick={() => onTab(t.id)}
+            className="relative flex flex-col items-center gap-1 flex-1 h-full justify-start transition-all group"
+            style={{ color: isActive ? "#1A1A1A" : "#595959" }}
+          >
+            <span
+              className="flex items-center justify-center rounded-full transition-all group-active:scale-95"
+              style={{
+                width: 34,
+                height: 34,
+                backgroundColor: isActive ? "var(--momo-yellow, #FFCC00)" : "transparent",
+                boxShadow: isActive ? "0 2px 6px rgba(0,0,0,0.15)" : "none",
+                color: isActive ? "#1A1A1A" : "#595959",
+              }}
+            >
+              {t.icon({ size: 18 })}
+            </span>
+            <span
+              className="text-[11px] leading-none"
+              style={{ fontWeight: isActive ? 700 : 500 }}
+            >
+              {t.label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }

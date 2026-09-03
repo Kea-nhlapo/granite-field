@@ -8,6 +8,7 @@ import familyBg from "./assets/onboarding/family.jpg";
 import farmerCornBg from "./assets/onboarding/farmer-corn.png";
 import farmerThumbsUpBg from "./assets/onboarding/farmer-thumbsup.png";
 import { m, springs } from "./motion";
+import { PhoneVerifyField } from "./PhoneVerifyField";
 
 type Slide = {
     icon: ReactNode;
@@ -46,45 +47,74 @@ const SLIDES: Slide[] = [
 const SWIPE_THRESHOLD = 60;
 
 function MascotBadge({
-    children,
-    spin = false,
+  children,
+  entrance = "none",
 }: {
-    children: ReactNode;
-    spin?: boolean;
+  children: ReactNode;
+  entrance?: "spin" | "bounce" | "loop" | "none";
 }) {
-    const style = {
-        width: 176,
-        height: 176,
-        borderRadius: "var(--fluent-radius-xl, 16px)",
-        background:
-            "linear-gradient(135deg, var(--momo-blue, #003E85), var(--momo-navy, #002B49))",
-        boxShadow: "0 12px 28px rgba(0, 62, 133, 0.28)",
-    };
+  const style = {
+    width: 176,
+    height: 176,
+    borderRadius: "var(--fluent-radius-xl, 16px)",
+    background: "linear-gradient(135deg, var(--momo-blue, #003E85), var(--momo-navy, #002B49))",
+    boxShadow: "0 12px 28px rgba(0, 62, 133, 0.28)",
+  };
 
     const reduceMotion = useReducedMotion();
 
-    if (!spin || reduceMotion) {
-        return (
-            <div
-                className="flex items-center justify-center shrink-0"
-                style={style}
-            >
-                {children}
-            </div>
-        );
-    }
-
+  if (entrance === "none" || reduceMotion) {
     return (
-        <m.div
+        <div
             className="flex items-center justify-center shrink-0"
             style={style}
-            initial={{ rotate: -180, scale: 0.4, opacity: 0 }}
-            animate={{ rotate: 0, scale: 1, opacity: 1 }}
-            transition={springs.gentle}
         >
             {children}
-        </m.div>
+        </div>
     );
+  }
+
+  if (entrance === "loop") {
+    return (
+      <m.div
+        className="flex items-center justify-center shrink-0"
+        style={style}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 2.4, ease: "linear", repeat: Infinity }}
+      >
+        {children}
+      </m.div>
+    );
+  }
+
+  if (entrance === "bounce") {
+    return (
+      <m.div
+        className="flex items-center justify-center shrink-0"
+        style={style}
+        initial={{ y: -140, opacity: 0 }}
+        animate={{ y: [-140, 0, -28, 0, -10, 0], opacity: 1 }}
+        transition={{
+          y: { duration: 1.1, times: [0, 0.4, 0.58, 0.74, 0.88, 1], ease: "easeOut" },
+          opacity: { duration: 0.25 },
+        }}
+      >
+        {children}
+      </m.div>
+    );
+  }
+
+  return (
+    <m.div
+      className="flex items-center justify-center shrink-0"
+      style={style}
+      initial={{ rotate: -180, scale: 0.4, opacity: 0 }}
+      animate={{ rotate: 0, scale: 1, opacity: 1 }}
+      transition={springs.gentle}
+    >
+      {children}
+    </m.div>
+  );
 }
 
 function SplashIntro() {
@@ -189,7 +219,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
             </div>
 
             <div className="flex-1 relative overflow-hidden">
-                <AnimatePresence initial={false} custom={direction}>
+                <AnimatePresence initial={false} custom={direction} mode="wait">
                     <m.div
                         key={index}
                         custom={direction}
@@ -230,7 +260,7 @@ export function OnboardingScreen({ onDone }: { onDone: () => void }) {
                             }}
                         />
 
-                        <MascotBadge spin={index === 0}>
+                        <MascotBadge entrance={index === 1 ? "bounce" : "loop"}>
                             {slide.icon}
                         </MascotBadge>
 
@@ -595,4 +625,127 @@ export function LoginScreen({
             </m.div>
         </div>
     );
+}
+
+export function SignUpScreen({
+  onSignedUp,
+  onSignIn,
+}: {
+  onSignedUp: () => void;
+  onSignIn: () => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [phoneValid, setPhoneValid] = useState(false);
+
+  const inputStyle = {
+    height: 48,
+    borderColor: "var(--fluent-stroke-default, #D1D5DB)",
+    borderRadius: "var(--fluent-radius-md, 8px)",
+    color: "var(--fluent-text-primary, #1A1A1A)",
+  };
+
+  const passwordsMatch = confirmPassword.length === 0 || confirmPassword === password;
+  const canSubmit = phoneValid && password.length >= 6 && confirmPassword === password;
+
+  return (
+    <div className="h-full flex flex-col overflow-y-auto fluent-scroll" style={{ backgroundColor: "#FFFFFF" }}>
+      <m.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="flex-1 flex flex-col px-6 pt-10 pb-6"
+      >
+        <div
+          className="w-20 h-20 flex items-center justify-center shrink-0 mx-auto"
+          style={{
+            borderRadius: "var(--fluent-radius-lg, 12px)",
+            background: "linear-gradient(135deg, var(--momo-blue, #003E85), var(--momo-navy, #002B49))",
+          }}
+        >
+          <ShieldCheck size={38} strokeWidth={1.75} className="text-white" />
+        </div>
+
+        <h1 className="text-3xl font-bold mt-6 text-center" style={{ color: "var(--momo-navy, #002B49)" }}>
+          Create Account
+        </h1>
+        <p className="text-sm mt-2 text-center" style={{ color: "var(--fluent-text-secondary, #595959)" }}>
+          Join TradeMesh with your MoMo number
+        </p>
+
+        <div className="flex flex-col gap-3 mt-8">
+          <PhoneVerifyField
+            label="Phone Number"
+            placeholder="+27 82 000 0000"
+            onVerified={(_, valid) => setPhoneValid(valid)}
+          />
+
+          <div>
+            <label className="block app-caption-strong text-[#002B49] mb-1">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="At least 6 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 pr-11 border text-sm outline-none focus:border-[var(--momo-blue,#003E85)]"
+                style={inputStyle}
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: "var(--momo-blue, #003E85)" }}
+              >
+                {showPassword ? <EyeOff size={18} strokeWidth={1.75} /> : <Eye size={18} strokeWidth={1.75} />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block app-caption-strong text-[#002B49] mb-1">Confirm Password</label>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Re-enter your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full px-4 border text-sm outline-none focus:border-[var(--momo-blue,#003E85)]"
+              style={{ ...inputStyle, borderColor: passwordsMatch ? inputStyle.borderColor : "var(--fluent-danger, #D32F2F)" }}
+            />
+            {!passwordsMatch && (
+              <p className="app-micro text-[#D32F2F] mt-1">Passwords don't match</p>
+            )}
+          </div>
+        </div>
+
+        <p className="text-xs mt-6" style={{ color: "var(--fluent-text-tertiary, #8E8E93)" }}>
+          By continuing, you agree to TradeMesh's{" "}
+          <span style={{ color: "var(--momo-blue, #003E85)", fontWeight: 600 }}>Terms &amp; Conditions</span> and{" "}
+          <span style={{ color: "var(--momo-blue, #003E85)", fontWeight: 600 }}>Privacy Policy</span>.
+        </p>
+
+        <div className="mt-6 w-[56%] mx-auto">
+          <PrimaryBtn
+            label="Create Account"
+            onClick={onSignedUp}
+            disabled={!canSubmit}
+            className="h-12 text-base"
+          />
+        </div>
+
+        <div className="flex items-center justify-center gap-1.5 mt-6 text-sm">
+          <span style={{ color: "var(--fluent-text-tertiary, #8E8E93)" }}>Already have an account?</span>
+          <button
+            onClick={onSignIn}
+            className="font-semibold"
+            style={{ color: "var(--momo-blue, #003E85)" }}
+          >
+            Sign In
+          </button>
+        </div>
+      </m.div>
+    </div>
+  );
 }

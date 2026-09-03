@@ -1,99 +1,68 @@
 import type { Navigate, Screen } from "./types";
-import { Badge, PersonaCoin, SectionCard, TopBar } from "./ui";
+import { Badge, SectionCard } from "./ui";
 import {
-    BoxIcon,
-    DocumentTextIcon,
-    RouteIcon,
-    ShieldCheckmarkIcon,
-    TruckIcon,
-    ChevronRightIcon,
+  BoxIcon,
+  DocumentTextIcon,
+  RouteIcon,
+  ShieldCheckmarkIcon,
+  TruckIcon,
+  ChevronRightIcon,
+  MenuIcon,
+  MailIcon,
 } from "./icons";
+import accelBanner from "./assets/promo/momo-b2b-accelerator.jpg";
 
 export function HomeScreen({ navigate }: { navigate: Navigate }) {
-    return (
-        <>
-            <TopBar
-                title="Overview"
-                action={
-                    <PersonaCoin
-                        initials="MN"
-                        size={32}
-                        status="available"
-                        onClick={() => navigate({ id: "profile" })}
-                    />
-                }
-            />
+  return (
+    <>
+      <div
+        className="shrink-0 flex items-center justify-between gap-3 px-4 bg-white border-b"
+        style={{ borderColor: "var(--fluent-stroke-divider, #E5E7EB)", height: 56 }}
+      >
+        <button
+          onClick={() => navigate({ id: "profile" })}
+          className="w-9 h-9 -ml-1 rounded-lg flex items-center justify-center text-[#1A1A1A] hover:bg-[#F3F4F6] active:bg-[#E5E7EB] transition-colors shrink-0"
+          aria-label="Menu"
+        >
+          <MenuIcon size={20} />
+        </button>
+        <p className="flex-1 min-w-0 truncate text-[16px] font-bold text-[#1A1A1A]">
+          <span className="font-extrabold italic">Y'ello</span>, Mama Nkosi
+        </p>
+        <button
+          className="w-9 h-9 rounded-lg flex items-center justify-center text-[#1A1A1A] hover:bg-[#F3F4F6] active:bg-[#E5E7EB] transition-colors shrink-0"
+          aria-label="Messages"
+        >
+          <MailIcon size={19} />
+        </button>
+      </div>
 
-            <div
-                className="flex-1 fluent-scroll overflow-y-auto"
-                style={{ background: "var(--fluent-bg-canvas, #F8F9FA)" }}
-            >
-                {/* Tenant Hero Profile Card */}
-                <div
-                    className="p-4 bg-white border-b"
-                    style={{
-                        borderColor: "var(--fluent-stroke-divider, #E5E7EB)",
-                    }}
-                >
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <p className="app-overline text-[#003E85] mb-0.5">
-                                MoMo Enterprise Node
-                            </p>
-                            <h1 className="app-title leading-snug">
-                                Mama Nkosi Spaza Supply
-                            </h1>
-                            <p className="app-caption mt-0.5">
-                                Soweto Distribution Node • Johannesburg
-                            </p>
-                        </div>
-                        <div className="text-right shrink-0">
-                            <Badge label="Trust 91/100" color="success" />
-                        </div>
-                    </div>
-
-                    {/* Key Metrics Bar */}
-                    <div
-                        className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t"
-                        style={{
-                            borderColor:
-                                "var(--fluent-stroke-divider, #E5E7EB)",
-                        }}
-                    >
-                        {[
-                            {
-                                label: "Active Orders",
-                                value: "7",
-                                sub: "2 awaiting",
-                            },
-                            {
-                                label: "In Transit",
-                                value: "3",
-                                sub: "On schedule",
-                            },
-                            {
-                                label: "Freight Saved",
-                                value: "R2,340",
-                                sub: "+18% pooled",
-                            },
-                        ].map((m, i) => (
-                            <div
-                                key={m.label}
-                                className={`text-center ${i < 2 ? "border-r" : ""}`}
-                                style={{
-                                    borderColor:
-                                        "var(--fluent-stroke-divider, #E5E7EB)",
-                                }}
-                            >
-                                <p className="app-metric">{m.value}</p>
-                                <p className="app-caption font-medium mt-0.5">
-                                    {m.label}
-                                </p>
-                                <p className="app-micro">{m.sub}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+      <div
+        className="flex-1 fluent-scroll overflow-y-auto"
+        style={{ background: "var(--fluent-bg-canvas, #F8F9FA)" }}
+      >
+        {/* Tenant Hero Profile Card */}
+        <div
+          className="p-4 bg-white border-b"
+          style={{ borderColor: "var(--fluent-stroke-divider, #E5E7EB)" }}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="app-overline text-[#003E85] mb-0.5">
+                MoMo Enterprise Node
+              </p>
+              <h1 className="app-title leading-snug">
+                Mama Nkosi Spaza Supply
+              </h1>
+              <p className="app-caption mt-0.5">
+                Soweto Distribution Node • Johannesburg
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <Badge label="Trust 91/100" color="success" />
+            </div>
+          </div>
+        </div>
 
                 <div className="p-4 space-y-4">
                     {/* Active Shipment Focus Card */}
@@ -138,75 +107,91 @@ export function HomeScreen({ navigate }: { navigate: Navigate }) {
                         </div>
                     </SectionCard>
 
-                    {/* Quick Actions */}
-                    <div>
-                        <p className="app-overline mb-2.5">Core Operations</p>
-                        <div className="grid grid-cols-2 gap-2.5">
-                            {[
-                                {
-                                    label: "Source Stock",
-                                    icon: (
-                                        <BoxIcon
-                                            size={20}
-                                            className="text-[#003E85]"
-                                        />
-                                    ),
-                                    desc: "Browse supplier catalog & orders",
-                                    screen: { id: "source" } as Screen,
-                                },
-                                {
-                                    label: "Upload Invoice",
-                                    icon: (
-                                        <DocumentTextIcon
-                                            size={20}
-                                            className="text-[#003E85]"
-                                        />
-                                    ),
-                                    desc: "Parse supplier bill & verify lines",
-                                    screen: { id: "orders_invoice" } as Screen,
-                                },
-                                {
-                                    label: "Route Dispatch",
-                                    icon: (
-                                        <RouteIcon
-                                            size={20}
-                                            className="text-[#003E85]"
-                                        />
-                                    ),
-                                    desc: "Cluster freight & carrier match",
-                                    screen: { id: "routes" } as Screen,
-                                },
-                                {
-                                    label: "Trust & Risk",
-                                    icon: (
-                                        <ShieldCheckmarkIcon
-                                            size={20}
-                                            className="text-[#003E85]"
-                                        />
-                                    ),
-                                    desc: "Fraud signals & credit ratings",
-                                    screen: { id: "risk" } as Screen,
-                                },
-                            ].map((q) => (
-                                <button
-                                    key={q.label}
-                                    onClick={() => navigate(q.screen)}
-                                    className="bg-white rounded-xl p-3 text-left border border-[#E5E7EB] hover:border-[#003E85] hover:shadow-xs active:bg-[#F8F9FA] transition-all flex flex-col justify-between"
-                                    style={{ minHeight: "105px" }}
-                                >
-                                    <div className="w-8 h-8 rounded-lg bg-[#EBF3FC] flex items-center justify-center mb-2">
-                                        {q.icon}
-                                    </div>
-                                    <div>
-                                        <p className="app-heading">{q.label}</p>
-                                        <p className="app-micro text-[#595959] mt-0.5 leading-snug">
-                                            {q.desc}
-                                        </p>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+          {/* Promo Banner */}
+          <button className="block w-full rounded-xl overflow-hidden border border-[#E5E7EB] hover:shadow-xs active:brightness-95 transition-all">
+            <img
+              src={accelBanner}
+              alt="MoMo B2B Specials for Suppliers — 48-Hour Accelerator Offer: 50% off your next platform fee"
+              className="w-full h-auto block"
+            />
+          </button>
+
+          {/* Key Metrics Bar */}
+          <SectionCard className="grid grid-cols-3 gap-2 p-3.5">
+            {[
+              { label: "Active Orders", value: "7", sub: "2 awaiting" },
+              { label: "In Transit", value: "3", sub: "On schedule" },
+              { label: "Freight Saved", value: "R2,340", sub: "+18% pooled" },
+            ].map((m, i) => (
+              <div
+                key={m.label}
+                className={`text-center ${i < 2 ? "border-r" : ""}`}
+                style={{ borderColor: "var(--fluent-stroke-divider, #E5E7EB)" }}
+              >
+                <p className="app-metric">
+                  {m.value}
+                </p>
+                <p className="app-caption font-medium mt-0.5">
+                  {m.label}
+                </p>
+                <p className="app-micro">{m.sub}</p>
+              </div>
+            ))}
+          </SectionCard>
+
+          {/* Quick Actions */}
+          <div>
+            <p className="app-overline mb-2.5">
+              Core Operations
+            </p>
+            <div className="grid grid-cols-2 gap-2.5">
+              {[
+                {
+                  label: "Source Stock",
+                  icon: <BoxIcon size={20} className="text-[#003E85]" />,
+                  desc: "Browse supplier catalog & orders",
+                  screen: { id: "source" } as Screen,
+                },
+                {
+                  label: "Upload Invoice",
+                  icon: <DocumentTextIcon size={20} className="text-[#003E85]" />,
+                  desc: "Parse supplier bill & verify lines",
+                  screen: { id: "orders_invoice" } as Screen,
+                },
+                {
+                  label: "Route Dispatch",
+                  icon: <RouteIcon size={20} className="text-[#003E85]" />,
+                  desc: "Cluster freight & carrier match",
+                  screen: { id: "routes" } as Screen,
+                },
+                {
+                  label: "Trust & Risk",
+                  icon: <ShieldCheckmarkIcon size={20} className="text-[#003E85]" />,
+                  desc: "Fraud signals & credit ratings",
+                  screen: { id: "risk" } as Screen,
+                },
+              ].map((q) => (
+                <button
+                  key={q.label}
+                  onClick={() => navigate(q.screen)}
+                  className="bg-white rounded-xl p-3 text-left border border-[#E5E7EB] hover:border-[#003E85] hover:shadow-xs active:bg-[#F8F9FA] transition-all flex flex-col justify-between"
+                  style={{ minHeight: "105px" }}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#EBF3FC] flex items-center justify-center mb-2">
+                    {q.icon}
+                  </div>
+                  <div>
+                    <p className="app-heading">
+                      {q.label}
+                    </p>
+                    <p className="app-micro text-[#595959] mt-0.5 leading-snug">
+                      {q.desc}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
 
                     {/* Audit Stream — most recent item only; rest is one tap away */}
                     <SectionCard className="p-4">
