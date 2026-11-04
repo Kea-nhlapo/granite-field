@@ -1,0 +1,20 @@
+# CI only. Layered on docker-compose.aws.yml by the Cloud Readiness job so the
+# deployment stack boots without the retired AWS account. MinIO stands in for S3
+# and is thrown away with the rest of the stack when the job ends.
+services:
+  minio:
+    # quay.io/minio/minio now needs a login and minio/minio is gone from Docker
+    # Hub, so CI pulls the same MinIO release from Bitnami's public legacy repo.
+    # That image starts the server itself, so there is no command override.
+    image: bitnamilegacy/minio:2025.7.23-debian-12-r5
+    container_name: trademesh-minio
+    environment:
+      MINIO_ROOT_USER: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY in .env}
+      MINIO_ROOT_PASSWORD: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY in .env}
+    ports:
+      - "127.0.0.1:9000:9000"
+
+  backend:
+    depends_on:
+      minio:
+        condition: service_started
