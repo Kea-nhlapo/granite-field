@@ -24,10 +24,10 @@ class ObjectStorageContainerConfigurationTest {
             Map<String, Object> services = section(root, "services", composeFile);
             Map<String, Object> minio = section(services, "minio", composeFile);
 
+            // Bitnami's image starts the server itself, so there is no command to check.
             assertThat(minio.get("image").toString())
-                    .startsWith("quay.io/minio/minio:RELEASE.")
+                    .startsWith("bitnamilegacy/minio:2025.")
                     .doesNotEndWith(":latest");
-            assertThat(minio.get("command").toString()).contains("server /data");
             assertThat(list(minio, "ports", composeFile)).hasSize(2).allSatisfy(port -> assertThat(port.toString())
                     .startsWith("127.0.0.1:"));
         }

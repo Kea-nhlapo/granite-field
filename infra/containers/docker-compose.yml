@@ -78,9 +78,11 @@ services:
       - trademesh-postgres-data:/var/lib/postgresql/data
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2025-07-23T15-54-02Z
+    # quay.io/minio/minio now needs a login and minio/minio is gone from Docker
+    # Hub. This is Bitnami's public build of the same MinIO release, the one CI
+    # uses. It starts the server and the console on 9001 itself.
+    image: bitnamilegacy/minio:2025.7.23-debian-12-r5
     container_name: trademesh-minio
-    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${OBJECT_STORAGE_ACCESS_KEY:?Set OBJECT_STORAGE_ACCESS_KEY in infra/containers/.env}
       MINIO_ROOT_PASSWORD: ${OBJECT_STORAGE_SECRET_KEY:?Set OBJECT_STORAGE_SECRET_KEY in infra/containers/.env}
@@ -88,7 +90,7 @@ services:
       - "127.0.0.1:${MINIO_API_PORT:-9000}:9000"
       - "127.0.0.1:${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
-      - trademesh-minio-data:/data
+      - trademesh-minio-data:/bitnami/minio/data
 
 volumes:
   trademesh-postgres-data:
