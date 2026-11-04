@@ -2,7 +2,7 @@
 
 TradeMesh helps small businesses source stock, share freight and get paid safely. A buyer can find verified suppliers, group orders with other buyers, book spare space on a truck that is already heading their way, track the load live, and only release payment once the delivery is scanned and checked.
 
-We built it as a team for a hackathon. The full journey runs end to end, and the backend is deployed on AWS.
+We built it as a team for a hackathon. The full journey runs end to end, and we ran the backend on AWS for the demo.
 
 ## What it does
 
@@ -108,9 +108,9 @@ If both runs pass, the demo is good to go. See [demo readiness](docs/operations/
 
 ## Deployment
 
-The backend runs on a single EC2 instance behind CloudFront in `af-south-1`. There's no SSH and no open database ports, and only CloudFront can reach the instance. The full setup, including which providers are real and which are mocked, is in [docs/deployment/aws-ec2.md](docs/deployment/aws-ec2.md).
+For the demo, the backend ran on a single EC2 instance behind CloudFront in `af-south-1`. There was no SSH and no open database ports, and only CloudFront could reach the instance. The full setup, including which providers were real and which were mocked, is in [docs/deployment/aws-ec2.md](docs/deployment/aws-ec2.md).
 
-This setup is sized for a demo, not for high availability.
+We shut the cloud deployment down after the hackathon. CI still boots the same deployment stack on every pull request (with MinIO standing in for S3), so it stays ready to redeploy.
 
 ## Status
 
